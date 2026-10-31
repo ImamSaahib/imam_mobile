@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, ChevronDown, CircleHelp, CreditCard, LayoutDashboard, Menu, Moon, MoreHorizontal, Package, Plus, Search, Settings, ShoppingBag, ShoppingCart, Smartphone, Sun, Users, Wallet, X } from "lucide-react";
 
 const products = [
