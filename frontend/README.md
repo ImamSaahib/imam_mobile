@@ -1,6 +1,6 @@
 # Imam Mobile frontend
 
-React + Vite starter interface for the Imam Mobile shop management project.
+React + Vite interface for the Imam Mobile shop management project. Current project status: **Under development**.
 
 ## Run locally
 
@@ -29,8 +29,11 @@ Connect this repository to Cloudflare Pages and set:
 
 The existing root-level Cloudflare Worker files are not changed.
 
-## Current status
+## Current status: Under development
 
-This is a frontend prototype. Dashboard figures, products, customers and transactions are sample data. Actions that need backend operations show a preview notice and do not create or update records.
+The current UI includes separate list and form views for:
+- Mobile devices (one record per device, unique IMEI, calculated display price)
+- Customers (Regular / Account types and calculated ledger balances)
+- Customer entries (In (+) / Out (-), customer relation and optional device relation)
 
-Next: choose and connect the database, then add authenticated API endpoints and replace the sample data with live records.
+The current records are in-memory preview data only. They are not persisted to a database and will reset when the page reloads. The next planned phase is Cloudflare D1 schema and API integration, followed by UI polish and authentication.
