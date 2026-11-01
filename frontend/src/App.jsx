@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Eye, EyeOff, LayoutDashboard, Menu, Moon, MoreHorizontal, Package, Plus, Search, Settings, ShoppingCart, Smartphone, Sun, Users, Wallet, X, Save, Printer, ArrowLeft, ArrowUpDown, Filter, HandCoins } from "lucide-react";
 
 const API_BASE = "https://imam-mobile-api.imamsaahib.workers.dev";
-async function api(path, options={}) { const response=await fetch(API_BASE+path,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}}); const data=await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.error||"API request failed."); return data; }
+async function api(path, options={}) { const response=await fetch(API_BASE+path,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}}); const data=await response.json().catch(()=>({})); if(!response.ok) throw new Error(`${path} returned ${response.status}: ${data.error||"API request failed."}`); return data; }
 const money = n => "PKR " + Number(n || 0).toLocaleString("en-PK");
 const today = () => new Date().toLocaleDateString("en-CA");
 const displayPrice = p => Number(p || 0) + (Number(p || 0) >= 100000 ? 4000 : Number(p || 0) >= 50000 ? 2000 : 1000);
