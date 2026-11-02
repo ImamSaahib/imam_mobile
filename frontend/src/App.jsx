@@ -56,7 +56,7 @@ function ConfiguredList({component,rows=[]}) {
  const availableKeys=rows.length?Object.keys(rows[0]).filter(k=>!["id","deviceIds","devices"].includes(k)):[];
  const columns=component.columns?.length?component.columns.filter(k=>availableKeys.includes(k)):availableKeys.slice(0,5);
  const pageSize=Math.max(5,Math.min(100,Number(component.pageSize)||10));
- const filtered=rows.filter(row=>!component.searchable===false||true).filter(row=>!component.searchable||Object.values(row).some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
+ const filtered=rows.filter(row=>component.searchable===false||Object.values(row).some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
  const ordered=[...filtered].sort((a,b)=>{if(!sort.key)return 0;const av=a[sort.key]??"",bv=b[sort.key]??"";const an=Number(av),bn=Number(bv);const cmp=av!==""&&bv!==""&&Number.isFinite(an)&&Number.isFinite(bn)?an-bn:String(av).localeCompare(String(bv));return sort.direction==="asc"?cmp:-cmp;});
  const pages=Math.max(1,Math.ceil(ordered.length/pageSize));
  const current=Math.min(page,pages-1);
@@ -124,8 +124,11 @@ export default function App() {
   const rows=configuredRowsFor(component.source||"devices");
   const title=component.title||"Configured component";
   if(component.type==="report"||component.type==="summary")return <section className="panel configured-runtime-card" key={component.id}><p className="eyebrow">{component.type==="report"?"REPORT":"SUMMARY"}</p><h2>{title}</h2><strong>{rows.length}</strong><small>{component.source||"devices"} records</small></section>;
-  if(component.type==="list") return <ConfiguredList component={component} rows={rows}/>;
-  return <section className="panel configured-runtime-card" key={component.id}><h2>{title}</h2><p className="admin-hint">This component type is saved, but its interactive renderer is not enabled yet.</p></section>;
+  const widthClass=component.width==="half"?"span-half":component.width==="third"?"span-third":"span-full";
+  if(component.type==="list") return <div className={"configured-component "+widthClass} key={component.id}><ConfiguredList component={component} rows={rows}/></div>;
+  if(component.type==="form") return <section className={"panel configured-runtime-card configured-form-launch "+widthClass} key={component.id}><h2>{title}</h2><p>Create a new {component.source==="customers"?"customer":component.source==="sales"?"sale":component.source==="customer_entries"?"customer entry":"inventory record"} using the existing validated form.</p><button className="primary-button" onClick={()=>setModal(component.source==="customers"?"customer":component.source==="sales"?"sale":component.source==="customer_entries"?"entry":"device")}><Plus size={15}/>Open form</button></section>;
+  if(component.type==="layout") return <section className={"panel configured-runtime-card "+widthClass} key={component.id}><h2>{title}</h2><p className="admin-hint">Layout container · place other components on this page and use width settings to arrange them.</p></section>;
+  return <section className={"panel configured-runtime-card "+widthClass} key={component.id}><p className="eyebrow">{component.type==="report"?"REPORT":"SUMMARY"}</p><h2>{title}</h2><strong>{rows.length}</strong><small>{component.source||"devices"} records</small></section>;
  };
  const currentPageId=pageIds[page]||page;
  const extraConfiguredComponents=(runtimeConfig?.components||[]).filter(c=>c.page===currentPageId&&!["dashboard-summary","inventory-list","customer-list","ledger-list","sales-list"].includes(c.id)&&c.enabled!==false);
