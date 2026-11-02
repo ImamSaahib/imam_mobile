@@ -124,7 +124,7 @@ export default function App() {
   return devices;
  };
  const reportRowsFor=(source)=>{
-  if(source==="customers")return customers.map(c=>({...c,...getLedger(entries,c.id),balance:getLedger(entries,c.id).balance,totalDebit:getLedger(entries,c.id).debit,totalCredit:getLedger(entries,c.id).credit}));
+  if(source==="customers")return customers.map(c=>{const ledger=getLedger(entries,c.id);return {...c,balance:ledger.balance,totalDebit:ledger.debit,totalCredit:ledger.credit};});
   if(source==="sales")return sales;
   if(source==="customer_entries")return entries;
   return devices;
