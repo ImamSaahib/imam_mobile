@@ -126,3 +126,9 @@
 .admin-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
 @media(max-width:800px){.admin-workspace{grid-template-columns:1fr}.admin-studio-head{align-items:flex-start}.admin-studio-head h1{font-size:22px}}
 @media(max-width:520px){.admin-token-row{flex-direction:column}.admin-component{flex-wrap:wrap}.admin-component-info{min-width:55%}.admin-actions>*{flex:1;justify-content:center}.admin-studio-head{flex-direction:column}}
+
+.reports-runtime-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.report-runtime-card{padding:18px;display:grid;gap:8px}
+.report-runtime-card h2{font:700 14px Manrope,sans-serif;margin:0}
+.report-runtime-card>strong{font:800 30px Manrope,sans-serif}
+.report-runtime-card>small{color:var(--muted);font-size:10px}
