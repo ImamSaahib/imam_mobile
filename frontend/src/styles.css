@@ -132,3 +132,11 @@
 .report-runtime-card h2{font:700 14px Manrope,sans-serif;margin:0}
 .report-runtime-card>strong{font:800 30px Manrope,sans-serif}
 .report-runtime-card>small{color:var(--muted);font-size:10px}
+
+.admin-page-choice{display:flex;align-items:center;gap:6px}
+.admin-page-choice>button:first-child{flex:1;display:flex;justify-content:space-between;align-items:center;border:0;background:transparent;color:inherit;padding:0;text-align:left}
+.configured-runtime-card{padding:16px;margin:12px 0}
+.configured-runtime-card h2{font:750 14px Manrope,sans-serif;margin:0 0 8px}
+.configured-runtime-card>strong{font:800 28px Manrope,sans-serif;display:block;margin:8px 0}
+.configured-runtime-card>small{font-size:10px;color:var(--muted)}
+.configured-extra-components{margin-top:14px}
