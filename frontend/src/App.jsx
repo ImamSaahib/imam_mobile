@@ -94,7 +94,7 @@ export default function App() {
   const title=component.title||"Configured component";
   if(component.type==="report"||component.type==="summary")return <section className="panel configured-runtime-card" key={component.id}><p className="eyebrow">{component.type==="report"?"REPORT":"SUMMARY"}</p><h2>{title}</h2><strong>{rows.length}</strong><small>{component.source||"devices"} records</small></section>;
   if(component.type==="list") {
-   const keys=rows.length?Object.keys(rows[0]).filter(k=>!["id","deviceIds","devices"].includes(k)).slice(0,5):[];
+   const availableKeys=rows.length?Object.keys(rows[0]).filter(k=>!["id","deviceIds","devices"].includes(k)):[]; const keys=component.columns?.length?component.columns.filter(k=>availableKeys.includes(k)):availableKeys.slice(0,5);
    return <section className="panel configured-runtime-card" key={component.id}><div className="table-toolbar"><div><h2>{title}</h2><p>{rows.length} records · {component.source||"devices"}</p></div></div><div className="table-scroll"><table><thead><tr>{keys.map(k=><th key={k}>{k.replace(/[A-Z_]/g,x=>" "+x).replace(/^./,x=>x.toUpperCase())}</th>)}</tr></thead><tbody>{rows.slice(0,50).map((row,i)=><tr key={row.id||i}>{keys.map(k=><td key={k}>{String(row[k]??"—")}</td>)}</tr>)}{!rows.length&&<tr><td colSpan={Math.max(1,keys.length)} className="empty-state">No records found.</td></tr>}</tbody></table></div></section>;
   }
   return <section className="panel configured-runtime-card" key={component.id}><h2>{title}</h2><p className="admin-hint">This component type is saved, but its interactive renderer is not enabled yet.</p></section>;
