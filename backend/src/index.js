@@ -69,6 +69,24 @@ export default {
         return json({ published:true, version:nextVersion },200,origin);
       }
 
+      if (path === "/api/admin/configuration/versions" && request.method === "GET") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
+        const result = await env.DB.prepare("SELECT version,summary,created_at FROM configuration_versions ORDER BY version DESC LIMIT 20").all();
+        return json({versions:result.results},200,origin);
+      }
+      if (path === "/api/admin/configuration/restore" && request.method === "POST") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
+        const body = await readJson(request);
+        const version = Number(body?.version);
+        if (!Number.isInteger(version) || version < 1) return error("A valid configuration version is required.",400,origin);
+        const row = await env.DB.prepare("SELECT configuration_json FROM configuration_versions WHERE version=?").bind(version).first();
+        if (!row) return error("Configuration version not found.",404,origin);
+        const configuration = JSON.parse(row.configuration_json);
+        if (!configuration || configuration.schemaVersion !== 1 || !Array.isArray(configuration.pages) || !Array.isArray(configuration.components) || !Array.isArray(configuration.fields) || !Array.isArray(configuration.reports)) return error("Stored configuration version is invalid.",409,origin);
+        await env.DB.prepare("UPDATE app_configuration SET draft_json=?,updated_at=datetime('now') WHERE id=1").bind(JSON.stringify(configuration)).run();
+        return json({restored:true,configuration},200,origin);
+      }
+
       if (path === "/api/admin/schema/add-column" && request.method === "POST") {
         if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
         const body = await readJson(request);
