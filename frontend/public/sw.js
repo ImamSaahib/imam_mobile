@@ -1,4 +1,4 @@
-const VERSION = "imam-mobile-pwa-v1";
+const VERSION = "imam-mobile-pwa-v2";
 const APP_SHELL = ["/", "/index.html", "/offline.html", "/manifest.webmanifest", "/icons/icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
@@ -18,7 +18,7 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || url.pathname.includes("/assets/")) return;
+  if (url.pathname.startsWith("/api/")) return;
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       try {
