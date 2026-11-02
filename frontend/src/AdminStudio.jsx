@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Save, Eye, Send, Plus, Trash2, ChevronUp, ChevronDown, Lock, Layers, FileText, Database, RefreshCw } from "lucide-react";
+import { Save, Eye, Send, Plus, Trash2, ChevronUp, ChevronDown, Lock, Layers, FileText, Database, RefreshCw, History } from "lucide-react";
 
 const API = "https://imam-mobile-api.imamsaahib.workers.dev";
 const DEFAULT_CONFIG = {
@@ -38,6 +38,8 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [published, setPublished] = useState(DEFAULT_CONFIG);
   const [version, setVersion] = useState(1);
+  const [versions, setVersions] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState("");
   const [tab, setTab] = useState("pages");
   const [selectedPage, setSelectedPage] = useState("inventory");
   const [busy, setBusy] = useState(false);
@@ -65,6 +67,8 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
       setConfig(data.draft || DEFAULT_CONFIG);
       setPublished(data.published || DEFAULT_CONFIG);
       setVersion(data.version || 1);
+      const history = await request("/api/admin/configuration/versions", token);
+      setVersions(history.versions || []);
       setMessage("Draft loaded. Changes are not live until published.");
     } catch (e) { setMessage(e.message); }
     finally { setBusy(false); }
@@ -86,8 +90,22 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
       setPublished(config);
       onPublished?.(config);
       setVersion(result.version);
+      const history = await request("/api/admin/configuration/versions", token);
+      setVersions(history.versions || []);
       setMessage("Published version " + result.version + " successfully.");
       onNotice?.("Configuration version " + result.version + " published.");
+    } catch (e) { setMessage(e.message); }
+    finally { setBusy(false); }
+  }
+  async function restoreVersion() {
+    if (!selectedVersion) return setMessage("Choose a version to restore.");
+    if (!window.confirm("Restore version " + selectedVersion + " as a draft? The live configuration will not change until you publish it.")) return;
+    setBusy(true);
+    try {
+      const result = await request("/api/admin/configuration/restore", token, { method: "POST", body: JSON.stringify({ version: Number(selectedVersion) }) });
+      setConfig(result.configuration);
+      setSelectedPage(result.configuration.pages?.[0]?.id || "inventory");
+      setMessage("Version " + selectedVersion + " restored as a draft. Review and publish when ready.");
     } catch (e) { setMessage(e.message); }
     finally { setBusy(false); }
   }
@@ -159,7 +177,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
         <div className="admin-tabs">
           <button className={tab==="pages"?"active":""} onClick={()=>setTab("pages")}><Layers size={16}/>Pages & layout</button>
           <button className={tab==="reports"?"active":""} onClick={()=>setTab("reports")}><FileText size={16}/>Reports</button>
-          <button className={tab==="fields"?"active":""} onClick={()=>setTab("fields")}><Database size={16}/>Custom fields</button>
+          <button className={tab==="fields"?"active":""} onClick={()=>setTab("fields")}><Database size={16}/>Custom fields</button><button className={tab==="history"?"active":""} onClick={()=>setTab("history")}><History size={16}/>History</button>
         </div>
         {tab==="pages" && <>
           <h3>Application pages</h3>
@@ -171,8 +189,9 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
       </aside>
       <section className="panel admin-canvas">
         <div className="admin-canvas-head"><div><p className="eyebrow">LIVE DRAFT PREVIEW</p><h2>{page?.title || "Configuration"}</h2><p>Version {version} currently published</p></div><span className="status-pill status-warning">Draft</span></div>
-        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentSource} onChange={e=>setComponentSource(e.target.value)}><option value="devices">Inventory data</option><option value="customers">Customer data</option><option value="sales">Sales data</option><option value="customer_entries">Customer entries</option></select><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/><select aria-label="Component width" value={c.width||"full"} onChange={e=>changeComponent(c.id,{width:e.target.value})}><option value="full">Full width</option><option value="half">Half width</option><option value="third">One third</option></select>{c.type==="list"&&<input aria-label="Visible columns" placeholder="Columns: model, company, imei" value={(c.columns||[]).join(", ")} onChange={e=>changeComponent(c.id,{columns:e.target.value.split(",").map(x=>x.trim()).filter(Boolean)})}/>} {c.type==="list"&&<><select aria-label="Rows per page" value={c.pageSize||10} onChange={e=>changeComponent(c.id,{pageSize:Number(e.target.value)})}><option value="5">5 rows</option><option value="10">10 rows</option><option value="20">20 rows</option><option value="50">50 rows</option></select><label><input type="checkbox" checked={c.searchable!==false} onChange={e=>changeComponent(c.id,{searchable:e.target.checked})}/>Search</label></>}</div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Custom list, report and summary components render on their configured pages; generic forms and advanced layouts are not enabled yet.</p></>}
+        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentSource} onChange={e=>setComponentSource(e.target.value)}><option value="devices">Inventory data</option><option value="customers">Customer data</option><option value="sales">Sales data</option><option value="customer_entries">Customer entries</option></select><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/><select aria-label="Component width" value={c.width||"full"} onChange={e=>changeComponent(c.id,{width:e.target.value})}><option value="full">Full width</option><option value="half">Half width</option><option value="third">One third</option></select>{c.type==="list"&&<input aria-label="Visible columns" placeholder="Columns: model, company, imei" value={(c.columns||[]).join(", ")} onChange={e=>changeComponent(c.id,{columns:e.target.value.split(",").map(x=>x.trim()).filter(Boolean)})}/>} {c.type==="list"&&<><select aria-label="Rows per page" value={c.pageSize||10} onChange={e=>changeComponent(c.id,{pageSize:Number(e.target.value)})}><option value="5">5 rows</option><option value="10">10 rows</option><option value="20">20 rows</option><option value="50">50 rows</option></select><label><input type="checkbox" checked={c.searchable!==false} onChange={e=>changeComponent(c.id,{searchable:e.target.checked})}/>Search</label></>}</div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Custom list, report and summary components render on their configured pages. Form components open the existing validated business forms; layout components provide width-based grouping.</p></>}
         {tab==="reports" && <div className="admin-preview-list">{config.reports.filter(r=>r.enabled).map(r=><div className="panel"><strong>{r.title}</strong><small>Source: {r.source} · Metric: {r.metric}</small></div>)}{!config.reports.length&&<p className="empty-hint">Add a report to preview it here.</p>}</div>}
+        {tab==="history" && <div className="admin-preview-list"><div className="admin-add-row"><select aria-label="Configuration version" value={selectedVersion} onChange={e=>setSelectedVersion(e.target.value)}><option value="">Choose a version</option>{versions.map(v=><option key={v.version} value={v.version}>Version {v.version} · {v.summary||"Published"}</option>)}</select><button className="secondary-button" disabled={busy||!token||!selectedVersion} onClick={restoreVersion}><RefreshCw size={15}/>Restore as draft</button></div>{versions.map(v=><div className="panel admin-version-row" key={v.version}><strong>Version {v.version}</strong><small>{v.summary||"Configuration published"} · {v.created_at}</small>{v.version===version&&<span className="status-pill status-good">Current live</span>}</div>)}{!versions.length&&<p className="empty-hint">No published versions found.</p>}<p className="admin-hint">Restoring a version only replaces the draft. It does not change the live application until you publish.</p></div>}
         {tab==="fields" && <div className="admin-preview-list">{config.fields.map(f=><div className="panel"><strong>{f.label}</strong><small>{f.key} · {f.type} · {f.storage}</small></div>)}{!config.fields.length&&<p className="empty-hint">No custom fields defined.</p>}</div>}
         <div className="admin-status">{message}</div>
         <div className="admin-actions"><button className="secondary-button" onClick={()=>setConfig(published)}><Eye size={15}/>Discard draft</button><button className="secondary-button" disabled={busy || !token} onClick={saveDraft}><Save size={15}/>Save draft</button><button className="primary-button" disabled={busy || !token} onClick={publish}><Send size={15}/>Publish</button></div>
