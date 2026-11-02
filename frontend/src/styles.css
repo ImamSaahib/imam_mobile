@@ -152,7 +152,7 @@
 .configured-list-footer>div{display:flex;gap:8px}
 .configured-list-footer .secondary-button{padding:6px 10px;font-size:11px}
 
-.reports-runtime-grid{grid-template-columns:repeat(12,minmax(0,1fr))}
+.configured-layout-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
 .configured-component.span-full,.configured-runtime-card.span-full{grid-column:span 12}
 .configured-component.span-half,.configured-runtime-card.span-half{grid-column:span 6}
 .configured-component.span-third,.configured-runtime-card.span-third{grid-column:span 4}
