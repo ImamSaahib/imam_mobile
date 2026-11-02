@@ -13,6 +13,7 @@ function json(data, status = 200, origin = FRONTEND_ORIGIN) {
   return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 }
 function error(message, status = 400, origin) { return json({ error: message }, status, origin); }
+function cachedJson(data, status = 200, origin = FRONTEND_ORIGIN) { return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=60, s-maxage=300" } }); }
 async function readJson(request) { try { return await request.json(); } catch { return null; } }
 function deviceRow(r) {
   return { id:r.id, model:r.model, company:r.company, color:r.color, condition:r.condition, status:r.status, imei:r.imei, purchasePrice:r.purchase_price, salePrice:r.sale_price ?? 0, purchaseDate:r.purchase_date, saleDate:r.sale_date || "" };
@@ -36,8 +37,8 @@ export default {
       // Published configuration is read-only and cached briefly at the edge/browser.
       if (path === "/api/configuration" && request.method === "GET") {
         const row = await env.DB.prepare("SELECT published_json, published_version, updated_at FROM app_configuration WHERE id=1").first();
-        if (!row) return json({ configuration:null, version:0 },200,origin);
-        return json({ configuration:JSON.parse(row.published_json), version:row.published_version, updatedAt:row.updated_at },200,origin);
+        if (!row) return cachedJson({ configuration:null, version:0 },200,origin);
+        return cachedJson({ configuration:JSON.parse(row.published_json), version:row.published_version, updatedAt:row.updated_at },200,origin);
       }
       if (path === "/api/admin/configuration" && request.method === "GET") {
         if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized. Configure ADMIN_CONFIG_TOKEN on the Worker.",401,origin);
