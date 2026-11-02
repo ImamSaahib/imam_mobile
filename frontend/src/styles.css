@@ -159,3 +159,6 @@
 .configured-component .configured-runtime-card{margin:0;height:100%}
 .configured-form-launch p{font-size:12px;color:var(--muted);margin:4px 0 14px}
 @media(max-width:720px){.configured-component.span-half,.configured-component.span-third,.configured-runtime-card.span-half,.configured-runtime-card.span-third{grid-column:span 12}}
+
+.admin-version-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px}
+.admin-version-row small{color:var(--muted);font-size:11px}
