@@ -140,3 +140,8 @@
 .configured-runtime-card>strong{font:800 28px Manrope,sans-serif;display:block;margin:8px 0}
 .configured-runtime-card>small{font-size:10px;color:var(--muted)}
 .configured-extra-components{margin-top:14px}
+
+.custom-field-section{border-top:1px solid var(--line);padding-top:16px;margin-top:8px}
+.form-section-heading{margin-bottom:12px}
+.form-section-heading h3{font-size:13px;margin:0 0 4px}
+.form-section-heading p{font-size:11px;color:var(--muted);margin:0}
