@@ -51,7 +51,7 @@ function useCustomFieldValues(table, recordId) {
 function CustomFieldInputs({fields=[],values={},onChange}) {
  const active=fields.filter(f=>f.enabled!==false);
  if(!active.length)return null;
- return <div className="form-section custom-field-section"><div className="form-section-heading"><h3>Additional fields</h3><p>Configured by the administrator</p></div><div className="form-grid">{active.map(f=><Field key={f.id} label={f.label}>{f.type==="boolean"?<input type="checkbox" checked={["true","1"].includes(String(values[f.key]??""))} onChange={e=>onChange(f.key,e.target.checked?"true":"false")}/>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} step={f.type==="number"?"any":undefined} value={values[f.key]??""} onChange={e=>onChange(f.key,e.target.value)}/ >}</Field>)}</div></div>;
+ return <div className="form-section custom-field-section"><div className="form-section-heading"><h3>Additional fields</h3><p>Configured by the administrator</p></div><div className="form-grid">{active.map(f=><Field key={f.id} label={f.label}>{f.type==="boolean"?<input type="checkbox" checked={["true","1"].includes(String(values[f.key]??""))} onChange={e=>onChange(f.key,e.target.checked?"true":"false")}/>:<input type={f.type==="number"?"number":f.type==="date"?"date":"text"} step={f.type==="number"?"any":undefined} value={values[f.key]??""} onChange={e=>onChange(f.key,e.target.value)}/>}</Field>)}</div></div>;
 }
 
 function Status({status}) {
