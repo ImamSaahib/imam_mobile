@@ -80,3 +80,49 @@
   .sale-device-list{max-height:30dvh}
   .toast{bottom:calc(72px + env(safe-area-inset-bottom))}
 }
+/* Admin configuration studio */
+.admin-studio{max-width:1280px;margin:0 auto}
+.admin-studio-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.admin-studio-head h1{margin:0;font:800 27px Manrope,sans-serif}
+.admin-security-note{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-size:11px;color:var(--muted);margin-bottom:16px}
+.admin-connection{padding:17px 20px;margin-bottom:16px}
+.admin-connection h2,.admin-canvas h2{font:750 15px Manrope,sans-serif;margin:0 0 5px}
+.admin-connection p,.admin-canvas-head p{font-size:10px;color:var(--muted);margin:0}
+.admin-token-row{display:flex;gap:8px;margin-top:12px}
+.admin-token-row input,.admin-add-row input,.admin-add-field input,.admin-add-field select,.admin-list-row input,.admin-properties input:not([type=checkbox]),.admin-component-info input{min-width:0;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text);padding:9px 10px;font:inherit}
+.admin-token-row input{flex:1}
+.admin-workspace{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:16px;align-items:start}
+.admin-panel,.admin-canvas{padding:17px;min-width:0}
+.admin-tabs{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:15px}
+.admin-tabs button{display:flex;align-items:center;gap:6px;padding:8px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:10px}
+.admin-tabs button.active{background:var(--accent-soft);color:var(--accent)}
+.admin-panel h3{font:750 13px Manrope,sans-serif;margin:12px 0}
+.admin-page-choice{width:100%;display:flex;justify-content:space-between;padding:10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);text-align:left;font-size:11px}
+.admin-page-choice.selected{background:var(--soft);border-color:var(--line)}
+.admin-page-choice small,.admin-component-info small,.admin-list-row small,.admin-preview-list small{color:var(--muted);font-size:9px}
+.admin-properties{display:grid;gap:10px;border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.admin-properties label{display:grid;gap:6px;font-size:10px;color:var(--muted)}
+.admin-check{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);white-space:nowrap}
+.admin-add-row,.admin-add-field{display:flex;gap:6px;margin-bottom:12px}
+.admin-add-row input,.admin-add-field input{flex:1}
+.admin-add-field{flex-wrap:wrap}
+.admin-add-field select{width:100%}
+.admin-list-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:10px}
+.admin-list-row>input{flex:1;width:40%}
+.admin-list-row>span{flex:1}
+.admin-hint{font-size:10px;color:var(--muted);line-height:1.5}
+.admin-canvas-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:15px;border-bottom:1px solid var(--line)}
+.admin-component-toolbar{display:flex;justify-content:space-between;padding:14px 0;font-size:11px}
+.admin-component-toolbar span{color:var(--muted);font-size:10px}
+.admin-component{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:8px}
+.admin-component-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:var(--accent-soft);color:var(--accent)}
+.admin-component-info{flex:1;min-width:0;display:grid;gap:4px}
+.admin-component-info strong{font-size:11px}
+.admin-component-info input{width:100%;padding:6px 8px;font-size:10px}
+.admin-move{display:grid;gap:2px}
+.admin-preview-list{display:grid;gap:8px;padding:14px 0}
+.admin-preview-list .panel{padding:13px;display:grid;gap:5px}
+.admin-status{padding:10px 0;color:var(--muted);font-size:10px;min-height:34px}
+.admin-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
+@media(max-width:800px){.admin-workspace{grid-template-columns:1fr}.admin-studio-head{align-items:flex-start}.admin-studio-head h1{font-size:22px}}
+@media(max-width:520px){.admin-token-row{flex-direction:column}.admin-component{flex-wrap:wrap}.admin-component-info{min-width:55%}.admin-actions>*{flex:1;justify-content:center}.admin-studio-head{flex-direction:column}}
