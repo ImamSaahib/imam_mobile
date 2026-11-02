@@ -162,3 +162,10 @@
 
 .admin-version-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px}
 .admin-version-row small{color:var(--muted);font-size:11px}
+
+/* Keep configurable report controls usable on narrow admin panels. */
+.admin-list-row{flex-wrap:wrap}
+.admin-list-row>input{flex:1 1 140px;width:auto}
+.admin-list-row>select{flex:1 1 110px;min-width:0;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text);padding:8px;font:inherit;font-size:10px}
+.admin-list-row>label{flex:0 0 auto;white-space:nowrap}
+@media(max-width:720px){.admin-list-row{align-items:stretch}.admin-list-row>input,.admin-list-row>select{flex:1 1 100%}}
