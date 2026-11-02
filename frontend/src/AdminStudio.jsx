@@ -52,6 +52,13 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const [componentType, setComponentType] = useState("list");
   const [componentSource, setComponentSource] = useState("devices");
   const [newPageName, setNewPageName] = useState("");
+  const [dbSchema, setDbSchema] = useState([]);
+  const [schemaHistory, setSchemaHistory] = useState([]);
+  const [dbTable, setDbTable] = useState("");
+  const [dbColumn, setDbColumn] = useState("");
+  const [dbType, setDbType] = useState("TEXT");
+  const [indexColumns, setIndexColumns] = useState([]);
+  const [indexUnique, setIndexUnique] = useState(false);
 
   const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
   const pageComponents = useMemo(() => config.components.filter(c => c.page === selectedPage), [config.components, selectedPage]);
@@ -59,6 +66,53 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const changePage = (id, patch) => update({ pages: config.pages.map(p => p.id === id ? { ...p, ...patch } : p) });
   const changeComponent = (id, patch) => update({ components: config.components.map(c => c.id === id ? { ...c, ...patch } : c) });
 
+  async function loadDatabase() {
+    if (!token.trim()) return setMessage("Enter the Admin Configuration Token first.");
+    setBusy(true);
+    try {
+      const data = await request("/api/admin/schema", token);
+      setDbSchema(data.tables || []);
+      setSchemaHistory(data.history || []);
+      setDbTable(current => (data.tables || []).some(t => t.name === current) ? current : (data.tables?.[0]?.name || ""));
+      setMessage("Database schema loaded. No database changes have been made.");
+    } catch (e) { setMessage(e.message); }
+    finally { setBusy(false); }
+  }
+  async function addDatabaseColumn() {
+    const name = dbColumn.trim().toLowerCase();
+    if (!dbTable || !/^[a-z][a-z0-9_]{0,39}$/.test(name)) return setMessage("Use a column name beginning with a letter and containing only letters, numbers or underscores.");
+    if (!window.confirm("Add nullable column " + name + " (" + dbType + ") to " + dbTable + "? Existing rows will contain NULL. This schema change is immediate and is not automatically reversible.")) return;
+    setBusy(true);
+    try {
+      await request("/api/admin/schema/columns", token, {method:"POST",body:JSON.stringify({table:dbTable,column:name,type:dbType})});
+      setDbColumn("");
+      await loadDatabase();
+      setMessage("Column added to " + dbTable + ". You can now configure it as a custom field where supported.");
+    } catch (e) { setMessage(e.message); }
+    finally { setBusy(false); }
+  }
+  async function createDatabaseIndex() {
+    if (!dbTable || !indexColumns.length) return setMessage("Select at least one column for the index.");
+    if (!window.confirm("Create " + (indexUnique ? "a unique " : "an") + "index on " + dbTable + " (" + indexColumns.join(", ") + ")? A unique index will fail if duplicate values exist.")) return;
+    setBusy(true);
+    try {
+      await request("/api/admin/schema/indexes", token, {method:"POST",body:JSON.stringify({table:dbTable,columns:indexColumns,unique:indexUnique})});
+      setIndexColumns([]); setIndexUnique(false);
+      await loadDatabase();
+      setMessage("Database index created successfully.");
+    } catch (e) { setMessage(e.message); }
+    finally { setBusy(false); }
+  }
+  async function dropDatabaseIndex(index) {
+    if (!window.confirm("Remove custom index " + index.name + "? This does not delete table data.")) return;
+    setBusy(true);
+    try {
+      await request("/api/admin/schema/indexes", token, {method:"POST",body:JSON.stringify({action:"drop",table:dbTable,name:index.name})});
+      await loadDatabase();
+      setMessage("Index removed.");
+    } catch (e) { setMessage(e.message); }
+    finally { setBusy(false); }
+  }
   async function load() {
     if (!token.trim()) return setMessage("Enter the Admin Configuration Token first.");
     setBusy(true);
@@ -177,7 +231,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
         <div className="admin-tabs">
           <button className={tab==="pages"?"active":""} onClick={()=>setTab("pages")}><Layers size={16}/>Pages & layout</button>
           <button className={tab==="reports"?"active":""} onClick={()=>setTab("reports")}><FileText size={16}/>Reports</button>
-          <button className={tab==="fields"?"active":""} onClick={()=>setTab("fields")}><Database size={16}/>Custom fields</button><button className={tab==="history"?"active":""} onClick={()=>setTab("history")}><History size={16}/>History</button>
+          <button className={tab==="fields"?"active":""} onClick={()=>setTab("fields")}><Database size={16}/>Custom fields</button><button className={tab==="database"?"active":""} onClick={()=>{setTab("database");if(token.trim()&&!dbSchema.length)loadDatabase();}}><Database size={16}/>Database</button><button className={tab==="history"?"active":""} onClick={()=>setTab("history")}><History size={16}/>History</button>
         </div>
         {tab==="pages" && <>
           <h3>Application pages</h3>
@@ -191,6 +245,16 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
         <div className="admin-canvas-head"><div><p className="eyebrow">LIVE DRAFT PREVIEW</p><h2>{page?.title || "Configuration"}</h2><p>Version {version} currently published</p></div><span className="status-pill status-warning">Draft</span></div>
         {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentSource} onChange={e=>setComponentSource(e.target.value)}><option value="devices">Inventory data</option><option value="customers">Customer data</option><option value="sales">Sales data</option><option value="customer_entries">Customer entries</option></select><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/><select aria-label="Component width" value={c.width||"full"} onChange={e=>changeComponent(c.id,{width:e.target.value})}><option value="full">Full width</option><option value="half">Half width</option><option value="third">One third</option></select>{c.type==="list"&&<input aria-label="Visible columns" placeholder="Columns: model, company, imei" value={(c.columns||[]).join(", ")} onChange={e=>changeComponent(c.id,{columns:e.target.value.split(",").map(x=>x.trim()).filter(Boolean)})}/>} {c.type==="list"&&<><select aria-label="Rows per page" value={c.pageSize||10} onChange={e=>changeComponent(c.id,{pageSize:Number(e.target.value)})}><option value="5">5 rows</option><option value="10">10 rows</option><option value="20">20 rows</option><option value="50">50 rows</option></select><label><input type="checkbox" checked={c.searchable!==false} onChange={e=>changeComponent(c.id,{searchable:e.target.checked})}/>Search</label></>}</div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Custom list, report and summary components render on their configured pages. Form components open the existing validated business forms; layout components provide width-based grouping.</p></>}
         {tab==="reports" && <div className="admin-preview-list">{config.reports.filter(r=>r.enabled).map(r=><div className="panel"><strong>{r.title}</strong><small>Source: {r.source} · Metric: {r.metric}</small></div>)}{!config.reports.length&&<p className="empty-hint">Add a report to preview it here.</p>}</div>}
+        {tab==="database" && <div className="admin-preview-list">
+          <div className="admin-component-toolbar"><div><strong>Database Studio</strong><p className="admin-hint">Inspect the live D1 schema and apply controlled changes. No arbitrary SQL is accepted.</p></div><button className="secondary-button" disabled={busy||!token} onClick={loadDatabase}><RefreshCw size={14}/>Refresh schema</button></div>
+          {!dbSchema.length && <p className="empty-hint">Load the database schema to begin.</p>}
+          <div className="admin-properties"><label>Table<select value={dbTable} onChange={e=>{setDbTable(e.target.value);setIndexColumns([]);}}>{dbSchema.map(t=><option key={t.name} value={t.name}>{t.name}</option>)}</select></label></div>
+          {dbSchema.filter(t=>t.name===dbTable).map(table=><div className="panel" key={table.name}><strong>{table.name}</strong><small>{table.columns.length} columns · {table.indexes.length} indexes</small><div className="table-scroll"><table><thead><tr><th>Column</th><th>SQLite type</th><th>Nullable</th><th>Key</th></tr></thead><tbody>{table.columns.map(col=><tr key={col.name}><td>{col.name}</td><td>{col.type||"—"}</td><td>{col.primaryKey?"—":col.notNull?"No":"Yes"}</td><td>{col.primaryKey?"Primary":""}</td></tr>)}</tbody></table></div></div>)}
+          <div className="panel"><strong>Add column</strong><p className="admin-hint">Adds a nullable column. Existing records receive NULL. Use Custom fields to expose the new field in supported forms.</p><div className="admin-add-field"><input placeholder="column_name" value={dbColumn} onChange={e=>setDbColumn(e.target.value)}/><select value={dbType} onChange={e=>setDbType(e.target.value)}><option>TEXT</option><option>INTEGER</option><option>REAL</option><option>NUMERIC</option><option>BLOB</option></select><button className="primary-button" disabled={busy||!token||!dbTable||!dbColumn.trim()} onClick={addDatabaseColumn}><Plus size={14}/>Add column</button></div></div>
+          <div className="panel"><strong>Indexes</strong><p className="admin-hint">Indexes can improve lookups but add storage and write overhead. Select existing columns to create one.</p>{dbSchema.filter(t=>t.name===dbTable).flatMap(t=>t.indexes).map(index=><div className="admin-list-row" key={index.name}><span><strong>{index.name}</strong><small>{index.columns.join(", ")}{index.unique?" · Unique":""}</small></span><button className="icon-button" disabled={busy||index.origin!=="c"} title={index.origin!=="c"?"Managed index":"Drop custom index"} onClick={()=>dropDatabaseIndex(index)}><Trash2 size={15}/></button></div>)}<div className="admin-add-field"><select multiple value={indexColumns} onChange={e=>setIndexColumns(Array.from(e.target.selectedOptions).map(o=>o.value))}>{(dbSchema.find(t=>t.name===dbTable)?.columns||[]).map(col=><option key={col.name} value={col.name}>{col.name}</option>)}</select><label className="admin-check"><input type="checkbox" checked={indexUnique} onChange={e=>setIndexUnique(e.target.checked)}/>Unique</label><button className="secondary-button" disabled={busy||!token||!indexColumns.length} onClick={createDatabaseIndex}>Create index</button></div></div>
+          <div className="panel"><strong>Schema change history</strong>{schemaHistory.map(item=><div className="admin-list-row" key={item.id}><span>{item.table_name}.{item.column_name}<small>{item.column_type} · {item.status} · {item.created_at}</small></span></div>)}{!schemaHistory.length&&<p className="empty-hint">No schema changes recorded.</p>}</div>
+          <p className="admin-hint">Safety limits: table names are discovered from the database; identifiers and types are validated by the Worker; only additive columns and custom indexes are supported here. Column removal, renaming, foreign-key changes and table rebuilds are intentionally excluded because they can break existing records and business workflows.</p>
+        </div>}
         {tab==="history" && <div className="admin-preview-list"><div className="admin-add-row"><select aria-label="Configuration version" value={selectedVersion} onChange={e=>setSelectedVersion(e.target.value)}><option value="">Choose a version</option>{versions.map(v=><option key={v.version} value={v.version}>Version {v.version} · {v.summary||"Published"}</option>)}</select><button className="secondary-button" disabled={busy||!token||!selectedVersion} onClick={restoreVersion}><RefreshCw size={15}/>Restore as draft</button></div>{versions.map(v=><div className="panel admin-version-row" key={v.version}><strong>Version {v.version}</strong><small>{v.summary||"Configuration published"} · {v.created_at}</small>{v.version===version&&<span className="status-pill status-good">Current live</span>}</div>)}{!versions.length&&<p className="empty-hint">No published versions found.</p>}<p className="admin-hint">Restoring a version only replaces the draft. It does not change the live application until you publish.</p></div>}
         {tab==="fields" && <div className="admin-preview-list">{config.fields.map(f=><div className="panel"><strong>{f.label}</strong><small>{f.key} · {f.type} · {f.storage}</small></div>)}{!config.fields.length&&<p className="empty-hint">No custom fields defined.</p>}</div>}
         <div className="admin-status">{message}</div>
