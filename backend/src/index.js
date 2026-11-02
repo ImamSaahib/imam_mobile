@@ -4,7 +4,7 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin === FRONTEND_ORIGIN ? origin : FRONTEND_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
   };
@@ -33,6 +33,62 @@ export default {
     const path = url.pathname.replace(/\/$/,"") || "/";
     const parts = path.split("/").filter(Boolean);
     try {
+      // Published configuration is read-only and cached briefly at the edge/browser.
+      if (path === "/api/configuration" && request.method === "GET") {
+        const row = await env.DB.prepare("SELECT published_json, published_version, updated_at FROM app_configuration WHERE id=1").first();
+        if (!row) return json({ configuration:null, version:0 },200,origin);
+        return json({ configuration:JSON.parse(row.published_json), version:row.published_version, updatedAt:row.updated_at },200,origin);
+      }
+      if (path === "/api/admin/configuration" && request.method === "GET") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized. Configure ADMIN_CONFIG_TOKEN on the Worker.",401,origin);
+        const row = await env.DB.prepare("SELECT draft_json,published_json,published_version FROM app_configuration WHERE id=1").first();
+        if (!row) return json({ draft:null, published:null, version:0 },200,origin);
+        return json({ draft:JSON.parse(row.draft_json), published:JSON.parse(row.published_json), version:row.published_version },200,origin);
+      }
+      if (path === "/api/admin/configuration" && request.method === "PUT") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
+        const body = await readJson(request);
+        const configuration = body?.configuration;
+        if (!configuration || configuration.schemaVersion !== 1 || !Array.isArray(configuration.pages) || !Array.isArray(configuration.components) || !Array.isArray(configuration.fields) || !Array.isArray(configuration.reports)) return error("Configuration structure is invalid.",400,origin);
+        if (JSON.stringify(configuration).length > 100000) return error("Configuration is too large.",413,origin);
+        const serialized = JSON.stringify(configuration);
+        await env.DB.prepare(`INSERT INTO app_configuration (id,draft_json,published_json,published_version) VALUES (1,?,?,1) ON CONFLICT(id) DO UPDATE SET draft_json=excluded.draft_json,updated_at=datetime('now')`).bind(serialized,serialized).run();
+        return json({ saved:true },200,origin);
+      }
+      if (path === "/api/admin/configuration/publish" && request.method === "POST") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
+        const current = await env.DB.prepare("SELECT draft_json,published_version FROM app_configuration WHERE id=1").first();
+        if (!current) return error("Save a draft before publishing.",409,origin);
+        const nextVersion = Number(current.published_version) + 1;
+        const statements = [
+          env.DB.prepare("INSERT INTO configuration_versions (version,configuration_json,summary) VALUES (?,?,?)").bind(nextVersion,current.draft_json,(await readJson(request))?.summary || "Configuration published"),
+          env.DB.prepare("UPDATE app_configuration SET published_json=draft_json,published_version=?,updated_at=datetime('now') WHERE id=1").bind(nextVersion)
+        ];
+        await env.DB.batch(statements);
+        return json({ published:true, version:nextVersion },200,origin);
+      }
+
+      if (path === "/api/admin/schema/add-column" && request.method === "POST") {
+        if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized.",401,origin);
+        const body = await readJson(request);
+        const allowedTables = new Set(["mobile_devices","customers","sales","customer_entries"]);
+        const allowedTypes = new Set(["TEXT","INTEGER","REAL"]);
+        const table = String(body?.table || "");
+        const column = String(body?.column || "");
+        const type = String(body?.type || "").toUpperCase();
+        if (!allowedTables.has(table) || !/^[a-z][a-z0-9_]{0,39}$/.test(column) || !allowedTypes.has(type)) return error("Invalid table, column or type.",400,origin);
+        const existing = await env.DB.prepare("PRAGMA table_info(" + table + ")").all();
+        if (existing.results.some(c => c.name === column)) return error("That column already exists.",409,origin);
+        try {
+          await env.DB.prepare("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type).run();
+          await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'applied')").bind(table,column,type).run();
+          return json({ applied:true, table, column, type },200,origin);
+        } catch (e) {
+          await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'failed')").bind(table,column,type).run();
+          throw e;
+        }
+      }
+
       if (path === "/api/health" && request.method === "GET") {
         await env.DB.prepare("SELECT 1").first();
         return json({ ok:true, service:"imam-mobile-api", database:"connected" },200,origin);
