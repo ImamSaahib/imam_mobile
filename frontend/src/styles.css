@@ -145,3 +145,9 @@
 .form-section-heading{margin-bottom:12px}
 .form-section-heading h3{font-size:13px;margin:0 0 4px}
 .form-section-heading p{font-size:11px;color:var(--muted);margin:0}
+
+.configured-list-search{max-width:220px;min-width:130px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--text);font:inherit;font-size:12px}
+.configured-sort{border:0;background:transparent;color:inherit;font:inherit;font-weight:700;white-space:nowrap;padding:0;cursor:pointer}
+.configured-list-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.configured-list-footer>div{display:flex;gap:8px}
+.configured-list-footer .secondary-button{padding:6px 10px;font-size:11px}
