@@ -134,6 +134,8 @@ export default {
           if (field.type==="number" && value!=="" && !Number.isFinite(Number(value))) return error("Invalid number for " + field.label,400,origin);
           if (field.type==="boolean" && value!=="" && !["true","false","1","0"].includes(value)) return error("Invalid yes/no value for " + field.label,400,origin);
           if (field.storage==="physical") {
+            const columns = await env.DB.prepare("PRAGMA table_info(" + table + ")").all();
+            if (!columns.results.some(column=>column.name===key)) return error("Physical column is missing. Recreate the field after applying its schema change.",409,origin);
             statements.push(env.DB.prepare("UPDATE " + table + " SET " + key + "=? WHERE id=?").bind(value===""?null:(field.type==="number"?Number(value):field.type==="boolean"?(value==="true"||value==="1"?1:0):value),Number(recordId)));
           } else if (field.storage==="metadata") {
             statements.push(env.DB.prepare("INSERT INTO custom_field_values (entity_table,record_id,field_key,value_text) VALUES (?,?,?,?) ON CONFLICT(entity_table,record_id,field_key) DO UPDATE SET value_text=excluded.value_text").bind(table,Number(recordId),key,value));
