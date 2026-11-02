@@ -33,7 +33,7 @@ async function request(path, token, options = {}) {
   return body;
 }
 
-export default function AdminStudio({ onClose, onNotice }) {
+export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const [token, setToken] = useState("");
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [published, setPublished] = useState(DEFAULT_CONFIG);
@@ -45,6 +45,9 @@ export default function AdminStudio({ onClose, onNotice }) {
   const [reportName, setReportName] = useState("");
   const [fieldName, setFieldName] = useState("");
   const [fieldType, setFieldType] = useState("text");
+  const [fieldStorage, setFieldStorage] = useState("metadata");
+  const [fieldTable, setFieldTable] = useState("mobile_devices");
+  const [componentType, setComponentType] = useState("list");
 
   const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
   const pageComponents = useMemo(() => config.components.filter(c => c.page === selectedPage), [config.components, selectedPage]);
@@ -76,8 +79,10 @@ export default function AdminStudio({ onClose, onNotice }) {
     if (!window.confirm("Publish this configuration for the application?")) return;
     setBusy(true);
     try {
+      await request("/api/admin/configuration", token, { method: "PUT", body: JSON.stringify({ configuration: config }) });
       const result = await request("/api/admin/configuration/publish", token, { method: "POST", body: JSON.stringify({ summary: "Published from Admin Studio" }) });
       setPublished(config);
+      onPublished?.(config);
       setVersion(result.version);
       setMessage("Published version " + result.version + " successfully.");
       onNotice?.("Configuration version " + result.version + " published.");
@@ -90,13 +95,29 @@ export default function AdminStudio({ onClose, onNotice }) {
     update({ reports: [...config.reports, { id: "report-" + Date.now(), title, source: "devices", metric: "count", enabled: true }] });
     setReportName("");
   }
-  function addField() {
+  async function addField() {
     const label = fieldName.trim();
     if (!label) return;
     const key = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
     if (!key || config.fields.some(f => f.key === key)) return setMessage("That field name is invalid or already exists.");
-    update({ fields: [...config.fields, { id: "field-" + Date.now(), key, label, type: fieldType, storage: "metadata", enabled: true }] });
+    if (fieldStorage === "physical") {
+      const sqlType = fieldType === "number" ? "REAL" : fieldType === "boolean" ? "INTEGER" : "TEXT";
+      if (!window.confirm("Add a physical column to " + fieldTable + "? This changes the database schema and cannot be automatically undone.")) return;
+      setBusy(true);
+      try {
+        await request("/api/admin/schema/add-column", token, { method: "POST", body: JSON.stringify({ table: fieldTable, column: key, type: sqlType }) });
+      } catch (e) { setMessage(e.message); setBusy(false); return; }
+      setBusy(false);
+    }
+    update({ fields: [...config.fields, { id: "field-" + Date.now(), key, label, type: fieldType, storage: fieldStorage, table: fieldStorage === "physical" ? fieldTable : null, enabled: true }] });
     setFieldName("");
+    setMessage(fieldStorage === "physical" ? "Database column created. Save and publish the field definition." : "Metadata field added. Save and publish the field definition.");
+  }
+  function addComponent() {
+    if (!page) return;
+    const id = "component-" + Date.now();
+    const title = componentType === "list" ? "New list" : componentType === "form" ? "New form" : componentType === "report" ? "New report" : componentType === "layout" ? "New layout" : "New summary";
+    update({ components: [...config.components, { id, page: page.id, type: componentType, title, enabled: true }] });
   }
   function moveComponent(index, delta) {
     const next = [...pageComponents];
@@ -130,11 +151,11 @@ export default function AdminStudio({ onClose, onNotice }) {
           {page && <div className="admin-properties"><label>Page title<input value={page.title} onChange={e=>changePage(page.id,{title:e.target.value})}/></label><label className="admin-check"><input type="checkbox" checked={page.enabled} onChange={e=>changePage(page.id,{enabled:e.target.checked})}/> Page enabled</label></div>}
         </>}
         {tab==="reports" && <><h3>Reports</h3><div className="admin-add-row"><input placeholder="New report name" value={reportName} onChange={e=>setReportName(e.target.value)}/><button className="primary-button" onClick={addReport}><Plus size={15}/>Add</button></div>{config.reports.map(r=><div className="admin-list-row" key={r.id}><input value={r.title} onChange={e=>update({reports:config.reports.map(x=>x.id===r.id?{...x,title:e.target.value}:x)})}/><label><input type="checkbox" checked={r.enabled} onChange={e=>update({reports:config.reports.map(x=>x.id===r.id?{...x,enabled:e.target.checked}:x)})}/>On</label><button className="icon-button" onClick={()=>update({reports:config.reports.filter(x=>x.id!==r.id)})}><Trash2 size={15}/></button></div>)}</>}
-        {tab==="fields" && <><h3>Custom fields</h3><p className="admin-hint">New fields start as metadata fields. Physical columns require a separate, confirmed migration operation.</p><div className="admin-add-field"><input placeholder="Field label" value={fieldName} onChange={e=>setFieldName(e.target.value)}/><select value={fieldType} onChange={e=>setFieldType(e.target.value)}><option value="text">Text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / No</option></select><button className="primary-button" onClick={addField}><Plus size={15}/>Add field</button></div>{config.fields.map(f=><div className="admin-list-row" key={f.id}><span>{f.label} <small>({f.type} · {f.storage})</small></span><button className="icon-button" onClick={()=>update({fields:config.fields.filter(x=>x.id!==f.id)})}><Trash2 size={15}/></button></div>)}</>}
+        {tab==="fields" && <><h3>Custom fields</h3><p className="admin-hint">New fields start as metadata fields. Physical columns require a separate, confirmed migration operation.</p><div className="admin-add-field"><input placeholder="Field label" value={fieldName} onChange={e=>setFieldName(e.target.value)}/><select value={fieldType} onChange={e=>setFieldType(e.target.value)}><option value="text">Text</option><option value="number">Number</option><option value="date">Date</option><option value="boolean">Yes / No</option></select><select value={fieldStorage} onChange={e=>setFieldStorage(e.target.value)}><option value="metadata">Metadata</option><option value="physical">Physical column</option></select>{fieldStorage==="physical"&&<select value={fieldTable} onChange={e=>setFieldTable(e.target.value)}><option value="mobile_devices">Inventory</option><option value="customers">Customers</option><option value="sales">Sales</option><option value="customer_entries">Customer entries</option></select>}<button className="primary-button" disabled={busy||!token} onClick={addField}><Plus size={15}/>Add field</button></div>{config.fields.map(f=><div className="admin-list-row" key={f.id}><span>{f.label} <small>({f.type} · {f.storage})</small></span><button className="icon-button" onClick={()=>update({fields:config.fields.filter(x=>x.id!==f.id)})}><Trash2 size={15}/></button></div>)}</>}
       </aside>
       <section className="panel admin-canvas">
         <div className="admin-canvas-head"><div><p className="eyebrow">LIVE DRAFT PREVIEW</p><h2>{page?.title || "Configuration"}</h2><p>Version {version} currently published</p></div><span className="status-pill status-warning">Draft</span></div>
-        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/></div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button></div></div>)}<p className="admin-hint">This first editor release stores component placement and visibility. Runtime rendering is connected in the next integration step.</p></>}
+        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/></div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Newly added component types are stored for future renderer support.</p></>}
         {tab==="reports" && <div className="admin-preview-list">{config.reports.filter(r=>r.enabled).map(r=><div className="panel"><strong>{r.title}</strong><small>Source: {r.source} · Metric: {r.metric}</small></div>)}{!config.reports.length&&<p className="empty-hint">Add a report to preview it here.</p>}</div>}
         {tab==="fields" && <div className="admin-preview-list">{config.fields.map(f=><div className="panel"><strong>{f.label}</strong><small>{f.key} · {f.type} · {f.storage}</small></div>)}{!config.fields.length&&<p className="empty-hint">No custom fields defined.</p>}</div>}
         <div className="admin-status">{message}</div>
