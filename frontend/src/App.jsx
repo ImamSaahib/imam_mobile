@@ -48,6 +48,25 @@ function useCustomFieldValues(table, recordId) {
  useEffect(()=>{let active=true;if(recordId){api("/api/custom-field-values?table="+encodeURIComponent(table)+"&recordId="+recordId).then(r=>{if(active)setValues(r.values||{});}).catch(()=>{});}else setValues({});return()=>{active=false;};},[table,recordId]);
  return [values,setValues];
 }
+
+function ConfiguredList({component,rows=[]}) {
+ const [search,setSearch]=useState("");
+ const [sort,setSort]=useState({key:"",direction:"asc"});
+ const [page,setPage]=useState(0);
+ const availableKeys=rows.length?Object.keys(rows[0]).filter(k=>!["id","deviceIds","devices"].includes(k)):[];
+ const columns=component.columns?.length?component.columns.filter(k=>availableKeys.includes(k)):availableKeys.slice(0,5);
+ const pageSize=Math.max(5,Math.min(100,Number(component.pageSize)||10));
+ const filtered=rows.filter(row=>!component.searchable===false||true).filter(row=>!component.searchable||Object.values(row).some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
+ const ordered=[...filtered].sort((a,b)=>{if(!sort.key)return 0;const av=a[sort.key]??"",bv=b[sort.key]??"";const an=Number(av),bn=Number(bv);const cmp=av!==""&&bv!==""&&Number.isFinite(an)&&Number.isFinite(bn)?an-bn:String(av).localeCompare(String(bv));return sort.direction==="asc"?cmp:-cmp;});
+ const pages=Math.max(1,Math.ceil(ordered.length/pageSize));
+ const current=Math.min(page,pages-1);
+ return <section className="panel configured-runtime-card" key={component.id}>
+  <div className="table-toolbar"><div><h2>{component.title||"Records"}</h2><p>{filtered.length} records · {component.source||"devices"}</p></div>{component.searchable!==false&&<input className="configured-list-search" value={search} onChange={e=>{setSearch(e.target.value);setPage(0);}} placeholder="Filter records…"/>}</div>
+  <div className="table-scroll"><table><thead><tr>{columns.map(k=><th key={k}><button className="configured-sort" onClick={()=>setSort(s=>({key:k,direction:s.key===k&&s.direction==="asc"?"desc":"asc"}))}>{k.replace(/[A-Z_]/g,x=>" "+x).replace(/^./,x=>x.toUpperCase())}{sort.key===k?(sort.direction==="asc"?" ↑":" ↓"):" ↕"}</button></th>)}</tr></thead><tbody>{ordered.slice(current*pageSize,(current+1)*pageSize).map((row,i)=><tr key={row.id||i}>{columns.map(k=><td key={k}>{String(row[k]??"—")}</td>)}</tr>)}{!ordered.length&&<tr><td colSpan={Math.max(1,columns.length)} className="empty-state">No records found.</td></tr>}</tbody></table></div>
+  <div className="configured-list-footer"><span>Page {current+1} of {pages}</span><div><button className="secondary-button" disabled={current===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>Previous</button><button className="secondary-button" disabled={current>=pages-1} onClick={()=>setPage(p=>Math.min(pages-1,p+1))}>Next</button></div></div>
+ </section>;
+}
+
 function CustomFieldInputs({fields=[],values={},onChange}) {
  const active=fields.filter(f=>f.enabled!==false);
  if(!active.length)return null;
@@ -105,10 +124,7 @@ export default function App() {
   const rows=configuredRowsFor(component.source||"devices");
   const title=component.title||"Configured component";
   if(component.type==="report"||component.type==="summary")return <section className="panel configured-runtime-card" key={component.id}><p className="eyebrow">{component.type==="report"?"REPORT":"SUMMARY"}</p><h2>{title}</h2><strong>{rows.length}</strong><small>{component.source||"devices"} records</small></section>;
-  if(component.type==="list") {
-   const availableKeys=rows.length?Object.keys(rows[0]).filter(k=>!["id","deviceIds","devices"].includes(k)):[]; const keys=component.columns?.length?component.columns.filter(k=>availableKeys.includes(k)):availableKeys.slice(0,5);
-   return <section className="panel configured-runtime-card" key={component.id}><div className="table-toolbar"><div><h2>{title}</h2><p>{rows.length} records · {component.source||"devices"}</p></div></div><div className="table-scroll"><table><thead><tr>{keys.map(k=><th key={k}>{k.replace(/[A-Z_]/g,x=>" "+x).replace(/^./,x=>x.toUpperCase())}</th>)}</tr></thead><tbody>{rows.slice(0,50).map((row,i)=><tr key={row.id||i}>{keys.map(k=><td key={k}>{String(row[k]??"—")}</td>)}</tr>)}{!rows.length&&<tr><td colSpan={Math.max(1,keys.length)} className="empty-state">No records found.</td></tr>}</tbody></table></div></section>;
-  }
+  if(component.type==="list") return <ConfiguredList component={component} rows={rows}/>;
   return <section className="panel configured-runtime-card" key={component.id}><h2>{title}</h2><p className="admin-hint">This component type is saved, but its interactive renderer is not enabled yet.</p></section>;
  };
  const currentPageId=pageIds[page]||page;
