@@ -109,6 +109,84 @@ export default {
       }
 
 
+
+      // Database Studio: schema inspection and safe, allowlisted DDL operations.
+      const schemaAdmin = () => Boolean(env.ADMIN_CONFIG_TOKEN) && request.headers.get("Authorization") === "Bearer " + env.ADMIN_CONFIG_TOKEN;
+      const quoteIdentifier = value => '"' + String(value).replace(/"/g, '""') + '"';
+      const listUserTables = async () => {
+        const result = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all();
+        return result.results.map(row => row.name).filter(name => !["app_configuration","configuration_versions","schema_changes","custom_field_values"].includes(name));
+      };
+      if (path === "/api/admin/schema" && request.method === "GET") {
+        if (!schemaAdmin()) return error("Admin configuration access is not authorized.",401,origin);
+        const tables = await listUserTables();
+        const schema = [];
+        for (const table of tables) {
+          const quoted = quoteIdentifier(table);
+          const [columnsResult,indexResult] = await Promise.all([
+            env.DB.prepare("PRAGMA table_info(" + quoted + ")").all(),
+            env.DB.prepare("PRAGMA index_list(" + quoted + ")").all()
+          ]);
+          const indexes = [];
+          for (const index of indexResult.results) {
+            const details = await env.DB.prepare("PRAGMA index_info(" + quoteIdentifier(index.name) + ")").all();
+            indexes.push({ name:index.name, unique:Boolean(index.unique), origin:index.origin, columns:details.results.map(c=>c.name) });
+          }
+          schema.push({ name:table, columns:columnsResult.results.map(c=>({name:c.name,type:c.type,notNull:Boolean(c.notnull),primaryKey:Boolean(c.pk),defaultValue:c.dflt_value})), indexes });
+        }
+        const history = await env.DB.prepare("SELECT id,table_name,column_name,column_type,status,created_at FROM schema_changes ORDER BY id DESC LIMIT 50").all();
+        return json({tables:schema,history:history.results},200,origin);
+      }
+      if (path === "/api/admin/schema/columns" && request.method === "POST") {
+        if (!schemaAdmin()) return error("Admin configuration access is not authorized.",401,origin);
+        const body = await readJson(request);
+        const table = String(body?.table || "");
+        const column = String(body?.column || "");
+        const type = String(body?.type || "").toUpperCase();
+        const allowedTypes = new Set(["TEXT","INTEGER","REAL","NUMERIC","BLOB"]);
+        const tables = await listUserTables();
+        if (!tables.includes(table) || !/^[a-z][a-z0-9_]{0,39}$/.test(column) || !allowedTypes.has(type)) return error("Choose a valid application table, column name and SQLite type.",400,origin);
+        const quoted = quoteIdentifier(table);
+        const existing = await env.DB.prepare("PRAGMA table_info(" + quoted + ")").all();
+        if (existing.results.some(c=>c.name===column)) return error("That column already exists.",409,origin);
+        try {
+          await env.DB.prepare("ALTER TABLE " + quoted + " ADD COLUMN " + quoteIdentifier(column) + " " + type).run();
+          await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'applied')").bind(table,column,type).run();
+          return json({applied:true,table,column,type},200,origin);
+        } catch (e) {
+          await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'failed')").bind(table,column,type).run();
+          return error("Column could not be added. SQLite requires new columns to be nullable and use a supported type: " + String(e.message||"").slice(0,180),400,origin);
+        }
+      }
+      if (path === "/api/admin/schema/indexes" && request.method === "POST") {
+        if (!schemaAdmin()) return error("Admin configuration access is not authorized.",401,origin);
+        const body = await readJson(request);
+        const action = String(body?.action || "create");
+        const table = String(body?.table || "");
+        const indexName = String(body?.name || "");
+        const tables = await listUserTables();
+        if (!tables.includes(table)) return error("Choose a valid application table.",400,origin);
+        if (action === "drop") {
+          if (!/^idx_[a-z][a-z0-9_]{0,100}$/.test(indexName)) return error("Only custom indexes created through Database Studio can be removed.",400,origin);
+          const found = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name=? AND tbl_name=?").bind(indexName,table).first();
+          if (!found) return error("Index not found on the selected table.",404,origin);
+          await env.DB.prepare("DROP INDEX " + quoteIdentifier(indexName)).run();
+          await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'applied')").bind(table,indexName,"INDEX DROPPED").run();
+          return json({applied:true,action,name:indexName,table},200,origin);
+        }
+        const columns = Array.isArray(body?.columns) ? body.columns.map(String) : [];
+        if (!columns.length || columns.length>4 || columns.some(c=>!/^[a-z][a-z0-9_]{0,39}$/.test(c))) return error("Select between one and four valid columns.",400,origin);
+        const tableInfo = await env.DB.prepare("PRAGMA table_info(" + quoteIdentifier(table) + ")").all();
+        if (columns.some(c=>!tableInfo.results.some(col=>col.name===c))) return error("One or more selected columns do not exist.",400,origin);
+        const generated = "idx_" + table + "_" + columns.join("_");
+        if (!/^idx_[a-z][a-z0-9_]{0,100}$/.test(generated)) return error("The generated index name is too long or invalid.",400,origin);
+        const duplicate = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name=?").bind(generated).first();
+        if (duplicate) return error("That index already exists.",409,origin);
+        await env.DB.prepare("CREATE " + (body?.unique===true?"UNIQUE ":"") + "INDEX " + quoteIdentifier(generated) + " ON " + quoteIdentifier(table) + " (" + columns.map(quoteIdentifier).join(",") + ")").run();
+        await env.DB.prepare("INSERT INTO schema_changes (table_name,column_name,column_type,status) VALUES (?,?,?,'applied')").bind(table,generated,"INDEX CREATED").run();
+        return json({applied:true,action:"create",name:generated,table,columns,unique:body?.unique===true},200,origin);
+      }
+
       if (path === "/api/custom-field-values" && request.method === "GET") {
         const table = url.searchParams.get("table") || "";
         const recordId = url.searchParams.get("recordId") || "";
