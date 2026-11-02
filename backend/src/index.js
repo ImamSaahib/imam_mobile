@@ -94,36 +94,50 @@ export default {
       if (path === "/api/custom-field-values" && request.method === "GET") {
         const table = url.searchParams.get("table") || "";
         const recordId = url.searchParams.get("recordId") || "";
-        const allowedTables = new Set(["mobile_devices","customers","customer_entries"]);
+        const allowedTables = new Set(["mobile_devices","customers","sales","customer_entries"]);
         if (!allowedTables.has(table) || !validId(recordId)) return error("A valid entity table and record ID are required.",400,origin);
         const row = await env.DB.prepare("SELECT id FROM " + table + " WHERE id=?").bind(Number(recordId)).first();
         if (!row) return error("Record not found.",404,origin);
-        const result = await env.DB.prepare("SELECT field_key,value_text FROM custom_field_values WHERE entity_table=? AND record_id=?").bind(table,Number(recordId)).all();
-        return json({values:Object.fromEntries(result.results.map(v=>[v.field_key,v.value_text]))},200,origin);
+        const configRow = await env.DB.prepare("SELECT published_json FROM app_configuration WHERE id=1").first();
+        const config = configRow ? JSON.parse(configRow.published_json) : {fields:[]};
+        const fields = (config.fields||[]).filter(f=>f.enabled!==false&&f.table===table);
+        const physical = fields.filter(f=>f.storage==="physical"&&/^[a-z][a-z0-9_]{0,39}$/.test(f.key));
+        const metadata = await env.DB.prepare("SELECT field_key,value_text FROM custom_field_values WHERE entity_table=? AND record_id=?").bind(table,Number(recordId)).all();
+        let physicalValues = {};
+        if (physical.length) {
+          const columns = physical.map(f=>f.key).join(",");
+          const valuesRow = await env.DB.prepare("SELECT " + columns + " FROM " + table + " WHERE id=?").bind(Number(recordId)).first();
+          if (valuesRow) physicalValues = Object.fromEntries(physical.map(f=>[f.key,valuesRow[f.key]==null?"":String(valuesRow[f.key])]));
+        }
+        return json({values:{...physicalValues,...Object.fromEntries(metadata.results.map(v=>[v.field_key,v.value_text]))}},200,origin);
       }
       if (path === "/api/custom-field-values" && request.method === "POST") {
         const body = await readJson(request);
         const table = String(body?.table || "");
         const recordId = body?.recordId;
         const values = body?.values;
-        const allowedTables = new Set(["mobile_devices","customers","customer_entries"]);
+        const allowedTables = new Set(["mobile_devices","customers","sales","customer_entries"]);
         if (!allowedTables.has(table) || !validId(recordId) || !values || typeof values !== "object" || Array.isArray(values)) return error("Custom field values are invalid.",400,origin);
         const record = await env.DB.prepare("SELECT id FROM " + table + " WHERE id=?").bind(Number(recordId)).first();
         if (!record) return error("Record not found.",404,origin);
         const configRow = await env.DB.prepare("SELECT published_json FROM app_configuration WHERE id=1").first();
         const config = configRow ? JSON.parse(configRow.published_json) : {fields:[]};
-        const allowedFields = new Map((config.fields||[]).filter(f=>f.enabled!==false&&f.storage==="metadata"&&f.table===table).map(f=>[f.key,f]));
+        const allowedFields = new Map((config.fields||[]).filter(f=>f.enabled!==false&&f.table===table).map(f=>[f.key,f]));
         const entries = Object.entries(values);
         if (entries.length > 50) return error("Too many custom field values.",413,origin);
         const statements = [];
         for (const [key, raw] of entries) {
           const field = allowedFields.get(key);
-          if (!field) return error("Field is not configured for this record type: " + key,400,origin);
+          if (!field || !/^[a-z][a-z0-9_]{0,39}$/.test(key)) return error("Field is not configured for this record type: " + key,400,origin);
           const value = raw == null ? "" : String(raw);
           if (value.length > 2000) return error("Custom field value is too long: " + key,400,origin);
           if (field.type==="number" && value!=="" && !Number.isFinite(Number(value))) return error("Invalid number for " + field.label,400,origin);
           if (field.type==="boolean" && value!=="" && !["true","false","1","0"].includes(value)) return error("Invalid yes/no value for " + field.label,400,origin);
-          statements.push(env.DB.prepare("INSERT INTO custom_field_values (entity_table,record_id,field_key,value_text) VALUES (?,?,?,?) ON CONFLICT(entity_table,record_id,field_key) DO UPDATE SET value_text=excluded.value_text").bind(table,Number(recordId),key,value));
+          if (field.storage==="physical") {
+            statements.push(env.DB.prepare("UPDATE " + table + " SET " + key + "=? WHERE id=?").bind(value===""?null:(field.type==="number"?Number(value):field.type==="boolean"?(value==="true"||value==="1"?1:0):value),Number(recordId)));
+          } else if (field.storage==="metadata") {
+            statements.push(env.DB.prepare("INSERT INTO custom_field_values (entity_table,record_id,field_key,value_text) VALUES (?,?,?,?) ON CONFLICT(entity_table,record_id,field_key) DO UPDATE SET value_text=excluded.value_text").bind(table,Number(recordId),key,value));
+          } else return error("Unsupported custom field storage type.",400,origin);
         }
         if (statements.length) await env.DB.batch(statements);
         return json({saved:statements.length},200,origin);
