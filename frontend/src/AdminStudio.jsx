@@ -48,6 +48,8 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const [fieldStorage, setFieldStorage] = useState("metadata");
   const [fieldTable, setFieldTable] = useState("mobile_devices");
   const [componentType, setComponentType] = useState("list");
+  const [componentSource, setComponentSource] = useState("devices");
+  const [newPageName, setNewPageName] = useState("");
 
   const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
   const pageComponents = useMemo(() => config.components.filter(c => c.page === selectedPage), [config.components, selectedPage]);
@@ -113,11 +115,25 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
     setFieldName("");
     setMessage(fieldStorage === "physical" ? "Database column created. Save and publish the field definition." : "Metadata field added. Save and publish the field definition.");
   }
+  function addPage() {
+    const title = newPageName.trim();
+    const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!title || !id || config.pages.some(p=>p.id===id)) return setMessage("Enter a unique page name using letters or numbers.");
+    update({ pages:[...config.pages,{id,title,enabled:true}], components:[...config.components] });
+    setSelectedPage(id);
+    setNewPageName("");
+  }
+  function removePage(id) {
+    if (["dashboard","inventory","customers","customer-entries","sales","reports"].includes(id)) return;
+    if (!window.confirm("Remove this page and its component definitions?")) return;
+    update({ pages:config.pages.filter(p=>p.id!==id), components:config.components.filter(c=>c.page!==id) });
+    setSelectedPage("inventory");
+  }
   function addComponent() {
     if (!page) return;
     const id = "component-" + Date.now();
     const title = componentType === "list" ? "New list" : componentType === "form" ? "New form" : componentType === "report" ? "New report" : componentType === "layout" ? "New layout" : "New summary";
-    update({ components: [...config.components, { id, page: page.id, type: componentType, title, enabled: true }] });
+    update({ components: [...config.components, { id, page: page.id, type: componentType, source: componentSource, title, enabled: true }] });
   }
   function moveComponent(index, delta) {
     const next = [...pageComponents];
@@ -147,7 +163,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
         </div>
         {tab==="pages" && <>
           <h3>Application pages</h3>
-          {config.pages.map(p=><button key={p.id} className={"admin-page-choice "+(selectedPage===p.id?"selected":"")} onClick={()=>setSelectedPage(p.id)}><span>{p.title}</span><small>{p.enabled?"Visible":"Hidden"}</small></button>)}
+          {config.pages.map(p=><div className={"admin-page-choice "+(selectedPage===p.id?"selected":"")} key={p.id}><button onClick={()=>setSelectedPage(p.id)}><span>{p.title}</span><small>{p.enabled?"Visible":"Hidden"}</small></button>{!["dashboard","inventory","customers","customer-entries","sales","reports"].includes(p.id)&&<button className="icon-button" onClick={()=>removePage(p.id)} aria-label={"Remove "+p.title}><Trash2 size={14}/></button>}</div>)}<div className="admin-add-row"><input placeholder="New page name" value={newPageName} onChange={e=>setNewPageName(e.target.value)}/><button className="secondary-button" onClick={addPage}><Plus size={14}/>Add page</button></div>
           {page && <div className="admin-properties"><label>Page title<input value={page.title} onChange={e=>changePage(page.id,{title:e.target.value})}/></label><label className="admin-check"><input type="checkbox" checked={page.enabled} onChange={e=>changePage(page.id,{enabled:e.target.checked})}/> Page enabled</label></div>}
         </>}
         {tab==="reports" && <><h3>Reports</h3><div className="admin-add-row"><input placeholder="New report name" value={reportName} onChange={e=>setReportName(e.target.value)}/><button className="primary-button" onClick={addReport}><Plus size={15}/>Add</button></div>{config.reports.map(r=><div className="admin-list-row" key={r.id}><input value={r.title} onChange={e=>update({reports:config.reports.map(x=>x.id===r.id?{...x,title:e.target.value}:x)})}/><select value={r.source||"devices"} onChange={e=>update({reports:config.reports.map(x=>x.id===r.id?{...x,source:e.target.value}:x)})}><option value="devices">Inventory</option><option value="customers">Customers</option><option value="sales">Sales</option><option value="customer_entries">Customer entries</option></select><label><input type="checkbox" checked={r.enabled} onChange={e=>update({reports:config.reports.map(x=>x.id===r.id?{...x,enabled:e.target.checked}:x)})}/>On</label><button className="icon-button" onClick={()=>update({reports:config.reports.filter(x=>x.id!==r.id)})}><Trash2 size={15}/></button></div>)}</>}
@@ -155,7 +171,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
       </aside>
       <section className="panel admin-canvas">
         <div className="admin-canvas-head"><div><p className="eyebrow">LIVE DRAFT PREVIEW</p><h2>{page?.title || "Configuration"}</h2><p>Version {version} currently published</p></div><span className="status-pill status-warning">Draft</span></div>
-        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/></div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Newly added component types are stored for future renderer support.</p></>}
+        {tab==="pages" && <><div className="admin-component-toolbar"><strong>Reusable components</strong><span>{pageComponents.length} on this page</span><select value={componentSource} onChange={e=>setComponentSource(e.target.value)}><option value="devices">Inventory data</option><option value="customers">Customer data</option><option value="sales">Sales data</option><option value="customer_entries">Customer entries</option></select><select value={componentType} onChange={e=>setComponentType(e.target.value)}><option value="list">List</option><option value="form">Form</option><option value="report">Report</option><option value="summary">Summary</option><option value="layout">Layout</option></select><button className="secondary-button" onClick={addComponent}><Plus size={14}/>Add component</button></div>{pageComponents.map((c,i)=><div className="admin-component" key={c.id}><div className="admin-component-icon"><Layers size={17}/></div><div className="admin-component-info"><strong>{c.title}</strong><small>{c.type} component · {c.id}</small><input value={c.title} onChange={e=>changeComponent(c.id,{title:e.target.value})}/></div><label className="admin-check"><input type="checkbox" checked={c.enabled} onChange={e=>changeComponent(c.id,{enabled:e.target.checked})}/>Visible</label><div className="admin-move"><button className="icon-button" onClick={()=>moveComponent(i,-1)} aria-label="Move up"><ChevronUp size={16}/></button><button className="icon-button" onClick={()=>moveComponent(i,1)} aria-label="Move down"><ChevronDown size={16}/></button><button className="icon-button" onClick={()=>update({components:config.components.filter(x=>x.id!==c.id)})} aria-label="Remove component"><Trash2 size={15}/></button></div></div>)}<p className="admin-hint">Published component visibility and titles are applied to the existing runtime pages. Newly added component types are stored for future renderer support.</p></>}
         {tab==="reports" && <div className="admin-preview-list">{config.reports.filter(r=>r.enabled).map(r=><div className="panel"><strong>{r.title}</strong><small>Source: {r.source} · Metric: {r.metric}</small></div>)}{!config.reports.length&&<p className="empty-hint">Add a report to preview it here.</p>}</div>}
         {tab==="fields" && <div className="admin-preview-list">{config.fields.map(f=><div className="panel"><strong>{f.label}</strong><small>{f.key} · {f.type} · {f.storage}</small></div>)}{!config.fields.length&&<p className="empty-hint">No custom fields defined.</p>}</div>}
         <div className="admin-status">{message}</div>
