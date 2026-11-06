@@ -1,9 +1,9 @@
-name = "imam-mobile-api"
+name = "imam-mobile-api-dev"
 main = "src/index.js"
 compatibility_date = "2026-10-30"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "imam-mobile-db"
-database_id = "cf8717e7-a6ce-468a-9975-6e8706ff114a"
+database_name = "imam-mobile-dev-db"
+database_id = "794cc2e7-fcef-473c-b06d-c5665656c6ca"
 migrations_dir = "migrations"
