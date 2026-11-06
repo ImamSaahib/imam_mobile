@@ -1,8 +1,12 @@
 const FRONTEND_ORIGIN = "https://imam-mobile.pages.dev";
+const ALLOWED_ORIGINS = [
+  FRONTEND_ORIGIN,
+  "https://imam-mobile-dev.pages.dev"
+];
 
 function corsHeaders(origin) {
   return {
-    "Access-Control-Allow-Origin": origin === FRONTEND_ORIGIN ? origin : FRONTEND_ORIGIN,
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : FRONTEND_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
@@ -28,7 +32,7 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || FRONTEND_ORIGIN;
     if (request.method === "OPTIONS") return new Response(null, { status:204, headers:corsHeaders(origin) });
-    if (request.headers.has("Origin") && origin !== FRONTEND_ORIGIN) return error("Origin not allowed.",403,origin);
+    if (request.headers.has("Origin") && !ALLOWED_ORIGINS.includes(origin)) return error("Origin not allowed.",403,origin);
     if (!env.DB) return error("Database binding DB is not configured.",500,origin);
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/,"") || "/";
