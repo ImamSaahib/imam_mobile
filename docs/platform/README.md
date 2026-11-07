@@ -26,16 +26,17 @@ These are interaction references, not instructions to copy proprietary assets or
 ## Read in this order
 
 1. [Architecture](ARCHITECTURE.md)
-2. Story 01 — Platform foundation and application identity
-3. Story 02 — Application navigator and authorization integration
-4. Story 03 — Page builder and component registry
-5. Story 04 — Data model, properties and schema compatibility
-6. Story 05 — Lists, views and safe query engine
-7. Story 06 — Forms, records and domain service extensions
-8. Story 07 — Configuration, validation and publishing
-9. Story 08 — Reports, metrics and registered actions
-10. Story 09 — Audit, operational governance and release compatibility
-11. Story 10 — Client deployment, upgrades and release readiness
+2. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
+3. Story 01 — Platform foundation and application identity
+4. Story 02 — Application navigator and authorization integration
+5. Story 03 — Page builder and component registry
+6. Story 04 — Data model, properties and schema compatibility
+7. Story 05 — Lists, views and safe query engine
+8. Story 06 — Forms, records and domain service extensions
+9. Story 07 — Configuration, validation and publishing
+10. Story 08 — Reports, metrics and registered actions
+11. Story 09 — Audit, operational governance and release compatibility
+12. Story 10 — Client deployment, upgrades and release readiness
 
 ## Developer workflow
 
