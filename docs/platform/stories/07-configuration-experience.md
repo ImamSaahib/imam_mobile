@@ -1,64 +1,58 @@
-# Story 07 — Configuration Mode and Contextual Editors
+# Story 07 — Configuration, Validation and Publishing
 
-**Priority:** P0 · **Depends on:** Stories 02–06  
-**Goal:** Replace the separate Admin Studio destination with a coherent lock/unlock configuration experience.
+**Priority:** P1 after core runtime contracts · **Depends on:** Stories 01–06  
+**Goal:** Provide a controlled administrator experience for supported metadata changes without pretending that configuration can replace migrations or code deployments.
 
 ## User story
 
-As a platform administrator, I want to unlock configuration mode, right-click platform elements to configure them, and publish reviewed changes without exposing editing controls to normal users.
+As an authorized application administrator, I want to edit supported application configuration in a draft, preview and validate it, then publish a compatible immutable release.
 
 ## Interaction model
 
-- Top-right Super Menu contains a lock/edit toggle.
-- Normal mode is the default and shows no editor chrome.
-- Unlock is permission-gated; lock state is only a UI mode, never a security control.
-- Right-clicking a component opens a contextual menu with Configure, Duplicate, Move, Disable, and Remove actions as supported.
-- Right-clicking a table column/property opens Configure property.
-- Provide equivalent keyboard-accessible menus and explicit configure buttons for touch devices; context menu cannot be the only access path.
-- The editor opens in a side panel or focused modal and preserves the current page context.
-- A global configuration workspace is accessible through Super Menu, but Admin Studio is not a normal application module.
-- Changes edit a draft. Toolbar shows unsaved/saved draft state and Publish action.
-- Publish validation reports errors with links to the affected module/component/property.
+- Normal mode is default.
+- Top-right Super Menu contains the lock/edit toggle.
+- Unlock is permission-gated; it is not a security boundary.
+- Context menus/right-click may expose Configure, Duplicate, Move, Disable and Remove where supported.
+- Keyboard-accessible and touch alternatives are mandatory.
+- Admin Studio is not a normal navigator module.
+- A global configuration workspace may be opened from the Super Menu.
+- Draft edits are isolated from normal runtime users.
 
 ## Scope
 
-1. Integrate current Admin Studio capabilities into configuration mode; remove its sidebar module.
-2. Implement contextual targeting for menus, modules, pages, components, table columns, and properties.
-3. Add editors backed by the metadata schemas from earlier stories.
-4. Draft save, validation preview, publish, version history and rollback.
-5. Preview draft in a safe isolated preview mode without making it visible to normal users.
-6. Prevent accidental exit with unsaved changes; confirm discard.
-7. Responsive configuration experience for desktop and tablet; mobile may use explicit menus/panels rather than right-click.
+1. Configure supported menus, modules, pages, component arrangements, labels, approved property presentation, forms and views.
+2. Draft save, preview, validation, publish and release history.
+3. Clear classification of changes: configuration-only versus migration-required versus code-required.
+4. Validation of metadata references, component/property schema versions, action registrations, permissions and physical schema compatibility.
+5. Minimum platform version and required migration level recorded on each release.
+6. Restore a previous configuration by creating a new release; never erase history.
+7. Prevent publishing incompatible configuration.
 
-## API
+## Compatibility rules
 
-- `GET /api/configuration/draft`
-- `PUT /api/configuration/draft`
-- `POST /api/configuration/validate`
-- `POST /api/configuration/publish`
-- `GET /api/configuration/versions`
-- `POST /api/configuration/versions/:version/restore` creates a new draft based on that snapshot.
-
-Publishing is server-side and atomic: validate all metadata references and schemas, persist immutable release snapshot, then switch active published version. If any step fails, previous published version remains active.
+- A release must declare its minimum supported platform and configuration schema versions.
+- Component/property/action contracts must be supported by the deployed frontend and Worker.
+- A config-only rollback cannot reverse D1 schema migrations.
+- If a schema migration is required, deploy the compatible code/schema first, then publish metadata that depends on it.
+- If runtime code is older than the configuration, reject or enter a clear safe maintenance state; never silently render partially.
 
 ## Acceptance criteria
 
-- [ ] Admin Studio is not shown as a normal sidebar module.
-- [ ] Lock/unlock is visible in the top-right Super Menu.
-- [ ] Locked mode does not show configure affordances.
-- [ ] Unlocked mode offers contextual configuration for all supported element types.
-- [ ] Right-click and keyboard/touch alternatives work.
-- [ ] Draft edits survive reload and are not visible to normal users.
-- [ ] Validation catches missing pages, broken bindings, invalid property types, and unsupported component config.
-- [ ] Publish creates a new immutable version.
-- [ ] Failed publish leaves current published version unchanged.
-- [ ] Restore creates a new draft/version path; history is not deleted.
-- [ ] Authorization is enforced by API regardless of UI lock state.
+- [ ] Admin Studio is absent from normal navigation.
+- [ ] Super Menu lock/edit toggle is permission-gated.
+- [ ] Contextual and keyboard/touch configuration paths work.
+- [ ] Draft changes persist and remain invisible to normal users.
+- [ ] Validation detects broken references, unsupported schemas and missing physical columns.
+- [ ] Validation identifies whether a change needs configuration only, migration or code.
+- [ ] Publish creates an immutable version atomically.
+- [ ] Failed publish leaves the active release unchanged.
+- [ ] Release records platform/config/schema compatibility requirements.
+- [ ] Restore creates a new draft/release and does not claim to reverse migrations.
 
 ## Tests
 
-Permission gating; context target resolution; keyboard/touch parity; unsaved-change warning; draft/published isolation; invalid config validation; atomic publish failure; restore history.
+Draft/published isolation; authorization; context menu parity; schema mismatch; unsupported component version; atomic publish failure; restore history; old runtime/new config compatibility.
 
 ## Out of scope
 
-Collaborative real-time editing, visual drag-drop freeform canvas, per-field approval workflows.
+Real-time collaborative editing, freeform canvas, live admin database DDL and complex approval workflows.
