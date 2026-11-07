@@ -1,59 +1,96 @@
-# Story 10 — Migrations, Testing, Performance, and Release Readiness
+# Story 10 — Client Deployment, Upgrades, Testing and Release Readiness
 
-**Priority:** P0 · **Depends on:** all previous stories; practices apply from Story 01  
-**Goal:** Make platform changes repeatable, testable, observable, and safe to release.
+**Priority:** P0 · **Practices apply from Story 01** · **Depends on:** platform contracts from Stories 01–09  
+**Goal:** Make a client-owned fork reproducibly installable, configurable, upgradeable and recoverable without maintainer-owned Cloudflare credentials.
 
 ## User story
 
-As a maintainer, I want automated schema/config migrations, reliable tests, and a repeatable release process so development can evolve without corrupting data or breaking production.
+As a client or implementation developer, I want to fork the baseline, enter client-specific resource names before the first build, provision my own Cloudflare resources, deploy the application and adopt future baseline releases safely.
 
-## Scope
+## Part A — First installation
 
-1. Migration discipline for D1: sequential SQL files, migration status, development-first application, idempotent seed data, and documented rollback/forward-fix strategy.
-2. Build validation on every commit: Vite production build, lint/type checks if configured, Worker syntax/build checks, unit and integration tests.
-3. Add a smoke test for bootstrap, navigator, data source schema, list query, form CRUD, configuration draft/validate/publish, and authorization.
-4. Add regression fixtures for current Imam Mobile inventory, customer, customer ledger, sales and reports.
-5. Add bounded query defaults, indexes for known filters/sorts, and query timing/request IDs.
-6. Add error reporting that avoids secrets and sensitive record content.
-7. Add backup/recovery and release checklist for production.
-8. Document environment variables and verify no development URL/database ID is hardcoded into production configuration.
-9. Add deployment health checks and a simple rollback/forward-fix process.
+1. Fork the upstream repository into the client's GitHub account/organization.
+2. Edit the non-secret client/environment manifest before first deployment.
+3. Create or select the client's Cloudflare account.
+4. Create the D1 database and record its ID in the correct environment configuration.
+5. Connect the client fork to Cloudflare Pages and set build command/output directory.
+6. Configure Worker name, D1 binding, API origin/CORS and public non-secret frontend variables.
+7. Set secrets through Cloudflare dashboard/secret management; never commit them.
+8. Apply migrations to the explicitly selected database.
+9. Apply the application seed package.
+10. Deploy Worker and Pages.
+11. Run health, bootstrap, authentication, schema compatibility and core workflow smoke tests.
 
-## Migration policy
+The process must be documented and should be automated with safe preparation/validation scripts where practical. It must not require the maintainer's Cloudflare account or API token.
 
-- Never rewrite an applied migration.
-- Every schema change is a new numbered SQL file.
-- Development migration first; verify data and application behavior; only later release to production through explicit approval.
-- Prefer additive changes. Destructive changes require expand → migrate data → switch reads/writes → contract in a later release.
-- D1 schema migration rollback is not assumed to be automatic. Define a tested recovery or forward-fix path.
-- Worker deploy command must apply pending migrations to the correct environment. Verify database name/ID before execution.
-- Seed scripts must be repeatable and must not create duplicate rows.
+## Part B — Deployment configuration
 
-## CI and test layers
+Provide an editable manifest such as `deployment/client.config.json` and environment-specific configuration. The manifest is the source for validating/generating provider settings; do not duplicate resource names in unrelated source files.
 
-- Static: Vite build, Worker syntax check, lint, dependency audit where available.
-- Unit: metadata validators, type mapping, filter compiler, component config validators.
-- Integration: D1 migrations, repositories, CRUD, publish/restore, permissions.
-- E2E/smoke: critical browser paths on development.
-- Regression: legacy business workflows and calculations.
+Validate client name/slug, Pages project, Worker name, D1 name/ID, environment identifier, frontend API URL, allowed origins, required build variables and required secret names (not secret values).
+
+Explain which resources must be created in Cloudflare and which names are selected at resource creation. Editing a manifest does not rename an existing resource.
+
+## Part C — Environment safety
+
+A client may have development and production environments with separate branches/deployment refs, Pages projects, Worker names, D1 databases/IDs, secrets and allowed origins.
+
+Before migration/deployment, clearly identify selected environment, Worker and database. Require explicit environment selection. Never infer target database solely from branch name. Production requires explicit approval.
+
+## Part D — Upstream baseline updates
+
+1. Tag upstream baseline releases with semantic version and release notes.
+2. Document how a client fork adds upstream and reviews updates.
+3. Keep client configuration and extensions isolated from shared core.
+4. Client merges/cherry-picks upstream changes on a maintenance branch.
+5. Check platform/configuration/component/action compatibility.
+6. Apply migrations in client development first.
+7. Run build, security, smoke and business regression tests.
+8. Promote to client production only after client approval.
+9. Record baseline version, client extension version, migrations and deployment commit.
+
+Forks do not automatically receive upstream commits. Conflicts require review; do not promise automatic conflict-free updates.
+
+## Part E — Customization and patch policy
+
+- Prefer application configuration for labels, navigation, forms, views and component arrangement.
+- Prefer isolated client extension modules for new domain behavior.
+- Do not modify shared core for a one-client requirement unless the behavior is genuinely reusable.
+- Patches to shared files are exceptional. Record base release, reason, affected files, tests and future rebase plan.
+- Never put secrets or client production data in Git.
+
+## Part F — Quality checks
+
+- Vite production build and Worker syntax/build checks.
+- Migration from an empty database and upgrade from prior supported schema.
+- Repeatable seed/import checks.
+- Schema compatibility validation.
+- API authorization and sensitive-field tests.
+- Core inventory/customer/sales/ledger regression tests for Imam Mobile.
+- Health/bootstrap/list/form/action smoke tests.
+- Secret scan and environment-target verification.
+- Documented recovery/forward-fix notes.
 
 ## Acceptance criteria
 
-- [ ] Every PR/commit path has automated frontend and backend validation.
-- [ ] Broken JSX/JavaScript is caught before Cloudflare deployment.
-- [ ] Migrations apply to an empty development database in order.
-- [ ] Reapplying migration command is safe and reports no pending work.
-- [ ] Development smoke tests pass after deploy.
-- [ ] Existing business workflows pass regression tests.
-- [ ] Production deployment is a separate, explicitly approved action.
-- [ ] Recovery procedure is documented and has been rehearsed on development.
-- [ ] Performance limits are enforced for pagination, search, filters, and reports.
-- [ ] Deployment notes include commit SHA, migrations applied, test evidence, and known limitations.
+- [ ] A clean client fork can be prepared without editing scattered source files.
+- [ ] Client Pages, Worker and D1 names are configurable before first deployment.
+- [ ] D1 ID and Worker binding are validated.
+- [ ] No maintainer Cloudflare credentials are required.
+- [ ] Secrets remain in the client's Cloudflare account.
+- [ ] Development and production resources are isolated.
+- [ ] Migration/deploy target is explicit and visible.
+- [ ] Application seed can be installed/upgraded without overwriting client records.
+- [ ] A second distinct application can be seeded primarily through configuration using the same runtime.
+- [ ] Client extensions are isolated from shared core and have documented contracts.
+- [ ] Upstream release adoption is documented and tested in client development.
+- [ ] Production release requires explicit approval.
+- [ ] Recovery/forward-fix process is documented and rehearsed.
 
 ## Definition of done
 
-A release candidate can be rebuilt from GitHub, migrated from a clean D1 database, deployed to development, smoke-tested, and recovered without relying on undocumented manual steps.
+A developer can fork the repository into a separate account, configure client-specific Pages/Worker/D1 identifiers before first deployment, deploy using the client's own Cloudflare account, seed a working application and later adopt an upstream baseline release without overwriting client data or silently breaking configuration.
 
 ## Out of scope
 
-Large-scale load testing, multi-region architecture, enterprise observability stack, complex disaster recovery automation.
+One-click provisioning across arbitrary Cloudflare accounts using maintainer credentials, multi-tenant hosting, automatic conflict resolution and guaranteed zero-downtime migrations.
