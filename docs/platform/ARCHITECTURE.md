@@ -297,3 +297,8 @@ Record future requirements explicitly rather than silently treating them as forg
 8. Compatibility is checked before publish and deployment.
 9. Each client owns independent runtime resources and data.
 10. Existing Imam Mobile workflows pass regression tests.
+
+
+## 18. Normative implementation contracts
+
+The detailed extension registration, seed ownership/upgrades, property storage, second-application proof, maintenance policy and CI rules are defined in [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md). These rules are part of the target architecture. Stories implement them incrementally. Evaluate the second-application proof after Stories 01–06; expand Stories 07–08 only where that evidence demonstrates a common need.
