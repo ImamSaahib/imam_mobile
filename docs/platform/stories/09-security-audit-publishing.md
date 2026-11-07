@@ -36,3 +36,13 @@ Audit coverage; audit tamper restrictions; secret redaction; compatibility matri
 ## Out of scope
 
 Enterprise SIEM integration, complex compliance workflow and multi-region disaster recovery.
+
+## Seed upgrade governance
+
+Configuration releases and seed package upgrades are separate versioned operations. A seed upgrade must provide a preview and three-way conflict report before applying changes. Conflicts are resolved per item (accept upstream, retain client value, or provide a reviewed merged value) and resolutions are audited. Removed seed items are deprecated first; references prevent hard deletion. Resetting one item to its upstream default is explicit and audited. Seed upgrades never alter business records, secrets or client extension code.
+
+## Additional acceptance criteria
+
+- [ ] Seed upgrade previews additions, updates, unchanged items, client-owned items, conflicts and deprecations.
+- [ ] Conflicts are not silently resolved in favor of upstream.
+- [ ] Per-item resolutions and resets are audited.
