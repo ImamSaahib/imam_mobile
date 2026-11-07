@@ -51,3 +51,16 @@ CRUD by property type; invalid payloads; unauthorized field injection; stale upd
 ## Out of scope
 
 Workflow designer, arbitrary form scripting, multi-step approvals, external public forms and arbitrary plugin execution.
+
+## Extension registration and compatibility
+
+Extensions are trusted code compiled with the client Worker, not dynamically downloaded or executed. The Worker statically imports a client registration entry point; generic CRUD, forms and routes call a platform registry and do not import client implementations directly. Keep public extension contracts separate from private platform internals. Each action declares a stable namespaced key, positive implementation version, input/output schema, required permission, minimum platform/API version, transaction/idempotency policy, audit policy and documented error codes/retryability. The dispatcher validates input and permission before execution. Client-supplied actor or permission data is never trusted. Duplicate or missing registrations and incompatible versions fail validation clearly. Configured buttons reference only registered action keys/versions; they cannot contain code, SQL or arbitrary URLs.
+
+A suitable typed contract is an ActionDefinition with key, version, inputSchema, outputSchema, requiredPermission, minimumPlatformVersion and execute(input, trustedContext). Trusted context is constructed by the Worker and contains its D1 binding, authenticated actor, request ID and optional idempotency key. Use actual repository types when implementing; this is an interface requirement, not a requirement to add a particular validation library.
+
+## Additional acceptance criteria
+
+- [ ] A client extension registers through one static entry point and is dispatched through a platform registry.
+- [ ] Extension imports are restricted to documented public contracts and client-owned modules.
+- [ ] Action schemas, permission, version compatibility, audit and idempotency are enforced server-side.
+- [ ] Missing, duplicate and incompatible registrations fail safely.
