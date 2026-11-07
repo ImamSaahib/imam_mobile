@@ -1,43 +1,45 @@
-# Story 03 — Application Navigator and Page Composition
+# Story 03 — Page Builder and Component Registry
 
 **Priority:** P0 · **Depends on:** Stories 01–02  
-**Goal:** Render application navigation and pages from metadata using a fixed, versioned component registry.
+**Goal:** Render pages from metadata using a fixed, versioned component registry and stable data-binding contracts.
 
 ## User story
 
-As an application administrator, I want to organize modules and compose pages from supported components so a related application can use the same runtime without custom navigation/page code.
+As an application administrator, I want to compose pages from supported components so related applications can reuse the same runtime without custom page code.
 
 ## Scope
 
-1. Build the left application navigator from published application/menu/module metadata.
-2. Support multiple menus, ordered modules, icons, visibility and stable route keys.
-3. Keep route identity independent from display title, slug and icon.
-4. Render module pages from page/component metadata.
-5. Implement a fixed component registry with versioned schemas and renderers.
-6. Initial component types: heading/text, layout/container, list placeholder bound to a data source/view, form placeholder, KPI placeholder and registered action button placeholder.
-7. Unknown component types or unsupported schema versions fail visibly and safely.
-8. Preserve current visual direction: white default, dark theme support, responsive navigation, clean top bar and Super Menu.
+1. Render module pages from page/component metadata.
+2. Implement a fixed component registry with versioned configuration schemas.
+3. Initial component types: heading/text, layout/container, list, form, KPI/count and registered action button.
+4. Define stable data-source, view, form and action references using IDs/keys rather than labels or raw SQL.
+5. Validate component configuration before publish and at runtime.
+6. Provide safe diagnostics for unknown component types or unsupported schema versions.
+7. Preserve responsive design, white default theme and dark mode support.
+8. Keep client-specific component implementations in isolated extension modules, not shared core modifications where avoidable.
 
 ## Dependency contracts
 
-Lists/forms must bind through stable data-source/property identifiers, not guessed column labels. Their full behavior is implemented in Stories 05–06. Define the component data-binding contract here, but do not build an independent query or form engine.
+Lists and forms bind through stable data-source/property identifiers. Their query and CRUD behavior is implemented in Stories 05–06. This story defines the renderer/binding contract, not separate list or form engines.
+
+A component type has a stable type key, schema version, validated config shape and renderer implementation version. A configuration cannot reference a component version absent from deployed code.
 
 ## Acceptance criteria
 
-- [ ] Navigator is loaded from published metadata.
-- [ ] Applications, menus and modules are not hardcoded to Imam Mobile names.
-- [ ] Route identity remains stable when a title is renamed.
-- [ ] Modules can be reordered through metadata.
-- [ ] Pages render registered components using validated configuration.
-- [ ] Unsupported component types/schema versions produce a safe diagnostic state.
-- [ ] Component configuration contains no executable JavaScript or SQL.
-- [ ] Keyboard and mobile navigation are usable.
-- [ ] Existing Imam Mobile routes remain reachable during migration.
+- [ ] Pages render registered components from published metadata.
+- [ ] Component types and configuration schemas are versioned.
+- [ ] Component bindings use stable IDs/keys.
+- [ ] Unsupported component types/schema versions fail visibly and safely.
+- [ ] Configuration contains no executable JavaScript or SQL.
+- [ ] Component registration cannot bypass authorization or data-source policies.
+- [ ] Client-specific additions have an isolated extension contract.
+- [ ] Keyboard and mobile interaction remain usable.
+- [ ] Existing Imam Mobile pages remain functional during migration.
 
 ## Tests
 
-Navigator ordering; route stability; missing module; component registry validation; unknown component version; responsive navigation; bootstrap regression.
+Component registry validation; unknown component version; invalid config; missing data binding; permission-aware rendering; responsive layout; legacy page regression.
 
 ## Out of scope
 
-Freeform canvas, arbitrary React injection, third-party component marketplace and advanced drag-and-drop editor.
+Freeform canvas, arbitrary React injection, third-party marketplace and unreviewed runtime plug-ins.
