@@ -53,3 +53,22 @@ SQLite affinity/column inspection; missing table/column; incompatible type; meta
 ## Out of scope
 
 Live admin DDL, arbitrary SQL editor, formula language, rollups and unrestricted user-created relational schemas.
+
+## Required storage semantics
+
+- Currency uses integer minor units plus an ISO 4217 currency code; never use floating-point arithmetic for money. Preserve exact stored precision even if a UI displays whole rupees.
+- Select values use stable option keys, not labels.
+- Multi-select uses normalized junction rows, not comma-separated text.
+- Date is a calendar date in YYYY-MM-DD with no timezone conversion. Timestamp is UTC ISO-8601 and is converted only for display.
+- Checkbox accepts boolean at the API and stores INTEGER 0/1.
+- Relations use declared target keys, verify target existence/read permission, and declare delete behavior. Default relation deletion to RESTRICT.
+- Number values declare integer/fractional semantics, range and precision. Reject non-finite values and unsafe overflow.
+- Every property declares nullability, required/unique behavior, supported query operators, sensitivity and writability. Virtual/computed fields are read-only reviewed server implementations, never metadata expressions.
+
+## Additional acceptance criteria
+
+- [ ] Currency calculations use integer minor units and explicit currency codes.
+- [ ] Multi-select values are normalized and referentially validated.
+- [ ] Date and timestamp semantics are tested separately, including timezone boundaries.
+- [ ] Relation deletion behavior is explicit and tested.
+- [ ] Property type/operator support is consistent across forms, lists, filters, sorting and import/export.
