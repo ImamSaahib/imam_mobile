@@ -1,10 +1,17 @@
-name: Validate Admin Configuration Studio
+name: Development CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [development]
   push:
-    branches: [feature/admin-configuration-studio]
+    branches: [development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend-build:
@@ -17,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # Replace npm install with npm ci after frontend/package-lock.json is committed.
       - run: npm install
       - run: npm run build
 
