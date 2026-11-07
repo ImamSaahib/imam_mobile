@@ -1,58 +1,53 @@
-# Story 06 — Form and Record Engine
+# Story 06 — Forms, Records and Domain Service Extensions
 
-**Priority:** P0 · **Depends on:** Stories 03–04  
-**Goal:** Make record create/read/update flows reusable and schema-driven.
+**Priority:** P0 · **Depends on:** Stories 02 and 04  
+**Goal:** Reuse forms and CRUD for ordinary records while keeping business transactions in explicit, versioned domain services.
 
 ## User story
 
-As an administrator, I want to build forms from data-source properties so that new tables and modules can create and edit records without custom React form code.
+As an application developer, I want forms generated from typed properties and a supported extension contract for business operations so new applications reuse generic record behavior without losing domain rules.
 
 ## Scope
 
-1. Generic record detail page/modal renderer.
-2. Form renderer using property type editors from Story 04.
-3. Form layout configuration: sections, columns, field order, visibility, read-only, required overrides only when stricter than schema.
-4. Create, update, read-only and delete/archive modes.
-5. Server-side validation and safe mass-assignment protection.
-6. Relationship selectors with bounded search and permission checks.
-7. System fields and defaults are server-managed.
-8. Preserve custom business workflows (sale transaction, ledger updates, device status) as explicit domain services/actions; do not replace transactional business rules with generic CRUD.
+1. Generic record read/create/update/archive flows.
+2. Form renderer using the property editors and validation contracts from Story 04.
+3. Form layout metadata: sections, columns, field order, visibility, read-only and stricter required overrides.
+4. Relationship selectors with bounded search and permission checks.
+5. Server-side validation and mass-assignment protection.
+6. Optimistic concurrency/version checks where appropriate.
+7. Preserve existing domain services for sales, ledger updates and stock status transitions.
+8. Define a first-class domain action contract for registered server operations.
 
-## API
+## Domain action contract
 
-- `GET /api/data-sources/:id/records/:recordId`
-- `POST /api/data-sources/:id/records`
-- `PATCH /api/data-sources/:id/records/:recordId`
-- `DELETE /api/data-sources/:id/records/:recordId` or archive endpoint where policy requires.
-- `GET /api/data-sources/:id/records/lookup?q=...` for relation pickers.
-- `GET /api/forms/:id`, `PUT /api/forms/:id` for form metadata.
+Every action defines:
+- stable action key and implementation version;
+- validated input and output schema;
+- required permission;
+- transaction boundary and atomicity expectations;
+- idempotency key behavior for duplicate submissions;
+- audit requirements;
+- retryable/non-retryable error codes;
+- minimum supported platform/API version.
 
-Use allowlisted columns, prepared values, optimistic concurrency (updated_at/version) where feasible, and transactions/batches for related record changes. Return structured field errors.
-
-## UI behavior
-
-- Editors are selected from property type registry.
-- Required, read-only, default, help text, format, choices, and relation options come from property metadata.
-- Show field-level errors beside the field and a summary for multiple errors.
-- Confirm destructive actions and show success/failure feedback.
-- Preserve unsaved input when server validation fails.
-- Accessible labels, keyboard operation, mobile layout, and clear loading states.
+Configured buttons may invoke an approved action key. They cannot contain JavaScript, SQL or arbitrary endpoint URLs. The Worker dispatches the action and enforces authorization.
 
 ## Acceptance criteria
 
-- [ ] A form can be created from a data source without writing a bespoke form component.
-- [ ] New and edit forms use the same property metadata as lists.
-- [ ] Required, unique, choices, relation, number/date validation are enforced server-side.
-- [ ] Hidden/read-only fields cannot be mass-assigned by manipulating requests.
-- [ ] Record changes persist after refresh.
-- [ ] Related operations that must be atomic use a transaction/batch strategy and do not leave partial sales/ledger state.
-- [ ] Existing device/customer/sale forms retain their current business rules.
-- [ ] Users receive clear field-specific errors.
+- [ ] Generic forms are generated from property metadata.
+- [ ] Lists and forms use the same property contract.
+- [ ] Required/unique/choice/relation/number/date rules are enforced server-side.
+- [ ] Hidden or read-only fields cannot be mass-assigned.
+- [ ] Related transactional writes are atomic or have a documented consistency strategy.
+- [ ] Duplicate financial/inventory actions are safely rejected or idempotent.
+- [ ] A domain action can be registered without changing generic form/list code.
+- [ ] Action permissions and audit behavior are enforced server-side.
+- [ ] Existing device/customer/sale/ledger workflows pass regression tests.
 
 ## Tests
 
-CRUD integration tests per property type; invalid payload tests; unauthorized field injection; stale update tests; relation lookup permission tests; sales transaction rollback/consistency tests.
+CRUD by property type; invalid payloads; unauthorized field injection; stale update; relation lookup authorization; transaction failure; duplicate action submission; action version compatibility.
 
 ## Out of scope
 
-Complex multi-step workflows, approvals, form scripting, public external forms.
+Workflow designer, arbitrary form scripting, multi-step approvals, external public forms and arbitrary plugin execution.
