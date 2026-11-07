@@ -33,7 +33,7 @@ async function request(path, token, options = {}) {
   return body;
 }
 
-export default function AdminStudio({ onClose, onNotice, onPublished }) {
+export default function AdminStudio({ onClose, onNotice, onPublished, initialPage, initialTarget }) {
   const [token, setToken] = useState("");
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [published, setPublished] = useState(DEFAULT_CONFIG);
@@ -60,7 +60,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   const [indexColumns, setIndexColumns] = useState([]);
   const [indexUnique, setIndexUnique] = useState(false);
 
-  const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
+  useEffect(() => { if (initialPage && config.pages.some(p => p.id === initialPage)) setSelectedPage(initialPage); }, [initialPage, config.pages]);\n  useEffect(() => { if (initialTarget) setTab("pages"); }, [initialTarget]);\n  const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
   const pageComponents = useMemo(() => config.components.filter(c => c.page === selectedPage), [config.components, selectedPage]);
   const update = patch => setConfig(c => ({ ...c, ...patch }));
   const changePage = (id, patch) => update({ pages: config.pages.map(p => p.id === id ? { ...p, ...patch } : p) });
@@ -217,7 +217,7 @@ export default function AdminStudio({ onClose, onNotice, onPublished }) {
   }
 
   return <div className="admin-studio">
-    <div className="admin-studio-head">
+    <div className="admin-studio-head">{initialTarget&&<div className="admin-hint">Selected component: <strong>{initialTarget}</strong>. Edit its page and component settings below.</div>}
       <div><p className="eyebrow">ADMIN CONFIGURATION</p><h1>Visual configuration studio</h1><p className="page-subtitle">Configure pages, reusable components, reports and custom fields.</p></div>
       <button className="secondary-button" onClick={onClose}>Close editor</button>
     </div>
