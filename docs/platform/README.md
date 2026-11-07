@@ -27,8 +27,8 @@ These are interaction references, not instructions to copy proprietary assets or
 
 1. [Architecture](ARCHITECTURE.md)
 2. Story 01 — Platform foundation and application identity
-3. Story 02 — Authentication, authorization and deployment boundary
-4. Story 03 — Application navigator and page composition
+3. Story 02 — Application navigator and authorization integration
+4. Story 03 — Page builder and component registry
 5. Story 04 — Data model, properties and schema compatibility
 6. Story 05 — Lists, views and safe query engine
 7. Story 06 — Forms, records and domain service extensions
