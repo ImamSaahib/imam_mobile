@@ -1,72 +1,65 @@
-# Story 02 — Applications, Menus, and Modules
+# Story 02 — Authentication, Authorization and Deployment Boundary
 
-**Priority:** P0 · **Depends on:** Story 01  
-**Goal:** Make the left navigator data-driven and configurable.
+**Priority:** P0 · **Depends on:** Story 01 · **Security rules apply to every subsequent story**  
+**Goal:** Establish an explicit security policy and independent client-installation boundary before building editors and data access.
 
 ## User story
 
-As an administrator, I want to create applications, group modules into application menus, and rename, reorder, hide, or remove those items so the left navigator reflects the application I am building.
-
-## Domain rules
-
-- An application belongs to a workspace.
-- An application menu belongs to an application and is a collection of modules.
-- A module belongs to exactly one application and optionally one menu; it points to a page.
-- Menu and module labels, icons, order, visibility, and route are metadata.
-- A module is not a data table. A module opens a page.
-- Deleting a menu must require an explicit policy: move its modules to an ungrouped section, reassign them, or delete them only after confirmation. Never cascade-delete pages/records accidentally.
-- Route identifiers remain stable when a title is renamed.
+As a client application owner, I need users and API operations to be authenticated and authorized within my deployment so one client's credentials or data can never be shared with another client deployment.
 
 ## Scope
 
-1. Replace hardcoded sidebar arrays with the Story 01 bootstrap hierarchy.
-2. Build navigator rendering for applications, collapsible menus, modules, active states, icons, ordering, and responsive mobile navigation.
-3. Add configuration CRUD for application menus and modules.
-4. Support create, rename, reorder, enable/disable, and delete with reference checks.
-5. Add an application switcher only if more than one application exists; do not fabricate empty applications.
-6. Preserve direct URL navigation and unknown-route handling.
+1. Inspect current authentication and temporary admin-token behavior.
+2. Select a supported authentication/session approach suitable for a client-owned Cloudflare deployment. Evaluate Cloudflare Access or a maintained identity provider before implementing custom password storage.
+3. Define a permission matrix for Admin, Manager and User presets.
+4. Enforce authorization in Worker middleware/service boundaries, not only in React.
+5. Define policies for bootstrap, metadata reads, configuration writes, record CRUD, domain actions, publishing, migrations and health endpoints.
+6. Ensure each deployment uses independent identity configuration, secrets, sessions and allowed origins.
+7. Remove any assumption that a frontend lock/edit toggle or hidden control grants security.
+8. Document client setup inputs required for authentication and CORS.
 
-## API
+## Permission baseline
 
-- `GET /api/applications`
-- `POST /api/applications`
-- `PATCH /api/applications/:id`
-- `POST /api/applications/:id/menus`
-- `PATCH /api/menus/:id`
-- `DELETE /api/menus/:id`
-- `POST /api/menus/:id/modules`
-- `PATCH /api/modules/:id`
-- `DELETE /api/modules/:id`
-- `POST /api/navigator/reorder` accepting an ordered list of IDs and parent scope.
+Role names are presets, not authorization logic. Map roles to capabilities such as:
+- platform.configure;
+- application.read/manage;
+- module.read/manage;
+- table.read/create/update/delete;
+- configuration.validate/publish;
+- action.execute by action key.
 
-All mutation endpoints require configuration permission, validate same-application ownership, and write audit events. Reordering should be one transaction/batch where practical.
+Initial behavior:
+- Admin: full approved application administration.
+- Manager: read/create/update within assigned scope; no unrestricted destructive/configuration operations.
+- User: read-only.
 
-## UI requirements
+The exact matrix must be recorded and tested before production multi-user use.
 
-- Left side resembles a compact ServiceNow-style application navigator.
-- Application menus are section headers/collections; modules are links beneath them.
-- Search filters applications, menu names, and module labels without mutating the saved hierarchy.
-- Provide clear empty state, no-results state, active module state, and keyboard navigation.
-- In normal mode, navigator is used for navigation. In configuration mode, provide add/edit/reorder controls without making normal navigation difficult.
-- Rename is inline or in a focused dialog; avoid browser prompt dialogs.
+## Security constraints
+
+- Never embed secrets in Vite variables, static assets, repository files or client-side code.
+- Temporary development tokens are not production authentication.
+- Every Worker route must declare authentication and authorization requirements.
+- Sensitive properties must be protected in API responses and query services.
+- Use explicit CORS allowlists for each client environment; do not use wildcard origins with credentials.
+- Avoid building a custom enterprise ACL language.
 
 ## Acceptance criteria
 
-- [ ] Navigator is rendered entirely from published metadata.
-- [ ] Admin can add, rename, reorder, hide/show, and remove a menu.
-- [ ] Admin can add, rename, reorder, hide/show, and remove a module.
-- [ ] Renaming a module does not change its route or break bookmarks.
-- [ ] A module cannot reference a page from another application/workspace.
-- [ ] Removing a menu cannot silently delete modules or pages.
-- [ ] Search is immediate and case-insensitive.
-- [ ] Normal users cannot see draft-only changes.
-- [ ] Mobile navigation remains usable.
-- [ ] Existing Imam Mobile modules are migrated/seeded and still open correctly.
+- [ ] Authentication provider and session strategy are documented and configured for the client deployment.
+- [ ] Every API route has an explicit policy, including intentionally public health/bootstrap routes.
+- [ ] Admin/Manager/User permissions are enforced server-side.
+- [ ] Direct API calls cannot bypass UI restrictions.
+- [ ] No secret is present in the frontend bundle or repository.
+- [ ] Development and production auth secrets/origins are independent.
+- [ ] Session expiry/logout and unauthorized responses behave consistently.
+- [ ] Sensitive fields cannot be retrieved by users lacking permission.
+- [ ] Audit hooks exist for sensitive operations, even if full audit UI is deferred.
 
 ## Tests
 
-Test menu/module CRUD, reorder validation, deletion constraints, duplicate route/slug handling, workspace isolation, search, active route, and permission failures.
+Role/action matrix; unauthenticated calls; direct API bypass attempts; sensitive property access; CORS; session expiry; secret scan; route-policy coverage.
 
 ## Out of scope
 
-Page composition, component editors, and role administration.
+Enterprise SSO catalog, arbitrary ACL scripting, cross-client identity federation and multi-tenant identity management.
