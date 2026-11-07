@@ -14,10 +14,10 @@ As an application user, I want searchable tables with saved views, filters and s
 3. Multiple named views over one data source.
 4. Visible columns, column order, typed filters, ordered sorts and one initial group-by field.
 5. Stable deterministic sorting with primary-key tie-breaker.
-6. Safe query compiler that accepts a typed query model, never SQL fragments.
+6. Safe query compiler accepting a typed query model, never SQL fragments.
 7. Query complexity limits: maximum page size, filter depth, sort count, search length and result size.
 8. Authorization-aware property selection and record queries.
-9. Keep the generic query language narrow; domain-specific complex queries use developer-defined approved query services.
+9. Keep generic query language narrow; complex domain queries use developer-defined approved query services.
 
 ## View contract
 
@@ -25,7 +25,7 @@ A view stores data-source ID, layout, visible property IDs, column order, filter
 
 ## UI behavior
 
-Every table includes a search field unless an authorized configuration explicitly disables it. Provide distinct loading, empty, error, no-results and permission-denied states. Search should debounce and ignore stale responses. Filters/operators must be type-specific.
+Every table includes a search field unless authorized configuration explicitly disables it. Provide distinct loading, empty, error, no-results and permission-denied states. Search should debounce and ignore stale responses. Filters/operators must be type-specific.
 
 ## Acceptance criteria
 
