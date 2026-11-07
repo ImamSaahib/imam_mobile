@@ -60,7 +60,9 @@ export default function AdminStudio({ onClose, onNotice, onPublished, initialPag
   const [indexColumns, setIndexColumns] = useState([]);
   const [indexUnique, setIndexUnique] = useState(false);
 
-  useEffect(() => { if (initialPage && config.pages.some(p => p.id === initialPage)) setSelectedPage(initialPage); }, [initialPage]);\n  useEffect(() => { if (initialTarget) setTab("pages"); }, [initialTarget]);\n  const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
+  useEffect(() => { if (initialPage && config.pages.some(p => p.id === initialPage)) setSelectedPage(initialPage); }, [initialPage]);
+  useEffect(() => { if (initialTarget) setTab("pages"); }, [initialTarget]);
+  const page = config.pages.find(p => p.id === selectedPage) || config.pages[0];
   const pageComponents = useMemo(() => config.components.filter(c => c.page === selectedPage), [config.components, selectedPage]);
   const update = patch => setConfig(c => ({ ...c, ...patch }));
   const changePage = (id, patch) => update({ pages: config.pages.map(p => p.id === id ? { ...p, ...patch } : p) });
