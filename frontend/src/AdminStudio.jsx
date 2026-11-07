@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Save, Eye, Send, Plus, Trash2, ChevronUp, ChevronDown, Lock, Layers, FileText, Database, RefreshCw, History } from "lucide-react";
 
-const API = "https://imam-mobile-api.imamsaahib.workers.dev";
+const API = "https://imam-mobile-api-dev.imamsaahib.workers.dev";
 const DEFAULT_CONFIG = {
   schemaVersion: 1,
   pages: [
