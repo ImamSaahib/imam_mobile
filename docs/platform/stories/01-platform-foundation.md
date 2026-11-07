@@ -56,3 +56,15 @@ Empty-database migration; repeatable seed; bootstrap response; stable IDs; legac
 ## Out of scope
 
 Full visual editor, arbitrary table/column creation, multi-tenant shared hosting, marketplace, workflow engine and advanced reports.
+
+## Seed ownership and upgrade contract
+
+Every seeded configuration item must carry a stable seed key, package owner, ownership state, last-applied upstream version and baseline value/hash. Business records are never seed-managed. Initial install and repeated application must be idempotent. Upgrades use a three-way comparison (previous upstream, new upstream, current installed value): apply upstream changes only when the client has not changed that item; preserve client-owned values; and flag simultaneous changes as conflicts without overwriting them. Preview additions, updates, conflicts, deprecated items and incompatible references before applying. Resolve conflicts per item and audit the actor/choice. Mark removed items deprecated rather than hard-deleting referenced configuration. Never overwrite client data, secrets or extensions.
+
+## Additional acceptance criteria
+
+- [ ] Seed items have stable keys and explicit seed/client ownership.
+- [ ] Upgrade preview and three-way conflict detection are defined before upgrade automation is considered complete.
+- [ ] Repeated install and interrupted/retried application are safe.
+- [ ] Client-owned items and business records are never overwritten by upstream seed updates.
+- [ ] Seed reset-to-upstream-default is an explicit, auditable operation.
