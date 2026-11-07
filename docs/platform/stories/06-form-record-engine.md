@@ -10,7 +10,7 @@ As an application developer, I want forms generated from typed properties and a 
 ## Scope
 
 1. Generic record read/create/update/archive flows.
-2. Form renderer using the property editors and validation contracts from Story 04.
+2. Form renderer using property editors and validation contracts from Story 04.
 3. Form layout metadata: sections, columns, field order, visibility, read-only and stricter required overrides.
 4. Relationship selectors with bounded search and permission checks.
 5. Server-side validation and mass-assignment protection.
@@ -20,7 +20,7 @@ As an application developer, I want forms generated from typed properties and a 
 
 ## Domain action contract
 
-Every action defines:
+Each action defines:
 - stable action key and implementation version;
 - validated input and output schema;
 - required permission;
