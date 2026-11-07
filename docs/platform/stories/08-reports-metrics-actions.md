@@ -1,53 +1,46 @@
-# Story 08 — Reports, Metrics, and Actions
+# Story 08 — Reports, Metrics and Registered Actions
 
-**Priority:** P1 · **Depends on:** Stories 03–06  
-**Goal:** Turn the component platform into useful operational applications through safe summaries, reports, and reusable actions.
+**Priority:** P1 · **Depends on:** Stories 04–06 and action contract from Story 06  
+**Goal:** Add bounded operational summaries and reports only after the reusable data and action contracts are proven.
 
 ## User story
 
-As an application builder, I want to place KPI counts, charts, and buttons on pages and bind them to approved data sources so a module can support operational decisions and actions.
+As an application builder, I want to place approved KPIs, reports and action buttons on pages so each application can expose relevant operational information without custom dashboard code for every metric.
 
 ## Scope
 
-### KPI/count components
-- Count, sum, average, min, max, distinct count.
-- Configurable title, source, property, filter, number/currency/date formatting.
-- Permission-aware aggregation; restricted fields must not leak through aggregates.
+### Metrics
+- Count, sum, average, minimum, maximum and distinct count where supported.
+- Source, property, typed filters and explicit formatting.
+- Server-side authorization must apply to both records and aggregates.
 
-### Reports/charts
-- Start with table summary and bar/line/donut charts where data shape is bounded.
-- Report definition references a data source, metric, grouping property, filters, and time range.
-- All grouping/metric fields are validated against property types.
-- Enforce result limits and aggregation query limits.
+### Reports
+- Begin with table summaries and bounded bar/line/donut chart payloads.
+- Report definitions reference data sources, metric, grouping property, filters and date range.
+- Enforce aggregation and result limits.
 
-### Buttons/actions
-- Action types are fixed registry entries, not arbitrary scripts.
-- Initial actions: navigate to module, open create form, open record, refresh component, and invoke an approved domain action.
-- Domain actions (e.g. sell device) are server endpoints with transaction and permission checks.
-- Button visibility and enabled state may be configured using safe declarative conditions only; no eval.
-
-## API
-
-- `GET /api/reports/:id/data`
-- `GET /api/metrics` or component-specific metric endpoint.
-- `POST /api/actions/:actionKey/execute` for registered actions.
-- All report/action requests are authorized and bounded. Action requests require idempotency protection where duplicate execution could create duplicate transactions.
+### Actions
+- Buttons may navigate, open a form/record, refresh a component or invoke a registered domain action.
+- Action key and version must be supported by deployed Worker code.
+- Inputs are validated against the registered action schema.
+- Idempotency is required when duplicate execution could create duplicate transactions.
 
 ## Acceptance criteria
 
-- [ ] KPI count/sum/average renders from an approved source.
-- [ ] A report can group and aggregate records with typed filters.
-- [ ] Charts show loading, empty, error and no-data states.
-- [ ] Currency and date formatting follow explicit configuration and locale.
+- [ ] KPI values are generated from approved data sources.
+- [ ] Reports use typed, bounded queries.
+- [ ] Restricted data cannot leak through aggregates.
+- [ ] Charts expose loading, empty, error and no-data states.
+- [ ] Currency/date formatting is explicit and locale-aware.
 - [ ] Buttons invoke only registered actions.
-- [ ] Duplicate financial actions are prevented or safely idempotent.
-- [ ] Restricted source fields and aggregates are protected by server-side policy.
-- [ ] Reports do not fetch unbounded result sets.
+- [ ] Unsupported action versions are rejected visibly.
+- [ ] Duplicate financial/inventory actions are prevented or idempotent.
+- [ ] No arbitrary scripts or SQL are accepted.
 
 ## Tests
 
-Aggregation correctness; filter correctness; permission leakage tests; action authorization; idempotency; large-result caps; chart serialization.
+Aggregation correctness; filter correctness; permission leakage; action authorization; idempotency; query caps; unsupported action version; chart serialization.
 
 ## Out of scope
 
-Arbitrary scripting, scheduled report delivery, workflow builder, external webhooks, advanced BI.
+Advanced BI, scheduled report delivery, workflow builder, arbitrary scripting and external webhooks unless a concrete app proves the need.
