@@ -94,3 +94,21 @@ A developer can fork the repository into a separate account, configure client-sp
 ## Out of scope
 
 One-click provisioning across arbitrary Cloudflare accounts using maintainer credentials, multi-tenant hosting, automatic conflict resolution and guaranteed zero-downtime migrations.
+
+## Second-application proof and maintenance policy
+
+After Stories 01–06, build one small, distinct operational application using the same runtime. Its identity, navigation, data sources, properties, standard lists, forms and views must be supplied by its own seed/configuration package. Ordinary CRUD must not require shared-core edits. At least one application-specific operation must use the documented extension contract. Install it into a clean development database, rerun its seed, and pass schema, authorization and workflow tests. Record configuration files, extension files, shared-core files (target zero for ordinary setup), migrations, tests, deployment result, implementation time and any blocker requiring a platform change. Use this evidence to decide whether Stories 07–08 need expansion.
+
+Support the latest tagged stable baseline as the primary supported line. Publish release notes, migration notes and compatibility requirements. Older-version backports are not promised unless announced. A client fork is unverified until it reviews upstream changes, resolves conflicts, applies migrations in its own development environment, passes build/security/schema/business regression tests and records baseline/extension versions. No automatic conflict-free merges, indefinite old-version support, SLA or automatic production updates are promised. Production promotion requires explicit client approval.
+
+## CI contract
+
+CI targets pull requests into development and pushes to development. It must not deploy or migrate production. Add gates incrementally as each story introduces runnable checks: frontend production build, Worker build/typecheck, unit tests, empty-database migrations, seed idempotency, schema compatibility, API authorization/sensitive-field tests, and Imam Mobile regression tests. Do not claim checks that do not yet exist. Use npm ci only after the relevant lockfile is committed; until then use the currently supported install command and track lockfile creation as a gap. Any development deployment must identify its dev resources explicitly.
+
+## Additional acceptance criteria
+
+- [ ] A second distinct application passes the measurable reuse proof in Implementation Contracts.
+- [ ] CI runs on development PRs and development pushes, not a stale feature branch trigger.
+- [ ] CI never targets production resources.
+- [ ] Lockfiles are committed before switching CI to npm ci.
+- [ ] Baseline/extension versions and migration evidence are recorded for client upgrades.
