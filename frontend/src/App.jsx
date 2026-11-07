@@ -177,7 +177,9 @@ export default function App() {
  </div>;
 }
 
-function LockIcon(){return <span className="platform-lock-glyph">▣</span>}\nfunction UnlockIcon(){return <span className="platform-lock-glyph">⌑</span>}\nfunction StatCard({title,value,note,Icon}){return <div className="stat-card"><div className="stat-top"><span>{title}</span><div className="stat-icon violet"><Icon size={18}/></div></div><div className="stat-value">{value}</div><div className="stat-change">{note}</div></div>;}
+function LockIcon(){return <span className="platform-lock-glyph">▣</span>}
+function UnlockIcon(){return <span className="platform-lock-glyph">⌑</span>}
+function StatCard({title,value,note,Icon}){return <div className="stat-card"><div className="stat-top"><span>{title}</span><div className="stat-icon violet"><Icon size={18}/></div></div><div className="stat-value">{value}</div><div className="stat-change">{note}</div></div>;}
 function HoldReveal({value}){const [show,setShow]=useState(false);return <button className="hold-reveal" onMouseDown={()=>setShow(true)} onMouseUp={()=>setShow(false)} onMouseLeave={()=>setShow(false)} onTouchStart={()=>setShow(true)} onTouchEnd={()=>setShow(false)} aria-label="Press and hold to reveal purchase cost">{show?value:"Hold to reveal"}</button>;}
 function DashboardLegacy(){return null;}
 
