@@ -1,47 +1,38 @@
-# Story 09 — Permissions, Audit, and Publishing Governance
+# Story 09 — Audit, Operational Governance and Release Compatibility
 
-**Priority:** P0 before real multi-user use · **Depends on:** Stories 01 and 07; integrate across all stories  
-**Goal:** Ensure configuration and record access are enforced by the backend and every sensitive change is traceable.
-
-## User story
-
-As a workspace owner, I want to assign roles and permissions and inspect important changes so that users can only access the applications, modules, tables, records, and configuration they are allowed to use.
-
-## Security baseline
-
-The existing shared `ADMIN_CONFIG_TOKEN` mechanism is a temporary development bridge only. A token embedded in browser code or shared across users is not production authentication. Do not ship a secret in Vite variables or static assets.
+**Priority:** P0 requirements apply from Story 01; this story completes audit and governance · **Depends on:** Stories 01–08  
+**Goal:** Make important operations traceable and define safe compatibility rules across deployed code, configuration and database versions.
 
 ## Scope
 
-1. Implement a proper authentication/session approach supported by the chosen provider; assess Cloudflare Access or an established identity provider before custom password storage.
-2. Workspace-scoped users, roles, role assignments, and permission rules.
-3. Permission actions: platform.configure, application.read/manage, module.read/manage, table.read/create/update/delete, record-level restrictions only if a concrete need is established.
-4. Initial roles: Admin, Manager, User, mapped to permissions rather than hardcoded UI checks.
-5. Enforce every permission in Worker routes and data-source query services.
-6. Audit configuration changes, schema changes, publish/restore, role changes, and destructive data changes.
-7. Protect sensitive properties (e.g. purchase price) at API response and query layers, not only in UI.
-8. Add rate limits or abuse controls where exposed endpoints need them; avoid building a custom security framework unnecessarily.
+1. Append-only audit events for configuration edits/publish/restore, schema migration, permission changes and sensitive/destructive business actions.
+2. Record actor, timestamp, action, entity, request/correlation ID and minimized before/after diff.
+3. Never log passwords, tokens, secrets or unnecessary personal data.
+4. Define platform release version, configuration schema version, component/property schema versions, domain action API versions and required DB migration level.
+5. Add health/diagnostic output identifying incompatible configuration, missing schema or unsupported component/action versions without exposing sensitive data.
+6. Define rollback boundaries: configuration restore, code rollback and database recovery are separate operations.
+7. Document backup/restore expectations and client responsibility.
+8. Ensure every API route remains covered by an authorization policy established from the beginning.
 
-## Audit event contract
+## Compatibility policy
 
-Record actor, workspace, action, entity type/ID, timestamp, request ID, and a minimized before/after diff. Never store passwords, session tokens, admin secrets, or unnecessary personal data in audit JSON. Audit rows are append-only to normal application roles.
+A deployment must not activate configuration requiring a newer platform/API version or database migration than is installed. Database migration rollback is not assumed safe or automatic. Prefer forward-fix or tested recovery. Destructive schema changes use expand → migrate → switch → contract across releases.
 
 ## Acceptance criteria
 
-- [ ] No authentication secret is shipped in frontend bundle.
-- [ ] Every API route has an explicit authentication/authorization policy.
-- [ ] Admin, Manager, User permissions match the approved matrix.
-- [ ] Direct API calls cannot bypass hidden UI controls.
-- [ ] Sensitive fields are omitted or masked server-side based on permission.
-- [ ] Configuration and schema changes include actor and audit event.
-- [ ] Unauthorized access returns consistent 401/403 responses.
-- [ ] Session expiry and logout work.
-- [ ] Existing development/production secrets remain separate.
+- [ ] Sensitive operations create audit events.
+- [ ] Audit data excludes secrets and unnecessary personal information.
+- [ ] Audit events are not editable by normal application roles.
+- [ ] Runtime reports incompatible platform/config/schema/action versions.
+- [ ] Deployment health check fails clearly for required missing migrations.
+- [ ] Configuration rollback is not represented as database rollback.
+- [ ] Backup and recovery procedure is documented and rehearsed in development.
+- [ ] All routes retain explicit authorization policies.
 
 ## Tests
 
-Role/action matrix; direct API authorization; property-level field access; session expiry; CSRF/CORS policy as applicable; audit immutability; secret scan/build artifact scan.
+Audit coverage; audit tamper restrictions; secret redaction; compatibility matrix; missing migration; unsupported component/action version; recovery rehearsal; route-policy regression.
 
 ## Out of scope
 
-Enterprise SSO catalog, complex ACL scripting, row-level policy language, external identity federation beyond selected provider.
+Enterprise SIEM integration, complex compliance workflow and multi-region disaster recovery.
