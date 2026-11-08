@@ -52,6 +52,8 @@ The product is an environment for building, customizing and extending modules in
 
 **Status values:** *Ready for development* means dependencies are met and no open decision blocks the story. *Planned* means it waits on earlier stories. Move a story to Ready only when its dependencies are done.
 
+Development status and the full sequence are tracked in [the development timeline](../TIMELINE.md).
+
 Suggested order: 00 and 01 together, then 02, 03, 04, the early reuse slice ([Decisions D12](DECISIONS.md)), 05, 06, 07. Stories 08–11 follow.
 
 ## Developer workflow
