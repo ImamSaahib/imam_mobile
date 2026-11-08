@@ -1,7 +1,7 @@
 # Story 01 — Platform Foundation and Application Identity
 
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–10  
-**Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
+**Goal:** Establish the persistent metadata foundation, stable application identity, shared visual design system, seed contract and runtime boundaries.
 
 ## User story
 
@@ -16,8 +16,9 @@ As a maintainer, I need a minimal metadata foundation so the same runtime can lo
 5. Seed current Imam Mobile experience as metadata without replacing business records or domain endpoints.
 6. Define repeatable, versioned seed packages. Initial seed and upgrade seed are distinct operations.
 7. Add metadata-to-physical-schema compatibility inspection.
-8. Define the first authentication/authorization assumptions and require an explicit access policy for every API route from the beginning.
-9. Document which metadata is shared runtime core and which is application-specific.
+8. Establish the shared visual design system and reusable UI primitives before feature screens are built.
+9. Define security integration points and route-policy inventory only; implement authentication and authorization after the UI/UX foundation is complete.
+10. Document which metadata is shared runtime core and which is application-specific.
 
 ## Design constraints
 
@@ -28,6 +29,12 @@ As a maintainer, I need a minimal metadata foundation so the same runtime can lo
 - Do not store executable scripts or arbitrary SQL in metadata.
 - Seed reruns must not duplicate rows or overwrite client edits/data.
 - Physical schema changes require developer-controlled migrations.
+
+## Visual design system ownership
+
+Story 01 owns the platform-wide design system. Define documented design tokens and reusable primitives before feature UI work: typography scale, spacing scale, page/container widths, grid and responsive breakpoints, surface/background/border/text/status colors, radii, elevation, focus/hover/disabled states, and light/dark themes. The visual direction is inspired by Cloudflare Dashboard: restrained, high-contrast, information-dense, consistent and responsive; do not copy proprietary assets. Establish shared patterns for application shell, page headers, buttons, inputs, selects, dialogs, side panels, tabs, badges, empty/loading/error states, and data tables. Stories 02–08 must use these primitives rather than inventing local styles. Document accessibility requirements, keyboard focus, touch targets and mobile behavior.
+
+This story defines and implements the shared tokens/primitives only. Feature-specific page composition belongs to the owning story.
 
 ## API and persistence
 
@@ -45,7 +52,8 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [ ] Seed package declares version and minimum supported platform/configuration version.
 - [ ] Schema compatibility check reports missing/incompatible mapped tables and columns.
 - [ ] Incompatible metadata is not silently accepted.
-- [ ] Every API route has a documented authentication/authorization policy, even if selected auth integration is staged.
+- [ ] API routes and services expose clear policy integration points, but no production authentication/authorization implementation is required in this UI/UX phase.
+- [ ] Shared design tokens and core primitives are documented and used by the shell.
 - [ ] Worker metadata SQL is behind service/repository boundaries.
 - [ ] Development migration and tests pass; production remains untouched.
 
@@ -55,7 +63,7 @@ Empty-database migration; repeatable seed; bootstrap response; stable IDs; legac
 
 ## Out of scope
 
-Full visual editor, arbitrary table/column creation, multi-tenant shared hosting, marketplace, workflow engine and advanced reports.
+Authentication/authorization implementation (scheduled after UI/UX stories); full visual editor, arbitrary table/column creation, multi-tenant shared hosting, marketplace, workflow engine and advanced reports.
 
 ## Seed ownership and upgrade contract
 
