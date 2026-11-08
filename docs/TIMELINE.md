@@ -19,7 +19,7 @@
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
 | 00 | UI shell and design system | P0 | none | Ready | |
-| 01 | Platform foundation and application identity | P0 | none | Ready | |
+| 01 | Platform foundation and application identity | P0 | none | In progress (01a done) | Slice 01a: 35 Worker baseline tests, type check, CI. See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
 | 04 | Data model, properties and schema compatibility | P0 | 01 | Planned | |
@@ -52,7 +52,7 @@ Work is done one slice at a time, each in a pull request into `development`.
 
 | Step | Work | Why this order | Gate before moving on |
 |---|---|---|---|
-| 1 | **01a** Test runner, TypeScript build, baseline tests of current workflows | Nothing moves onto metadata until the current behavior is pinned by tests | Baseline tests pass on `development` |
+| 1 ✔ | **01a** Test runner, TypeScript build, baseline tests of current workflows | Nothing moves onto metadata until the current behavior is pinned by tests | Baseline tests pass on `development` |
 | 2 | **00a** Kumo evaluation, icon set, design tokens | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
 | 3 | **01b** Policy placeholder, actor columns, audit shape, legacy inventory | Every later route declares its permission | Route-policy inventory exists |
 | 4 | **00b** Shell, primitives, context menu, gallery | Needs the tokens | Gallery and screenshot tests pass, bundle under 300 KB gzip |
@@ -86,7 +86,8 @@ Work is done one slice at a time, each in a pull request into `development`.
 | Rough customer and sales counts (for the reference dataset) | Step 6 |
 | Whether Admin, Manager and User are enough as roles | Step 15 |
 | Password hashing spike result | Step 15 |
-| Frontend API URL is hardcoded to the dev Worker | Step 1 (baseline work) |
+| Frontend API URL is hardcoded to the dev Worker | Step 3 (01b) |
+| Frontend test tooling (Vitest with Testing Library) | Before Story 00b screenshot and component tests |
 
 ## Recommended model per step
 
@@ -97,3 +98,4 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 | Date | Change |
 |---|---|
 | 2026-11-08 | Timeline created. Stories 00 and 01 marked Ready. |
+| 2026-11-08 | Slice 01a done: Vitest with the Cloudflare plugin, 35 baseline tests, type checking, lockfiles and CI. Story 01 In progress. |

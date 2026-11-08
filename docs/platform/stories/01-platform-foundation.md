@@ -1,6 +1,6 @@
 # Story 01 — Platform Foundation and Application Identity
 
-**Status:** Ready for development  
+**Status:** In progress (slice 01a done; 01b–01d remaining)  
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–11  
 **Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
 
@@ -66,8 +66,8 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [ ] Incompatible metadata is not silently accepted.
 - [ ] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11.
 - [ ] `dev-open` is refused outside development, and the health check fails if it is active elsewhere.
-- [ ] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata.
-- [ ] The test runner and TypeScript build are in place.
+- [x] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata. *(Worker routes: 35 tests, slice 01a.)*
+- [x] The test runner and TypeScript build are in place. *(Worker side done in slice 01a. Frontend test tooling is still open, see notes.)*
 - [ ] The legacy admin code and `custom_field_values` inventory and plan are recorded.
 - [ ] Actor columns and the audit event shape exist with a placeholder actor.
 - [ ] The owner's confirmation that production holds no real data is recorded.
@@ -101,3 +101,43 @@ Every seeded configuration item must carry a stable seed key, package owner, own
 - [ ] Repeated install and interrupted/retried application are safe.
 - [ ] Client-owned items and business records are never overwritten by upstream seed updates.
 - [ ] Seed reset-to-upstream-default is an explicit, auditable operation.
+
+## Implementation notes
+
+Findings, evaluations and evidence are recorded here as the work happens, so they live in the repository and not in a session. Each slice adds a dated entry.
+
+### Slice 01a — test runner, TypeScript checking, baseline tests (2026-11-08)
+
+**Scope items covered:** 10 (test runner and baseline tests, Worker side), 12 (type checking, partly). Items 1 and 11 were started by reading the code, see the inspection below. Items 2–9 and 13–23 are still open.
+
+**Decisions**
+- **D10 resolved for the Worker.** The test runner is Vitest 4.1 with `@cloudflare/vitest-plugin` 1.6, which runs tests inside the Workers runtime with a local D1 database. The older `@cloudflare/vitest-pool-workers` is deprecated and renamed to this package, so it was not adopted. `vitest-pool-workers` 0.23 also pins `vitest ^4.1`, while the newest Vitest is 5.x. Version pins matter here.
+- Installing with plain `npm install -D` failed with an npm internal error (`Cannot read properties of null (reading 'edgesOut')`) on the deprecated package. The same install succeeds with `@cloudflare/vitest-plugin`. `npm ci` from the committed lockfile works from a clean checkout.
+- **TypeScript:** `tsc --noEmit` runs with `strict` on the tests and config. `allowJs` is on and `checkJs` is off, so the existing `src/index.js` is not type-checked yet. New platform modules are written in TypeScript and the existing file is converted when it changes (D3).
+- Lockfiles added for `backend` and `frontend`. CI now uses `npm ci` for both, runs `node --check`, `npm run typecheck` and `npm test` for the Worker, and builds the frontend. The Worker CI job was renamed `worker-syntax` to `worker-checks`. If a required status check is configured later, use the new name.
+
+**Evidence**
+- `npm run check` in `backend`: type check clean, 4 test files, 35 tests passing. Clean `npm ci` followed by `npm run check` also passes.
+- `npm audit`: 0 vulnerabilities in the plugin-based install. An earlier install of the deprecated package reported 6 high-severity findings in development-only tooling (`sharp`, `undici`, `zod`), another reason not to use it.
+- Frontend baseline build: `index` JavaScript 207.8 kB (62.8 kB gzip), Admin Studio chunk 30.0 kB (7.7 kB gzip), CSS 37.1 kB (7.7 kB gzip). About 78 kB gzip in total, against the 300 KB gzip budget (Contracts §9). This is the starting point for Story 00's bundle check.
+
+**Inspection of the current code (D11, scope items 1 and 11)**
+- A server-side sale operation exists: `POST /api/sales`. It checks stock, inserts the sale, then runs one `batch()` of sale items, conditional device updates and an optional credit ledger entry. The sale row is inserted in a separate statement before the batch, so a failure in the batch leaves an orphan sale. A concurrent sale of the same device is also possible. There is no idempotency key; a test shows a repeated request with the same `requestId` creates a second sale. Story 06 fixes this.
+- The frontend loads all devices, customers, entries and sales with four unpaginated calls on every load, then filters and sorts in the browser. Story 05 replaces this. `GET /api/devices` has a pinned test that returns every row (60 in the test).
+- Device and customer deletes are physical. The database refuses deleting a sold device or a customer with ledger entries (foreign keys, 409), which is pinned by tests. Story 04 moves records that matter to archive.
+- Validation gap: `condition` must be `Pack` or `Used` and `status` must be `Available`, `Booked` or `Sold Out`, but only the database checks this. A wrong value returns a generic 500 ("An unexpected server error occurred"). That is the kind of random error the product must not show. Pinned by a test and to be fixed in Story 06.
+- Admin routes use one shared bearer token. Every admin route returns 401 without it, pinned by tests. `GET /api/configuration` is public and cacheable for 60 seconds at the edge, which conflicts with D13 and is addressed in item 16.
+- `custom_field_values` and the live add-column and add-index endpoints exist and are not yet covered by tests. Item 11 (the legacy inventory) still needs its written plan.
+- `frontend/README.md` says data is held in memory. The code calls the API, so the README is out of date.
+- The API URL is hardcoded to the dev Worker in `App.jsx` and `AdminStudio.jsx`.
+
+**Test conventions**
+- Tests call the Worker's `fetch` directly with the local D1 binding and a helper in `backend/test/helpers.ts`.
+- Business tables are emptied before each test, because D1 data is not rolled back between tests in a file.
+- Tests that document a known defect say so in their names ("known gap") and name the story that changes them. When that story changes the behavior, it updates the test.
+
+**Still open for Story 01**
+- Frontend test tooling (Vitest with Testing Library), the rest of D10.
+- Tests for `custom_field_values` and the legacy schema endpoints, and the written legacy inventory and removal plan (item 11).
+- Slices 01b (policy placeholder, actor columns, audit shape, folder layout), 01c (metadata catalog, snapshots, bootstrap, seed) and 01d (measurement helper, caches, governor, service worker).
+- Confirm the D1 result fields for rows read and written (item 18).

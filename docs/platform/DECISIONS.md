@@ -49,6 +49,8 @@ The reference application's seed lives under `applications/imam-mobile/seed/`. U
 
 **D10. Test tooling.** Story 01 selects the test runner before other work. Evaluate Vitest with Cloudflare's Workers test integration for the Worker, and Vitest with Testing Library for the frontend. Verify current support before adopting. The baseline workflow tests (D11) cannot be written until this is chosen. *Relied on by: Story 01.*
 
+*Update 2026-11-08:* the Worker side is resolved. Vitest 4.1 with `@cloudflare/vitest-plugin` is adopted, because the older `@cloudflare/vitest-pool-workers` is deprecated. Frontend tooling is still open. Details are in Story 01 notes.
+
 **D11. Baseline tests first.** Before moving any existing screen onto metadata, Story 01 records what the application does today and adds tests for those workflows. The list is written from the actual routes. The inspection must confirm whether a server-side sale operation exists, since the `sales` and `sale_items` tables appear unused by the Worker. *Relied on by: Stories 01, 06.*
 
 **D12. Early reuse slice.** After Story 04, build a minimal second data source with one list and one form entirely from configuration. Pass criteria: no shared-core edits, no new migration beyond the new table, the list and form render from metadata. If it fails, stop and revise the metadata design before Stories 05–06. The full second-application proof after Story 06 remains. *Relied on by: Contracts §4, Story 10.*

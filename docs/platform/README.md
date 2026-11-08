@@ -38,7 +38,7 @@ The product is an environment for building, customizing and extending modules in
 3. [Decisions Record](DECISIONS.md)
 4. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
 5. Story 00 — UI shell and design system (P0, **Ready**)
-6. Story 01 — Platform foundation and application identity (P0, **Ready**)
+6. Story 01 — Platform foundation and application identity (P0, **In progress**)
 7. Story 02 — Application navigator (P0)
 8. Story 03 — Page builder and component registry (P0)
 9. Story 04 — Data model, properties and schema compatibility (P0)

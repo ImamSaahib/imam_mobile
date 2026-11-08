@@ -7,9 +7,17 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 migrations apply imam-mobile-db --local",
-    "db:remote": "wrangler d1 migrations apply imam-mobile-db --remote"
+    "db:remote": "wrangler d1 migrations apply imam-mobile-db --remote",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.6.0",
+    "@cloudflare/workers-types": "^5.20261108.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12",
     "wrangler": "^4.45.0"
   }
 }
