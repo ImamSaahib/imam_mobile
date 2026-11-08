@@ -1,18 +1,24 @@
 # Story 09 — Audit, Operational Governance and Release Compatibility
 
-**Priority:** P0 requirements apply from Story 01; this story completes audit and governance · **Depends on:** Stories 01–08  
-**Goal:** Make important operations traceable and define safe compatibility rules across deployed code, configuration and database versions.
+**Priority:** P0 release gate after UI/UX MVP · **Depends on:** Stories 01–08  
+**Goal:** Implement authentication, authorization, audit and release governance before any real multi-user or production use.
 
 ## Scope
 
-1. Append-only audit events for configuration edits/publish/restore, schema migration, permission changes and sensitive/destructive business actions.
+This is the security implementation phase. Stories 01–08 define stable policy hooks and metadata fields, but do not claim end-to-end access control. Complete and test authentication and authorization here before exposing real business data or enabling production use.
+
+1. Select and implement the supported authentication/session approach, including secure cookie/token handling, expiry, logout and account lifecycle.
+2. Implement server-side role/permission evaluation for every API route, data source, property, record operation and registered action.
+3. Enforce sensitive-field read/write restrictions in query, search, sort, filters, forms, exports and aggregates.
+4. Protect direct URL access and prevent client-supplied actor/permission identity from being trusted.
+5. Append-only audit events for configuration edits/publish/restore, schema migration, permission changes and sensitive/destructive business actions.
 2. Record actor, timestamp, action, entity, request/correlation ID and minimized before/after diff.
 3. Never log passwords, tokens, secrets or unnecessary personal data.
 4. Define platform release version, configuration schema version, component/property schema versions, domain action API versions and required DB migration level.
 5. Add health/diagnostic output identifying incompatible configuration, missing schema or unsupported component/action versions without exposing sensitive data.
 6. Define rollback boundaries: configuration restore, code rollback and database recovery are separate operations.
 7. Document backup/restore expectations and client responsibility.
-8. Ensure every API route remains covered by an authorization policy established from the beginning.
+8. Build a route/service authorization inventory and automated deny-by-default regression tests.
 
 ## Compatibility policy
 
@@ -20,6 +26,9 @@ A deployment must not activate configuration requiring a newer platform/API vers
 
 ## Acceptance criteria
 
+- [ ] Authentication and session lifecycle are implemented and tested.
+- [ ] Every API/data/action path has server-side authorization tests.
+- [ ] Sensitive properties are protected across all query and write paths.
 - [ ] Sensitive operations create audit events.
 - [ ] Audit data excludes secrets and unnecessary personal information.
 - [ ] Audit events are not editable by normal application roles.
