@@ -1,7 +1,7 @@
 # Story 08 — Reports, Metrics and Registered Actions
 
 **Status:** Planned (waiting on dependencies)  
-**Priority:** P1 · **Depends on:** Stories 04–06 and action contract from Story 06  
+**Priority:** P2 · **Depends on:** Stories 04–06 and action contract from Story 06  
 **Goal:** Add bounded operational summaries and reports only after reusable data and action contracts are proven.
 
 ## User story
@@ -42,6 +42,6 @@ As an application builder, I want to place approved KPIs, reports and action but
 
 Aggregation correctness; filter correctness; permission leakage; action authorization; idempotency; query caps; unsupported action version; chart serialization.
 
-## Out of scope
+## MVP boundary and deferred scope
 
-Advanced BI, scheduled report delivery, workflow builder, arbitrary scripting and external webhooks unless a concrete app proves the need.
+The initial platform MVP does not require a configurable reporting suite. Deliver only basic KPI/count and a small number of fixed operational summaries needed by Imam Mobile. Defer configurable aggregate builders, multiple chart types, advanced filters, scheduled report delivery, advanced BI, workflow builder, arbitrary scripting and external webhooks until the second-application proof and user feedback demonstrate demand.

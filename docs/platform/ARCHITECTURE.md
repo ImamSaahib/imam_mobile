@@ -212,6 +212,12 @@ Use physical relational D1 tables for business records and normalized metadata t
 
 A data source maps to an approved physical table. A property maps to a real column, except explicitly declared virtual/computed properties. Physical schema and property metadata are two representations that must be checked for compatibility.
 
+D1/SQLite constraints are part of the product contract:
+- Cloudflare D1 currently documents a maximum of 100 columns per table. Treat this as a hard ceiling and warn at a configurable lower threshold (default 80 columns); revalidate provider limits during implementation.
+- SQLite does not support a general in-place column-type alteration. Type/constraint changes commonly require a table rebuild and data copy/validation.
+- Rebuild plans must account for foreign keys, indexes, triggers, views, dependent queries and constraints; validate row counts and converted values before switching, and preserve a recovery path.
+- Property retirement is metadata deprecation first. Physical column removal is a separate reviewed migration.
+
 Required safeguards:
 - A migration/deployment check compares expected metadata with actual SQLite table/column definitions.
 - Publish validation refuses references to missing or incompatible columns.
@@ -324,10 +330,9 @@ Deferred: sub-groups, sub-items, templates, and the board, timeline, calendar, g
 
 Every API endpoint declares the permission it requires and calls the central authorize function from the first implementation story. Until Story 11 that function is a development-only placeholder ([Decisions D7](DECISIONS.md)); Story 11 enforces it. The lock/edit UI toggle is not a security control.
 
-- Select a supported authentication approach before real multi-user deployment.
 - Never ship secrets in Vite variables or browser assets.
-- Enforce permissions in Worker routes and data services.
-- Start with Admin, Manager and User role presets mapped to permissions, not hardcoded role-name checks.
+- Enforce permissions in Worker routes and data services when Story 11 is implemented.
+- Use Admin, Manager and User role presets mapped to permissions, not hardcoded role-name checks.
 - Protect sensitive fields at API/query level, not only by hiding columns.
 - Audit configuration changes, publish/restore, schema migrations, permission changes and sensitive/destructive operations.
 - Client deployments have independent credentials, sessions, secrets and data.

@@ -132,7 +132,9 @@ Acceptance evidence must show:
 
 Record configuration-only files changed, extension files changed, shared-core files changed (target: zero for ordinary setup), migrations added, tests/deployment result, implementation time and blockers requiring platform changes.
 
-Run a minimal early slice after Story 04 ([Decisions D12](DECISIONS.md)): one extra data source with one list and one form from configuration, with no shared-core edits. If it fails, stop and revise the metadata design. Then build the smallest meaningful full proof after Stories 01–06. Use evidence to decide whether Story 08 needs expansion and whether the edit-mode contract (§7) needs changes.
+Run a minimal early slice after Story 04 ([Decisions D12](DECISIONS.md)): seed a small, distinct second application with its own identity, one separate relational table, a data source, typed properties, a basic page and one list and one form from configuration, with no shared-core edits. This exposes metadata-model assumptions before the full CRUD and view surface is built; it is not the final reuse proof. If it fails, stop and revise the metadata design. Then build the smallest meaningful full proof after Stories 01–06. Use evidence to decide whether Story 08 needs expansion and whether the edit-mode contract (§7) needs changes.
+
+Build the full measurable proof after Stories 01–06. Use evidence to decide whether Stories 07–08 need expansion.
 
 ## 5. Initial upstream maintenance policy
 
@@ -351,3 +353,7 @@ Keeping tables under about 2,000 rows in the browser, with incremental sync by `
 - Simulated day: 100 sessions stay within the budgets in §9, and the governor stays in Normal.
 - Forced Limit state: the interface shows the message, lists stay readable from cache, and no raw error is displayed.
 - A looping client is rate limited without affecting other clients.
+
+## 11. UI/UX MVP and security release gate
+
+The UI/UX and reusable-runtime MVP establishes the design system, metadata-driven shell, page/component registry, early edit-mode/inspector interaction, typed property model, basic list/search and standard forms/CRUD. Authentication and authorization are implemented after this UI/UX phase in Story 11. The application must not be used with real multi-user business data or promoted to production before Story 11's authentication, authorization and sensitive-field tests pass. Development-only policy stubs must be clearly marked and must not be mistaken for security.

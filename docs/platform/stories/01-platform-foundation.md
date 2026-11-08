@@ -44,6 +44,10 @@ As a maintainer, I need a minimal metadata foundation so the same runtime can lo
 - Seed reruns must not duplicate rows or overwrite client edits/data.
 - Physical schema changes go through developer migrations in this story. The schema change service is added in Story 04.
 
+## Visual design system
+
+The shared design system is owned by [Story 00](00-ui-shell-design-system.md), which runs alongside this story. This story adds no visual primitives.
+
 ## API and persistence
 
 Define Worker repository/service boundaries. At minimum provide bootstrap/read access and a controlled seed mechanism. Exact SQL names may be finalized after inspecting existing migrations, but logical entities and ownership boundaries in Architecture are required.

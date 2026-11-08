@@ -45,7 +45,7 @@ The product is an environment for building, customizing and extending modules in
 10. Story 05 — Lists, views and safe query engine (P0)
 11. Story 06 — Forms, records and domain service extensions (P0)
 12. Story 07 — Edit mode, configuration drafts and publishing (P0)
-13. Story 08 — Reports, metrics and registered actions (P1)
+13. Story 08 — Reports, metrics and registered actions (P2, post-MVP)
 14. Story 09 — Audit, operational governance and release compatibility (P1)
 15. Story 10 — Client deployment, upgrades and release readiness (P1; its practices apply from Story 01)
 16. Story 11 — Authentication and authorization (P1; scheduled after Stories 00–07)
@@ -83,6 +83,12 @@ A story is not complete because its UI renders. Persistence, validation, failure
 - No deployment that runs the placeholder policy (`AUTH_MODE=dev-open`) holds real client data or serves production traffic until Story 11 passes in that environment.
 - Prefer configuration for client variation; use documented extension points for new behavior; avoid editing shared core for one client.
 - Every story includes tests, migration impact, compatibility considerations and rollback/forward-fix notes.
+
+## MVP sequencing and scope
+
+**UI/UX and reusable runtime MVP:** Stories 01–07, delivered incrementally. Story 00 establishes the shared visual system. Story 03 introduces edit mode and the shared inspector early; Story 07 completes draft persistence, validation and publishing. Stories 05–06 initially deliver only conventional list/search/basic filters/sort/pagination and standard CRUD/forms/domain actions. Story 08 is post-MVP except for a small number of fixed KPIs needed to prove the first app. Story 11 is a mandatory release gate after the UI/UX phase and before real multi-user or production use. Story 10's quality, environment safety and recovery practices apply throughout.
+
+**Early reuse checkpoint:** After Stories 01–04, configure a small second application using a separate seed, a distinct table and the same shell/page/component/property model. This is an early falsification test of the metadata model, not the final reuse proof. The full measurable proof remains after Stories 01–06 as defined in Implementation Contracts.
 
 ## Definition of success
 

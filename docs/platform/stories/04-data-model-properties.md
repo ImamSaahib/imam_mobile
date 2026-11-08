@@ -38,6 +38,12 @@ A person building a module may configure supported metadata and request allowlis
 14. Add the counter mechanism ([Contracts §10.4](../IMPLEMENTATION-CONTRACTS.md)): registered counter definitions, the `data_source_counters` table, and a rebuild operation that reports drift.
 15. Every write to a data source increments its `data_source_versions` row in the same `batch()`.
 
+## D1 and SQLite schema limits
+
+- D1 allows 100 columns per table. Treat that as a hard ceiling, and warn at 80 so there is room for system fields and later migrations.
+- SQLite has no general in-place `ALTER COLUMN`. Changing a column type or many constraints needs a table rebuild: create a replacement table, copy and convert validated data, verify row counts, constraints, indexes and relations, then switch.
+- Retire a property by hiding or deprecating it and keeping its data. Dropping a physical column is a separate reviewed operation, never part of ordinary property deletion.
+
 ## Phasing within this story
 
 - **Phase A:** scope items 1–8 and 10. Add property, option editing, presentation conversions, compatibility inspection.

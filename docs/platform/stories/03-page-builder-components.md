@@ -19,7 +19,12 @@ As an application administrator, I want to compose pages from supported componen
 7. Preserve responsive design, white default theme and dark mode support.
 8. Keep client-specific component implementations in isolated extension modules, not shared core modifications where avoidable.
 9. Every component type registers a configure descriptor (Implementation Contracts §7): configuration schema, configure panel and context actions. In edit mode, right-click, the context-menu key, Shift+F10 and long press open the same menu.
-10. A page contains components only and cannot embed another page in release 1 ([Decisions D6](../DECISIONS.md)). Tabs and sections use the container component. Validation rejects a page reference inside a page.
+10. Configure opens one shared inspector panel driven by each component's registered configuration schema. Components do not implement separate editors. Every context action is also reachable through visible controls, keyboard and touch.
+11. A page contains components only and cannot embed another page in release 1 ([Decisions D6](../DECISIONS.md)). Tabs and sections use the container component. Validation rejects a page reference inside a page.
+
+## Configuration interaction contract
+
+Normal mode renders the published release. The Super Menu lock/edit toggle enters configure mode ([Architecture §5.2](../ARCHITECTURE.md)). Selecting a component exposes Configure, Move, Duplicate, Disable and Remove where supported. Right-click is an enhancement: every action is also available through visible controls, keyboard and touch. Draft persistence, validation and publishing are completed in Story 07; component selection, edit affordances, the inspector contract and local draft interaction are demonstrated here. The toggle is a user-interface state, not an authorization boundary.
 
 ## Dependency contracts
 
@@ -39,6 +44,10 @@ A component type has a stable type key, schema version, validated config shape a
 - [ ] The page header component matches UI Reference §2.3.
 - [ ] Validation rejects a page embedded inside a page.
 - [ ] Client-specific additions have an isolated extension contract.
+- [ ] Edit mode can be entered and exited from the Super Menu.
+- [ ] Configure on different component types opens the same inspector shell with schema-specific controls.
+- [ ] Context actions have keyboard-accessible and touch-accessible alternatives.
+- [ ] Edit mode does not expose executable code, SQL or unrestricted styling.
 - [ ] Keyboard and mobile interaction remain usable.
 - [ ] Existing Imam Mobile pages remain functional during migration.
 
@@ -48,4 +57,4 @@ Component registry validation; unknown component version; invalid config; missin
 
 ## Out of scope
 
-Freeform canvas, arbitrary React injection, third-party marketplace and unreviewed runtime plug-ins.
+Full draft versioning/publish lifecycle (Story 07); freeform canvas, arbitrary React injection, third-party marketplace and unreviewed runtime plug-ins.
