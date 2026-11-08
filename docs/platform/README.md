@@ -27,15 +27,15 @@ These are interaction references, not instructions to copy proprietary assets or
 
 1. [Architecture](ARCHITECTURE.md)
 2. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
-3. Story 01 — Platform foundation and application identity
+3. Story 01 — Platform foundation, design system and application identity
 4. Story 02 — Application navigator and authorization integration
 5. Story 03 — Page builder and component registry
 6. Story 04 — Data model, properties and schema compatibility
-7. Story 05 — Lists, views and safe query engine
-8. Story 06 — Forms, records and domain service extensions
+7. Story 05 — Lists, views and safe query engine (MVP subset)
+8. Story 06 — Forms, records and domain service extensions (MVP subset)
 9. Story 07 — Configuration, validation and publishing
-10. Story 08 — Reports, metrics and registered actions
-11. Story 09 — Audit, operational governance and release compatibility
+10. Story 08 — Reports, metrics and registered actions (post-MVP)
+11. Story 09 — Authentication, authorization, audit and release compatibility
 12. Story 10 — Client deployment, upgrades and release readiness
 
 ## Developer workflow
@@ -50,7 +50,7 @@ For each story:
 7. Deploy and verify only in development.
 8. Record commit, evidence, migrations, limitations and recovery notes.
 
-A story is not complete because its UI renders. Persistence, authorization, validation, failure handling, tests and deployment evidence must pass.
+A story is not complete because its UI renders. Persistence, validation, failure handling, tests and development deployment evidence must pass. Authentication/authorization are deliberately implemented after the UI/UX phase in Story 09; no real multi-user production use is allowed before that release gate passes.
 
 ## Non-negotiable delivery rules
 
@@ -65,6 +65,12 @@ A story is not complete because its UI renders. Persistence, authorization, vali
 - Physical database schema changes are controlled developer/deployment migrations, not ordinary live admin edits.
 - Prefer configuration for client variation; use documented extension points for new behavior; avoid editing shared core for one client.
 - Every story includes tests, migration impact, compatibility considerations and rollback/forward-fix notes.
+
+## MVP sequencing and scope
+
+**UI/UX and reusable runtime MVP:** Stories 01–07, delivered incrementally. Story 01 establishes the shared visual system. Story 03 introduces edit mode and the shared inspector early; Story 07 completes draft persistence, validation and publishing. Stories 05–06 initially deliver only conventional list/search/basic filters/sort/pagination and standard CRUD/forms/domain actions. Story 08 is post-MVP except for a small number of fixed KPIs needed to prove the first app. Story 09 is a mandatory release gate after the UI/UX phase and before real multi-user or production use. Story 10's quality, environment safety and recovery practices apply throughout.
+
+**Early reuse checkpoint:** After Stories 01–04, configure a small second application using a separate seed, a distinct table and the same shell/page/component/property model. This is an early falsification test of the metadata model, not the final reuse proof. The full measurable proof remains after Stories 01–06 as defined in Implementation Contracts.
 
 ## Definition of success
 
