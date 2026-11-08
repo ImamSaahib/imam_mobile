@@ -1,6 +1,6 @@
 # Story 06 — Forms, Records and Domain Service Extensions
 
-**Priority:** P0 · **Depends on:** Stories 02 and 04  
+**Priority:** P1 · **Depends on:** Stories 03 and 04  
 **Goal:** Reuse forms and CRUD for ordinary records while keeping business transactions in explicit, versioned domain services.
 
 ## User story
@@ -16,7 +16,7 @@ As an application developer, I want forms generated from typed properties and a 
 5. Server-side validation and mass-assignment protection.
 6. Optimistic concurrency/version checks where appropriate.
 7. Preserve existing domain services for sales, ledger updates and stock status transitions.
-8. Define a first-class domain action contract for registered server operations.
+8. Define a first-class domain action contract for registered server operations, with permission enforcement wired as a later security phase.
 
 ## Domain action contract
 
@@ -30,7 +30,7 @@ Each action defines:
 - retryable/non-retryable error codes;
 - minimum supported platform/API version.
 
-Configured buttons may invoke an approved action key. They cannot contain JavaScript, SQL or arbitrary endpoint URLs. The Worker dispatches the action and enforces authorization.
+Configured buttons may invoke an approved action key. They cannot contain JavaScript, SQL or arbitrary endpoint URLs. The Worker dispatches the action through a centralized policy hook. Full authentication and authorization enforcement are implemented after the UI/UX phase; production use is blocked until then.
 
 ## Acceptance criteria
 
@@ -41,16 +41,16 @@ Configured buttons may invoke an approved action key. They cannot contain JavaSc
 - [ ] Related transactional writes are atomic or have a documented consistency strategy.
 - [ ] Duplicate financial/inventory actions are safely rejected or idempotent.
 - [ ] A domain action can be registered without changing generic form/list code.
-- [ ] Action permissions and audit behavior are enforced server-side.
+- [ ] Action definitions declare permission and audit requirements; enforcement is completed in the later security/audit phase.
 - [ ] Existing device/customer/sale/ledger workflows pass regression tests.
 
 ## Tests
 
-CRUD by property type; invalid payloads; unauthorized field injection; stale update; relation lookup authorization; transaction failure; duplicate action submission; action version compatibility.
+CRUD by property type; invalid payloads; mass-assignment rejection; stale update; relation integrity; transaction failure; duplicate action submission; action version compatibility. Authentication/authorization and sensitive-field tests are added in the later security phase.
 
 ## Out of scope
 
-Workflow designer, arbitrary form scripting, multi-step approvals, external public forms and arbitrary plugin execution.
+Authentication/authorization implementation (scheduled after UI/UX); workflow designer, arbitrary form scripting, multi-step approvals, external public forms and arbitrary plugin execution.
 
 ## Extension registration and compatibility
 
