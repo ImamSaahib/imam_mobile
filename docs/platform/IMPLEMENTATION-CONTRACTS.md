@@ -130,9 +130,15 @@ Acceptance evidence must show:
 
 Record configuration-only files changed, extension files changed, shared-core files changed (target: zero for ordinary setup), migrations added, tests/deployment result, implementation time and blockers requiring platform changes.
 
-Build the smallest meaningful proof after Stories 01–06. Use evidence to decide whether Stories 07–08 need expansion.
+Run an early model-validation checkpoint after Stories 01–04: seed a small, distinct second application with its own identity, one separate relational table, a data source, typed properties, a basic page and one list/component binding. This exposes metadata-model assumptions before investing in the full CRUD/view surface; it is not the final reuse proof.
 
-## 5. Initial upstream maintenance policy
+Build the full measurable proof after Stories 01–06. Use evidence to decide whether Stories 07–08 need expansion.
+
+## 5. UI/UX MVP and security release gate
+
+The UI/UX and reusable-runtime MVP establishes the design system, metadata-driven shell, page/component registry, early edit-mode/inspector interaction, typed property model, basic list/search and standard forms/CRUD. Authentication and authorization are implemented after this UI/UX phase in Story 09. The application must not be used with real multi-user business data or promoted to production before Story 09's authentication, authorization and sensitive-field tests pass. Development-only policy stubs must be clearly marked and must not be mistaken for security.
+
+## 6. Initial upstream maintenance policy
 
 Support the latest tagged stable baseline as the primary supported line. Publish release notes, migration notes, compatibility requirements and known risks for each tag. Security or critical correctness fixes target the latest stable release; backports to older tags are not promised unless announced.
 
@@ -140,7 +146,7 @@ Clients may defer updates, but their fork is unverified until they review upstre
 
 Do not promise automatic conflict-free merges, an SLA, indefinite support for old versions, or automatic production updates. Client production promotion requires explicit client approval. Revisit this policy when actual external clients and support capacity exist.
 
-## 6. Continuous integration contract
+## 7. Continuous integration contract
 
 Shared baseline CI validates pull requests targeting development and pushes to development. Production branch main is not a development target; production deployment is a separate approval-controlled workflow.
 
