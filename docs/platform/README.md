@@ -19,24 +19,40 @@ This is not a multi-tenant SaaS design or a universal no-code platform.
 
 - ServiceNow: application navigator, modules, records, lists, forms and configuration.
 - Notion: typed properties, database views, filters, sorting, grouping and relations.
-- Cloudflare: restrained responsive interface and lightweight operations.
+- Cloudflare: restrained responsive interface and lightweight operations. The target layout, table and controls are specified in [UI Reference](UI-REFERENCE.md).
 
 These are interaction references, not instructions to copy proprietary assets or code.
+
+The product is an environment for building, customizing and extending modules inside the running application, not one business application. Edit mode (the lock/edit toggle in the Super Menu) is the only place configuration is changed; see [Architecture §5.2](ARCHITECTURE.md) and [Decisions C1](DECISIONS.md).
+
+## Phases
+
+1. **UI/UX and platform (Stories 00–07).** The runtime, the interface, edit mode and publishing. Authorization is designed but not enforced: routes declare their required permission and call one placeholder policy function ([Decisions D7](DECISIONS.md)). These environments hold test data only.
+2. **Security (Story 11).** Authentication and authorization replace the placeholder. Real data is allowed only after this phase passes.
+3. **Operations (Stories 08–10).** Reports, governance and release readiness. Practices from Story 10 apply from Story 01.
 
 ## Read in this order
 
 1. [Architecture](ARCHITECTURE.md)
-2. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
-3. Story 01 — Platform foundation and application identity
-4. Story 02 — Application navigator and authorization integration
-5. Story 03 — Page builder and component registry
-6. Story 04 — Data model, properties and schema compatibility
-7. Story 05 — Lists, views and safe query engine
-8. Story 06 — Forms, records and domain service extensions
-9. Story 07 — Configuration, validation and publishing
-10. Story 08 — Reports, metrics and registered actions
-11. Story 09 — Audit, operational governance and release compatibility
-12. Story 10 — Client deployment, upgrades and release readiness
+2. [UI Reference](UI-REFERENCE.md)
+3. [Decisions Record](DECISIONS.md)
+4. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
+5. Story 00 — UI shell and design system (P0, **Ready**)
+6. Story 01 — Platform foundation and application identity (P0, **Ready**)
+7. Story 02 — Application navigator (P0)
+8. Story 03 — Page builder and component registry (P0)
+9. Story 04 — Data model, properties and schema compatibility (P0)
+10. Story 05 — Lists, views and safe query engine (P0)
+11. Story 06 — Forms, records and domain service extensions (P0)
+12. Story 07 — Edit mode, configuration drafts and publishing (P0)
+13. Story 08 — Reports, metrics and registered actions (P1)
+14. Story 09 — Audit, operational governance and release compatibility (P1)
+15. Story 10 — Client deployment, upgrades and release readiness (P1; its practices apply from Story 01)
+16. Story 11 — Authentication and authorization (P1; scheduled after Stories 00–07)
+
+**Status values:** *Ready for development* means dependencies are met and no open decision blocks the story. *Planned* means it waits on earlier stories. Move a story to Ready only when its dependencies are done.
+
+Suggested order: 00 and 01 together, then 02, 03, 04, the early reuse slice ([Decisions D12](DECISIONS.md)), 05, 06, 07. Stories 08–11 follow.
 
 ## Developer workflow
 
@@ -50,7 +66,7 @@ For each story:
 7. Deploy and verify only in development.
 8. Record commit, evidence, migrations, limitations and recovery notes.
 
-A story is not complete because its UI renders. Persistence, authorization, validation, failure handling, tests and deployment evidence must pass.
+A story is not complete because its UI renders. Persistence, validation, failure handling, tests and deployment evidence must pass. Authorization criteria are marked *deferred to Story 11* where the phasing above applies, and are not counted as met until that story completes.
 
 ## Non-negotiable delivery rules
 
@@ -62,7 +78,9 @@ A story is not complete because its UI renders. Persistence, authorization, vali
 - Never embed secrets in Vite variables or browser bundles.
 - Never store executable JavaScript, arbitrary SQL or expressions in configuration.
 - Runtime users consume published configuration only.
-- Physical database schema changes are controlled developer/deployment migrations, not ordinary live admin edits.
+- Physical database schema changes go through the platform schema change service (add property, add index, presentation conversions) or developer migrations (new tables, constraints, data-rewriting conversions). Arbitrary DDL and SQL supplied by a person or by configuration are never accepted. See [Architecture §7.3](ARCHITECTURE.md).
+- Stay within the resource budget in [Implementation Contracts §9](IMPLEMENTATION-CONTRACTS.md). Each story reports measured rows read and written for its main operations.
+- No deployment that runs the placeholder policy (`AUTH_MODE=dev-open`) holds real client data or serves production traffic until Story 11 passes in that environment.
 - Prefer configuration for client variation; use documented extension points for new behavior; avoid editing shared core for one client.
 - Every story includes tests, migration impact, compatibility considerations and rollback/forward-fix notes.
 

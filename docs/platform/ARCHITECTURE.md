@@ -3,7 +3,9 @@
 **Status:** Proposed target architecture for development  
 **Repository:** `ImamSaahib/imam_mobile`  
 **Distribution:** Client-owned GitHub fork + client-owned Cloudflare deployment  
-**Runtime:** React/Vite, Cloudflare Worker API, Cloudflare D1 (SQLite)
+**Runtime:** React/Vite, Cloudflare Worker API, Cloudflare D1 (SQLite)  
+**Interface:** [UI Reference](UI-REFERENCE.md)  
+**Decisions:** [Decisions Record](DECISIONS.md)
 
 ## 1. Product boundary and success test
 
@@ -12,6 +14,16 @@ The product is a reusable baseline for **related, small-to-medium internal opera
 Imam Mobile is the first reference application. The architecture is successful only when a second, distinct application can be created with the same runtime and shared components primarily through configuration.
 
 The platform supports common CRUD workflows. Business-specific behavior such as selling stock, posting ledger entries, approvals or integrations belongs in explicit domain services.
+
+### Direction
+
+The product is an environment for building, customizing and extending modules, not one business application. It is a lightweight counterpart to the ServiceNow platform, at Notion's level of simplicity, with a Cloudflare-style interface:
+
+- **ServiceNow** supplies the framework: application menus containing modules, pages built from components, lists, forms and a configuration mode.
+- **Notion** supplies the data interaction: typed properties, table views with filters, sorts and groups, and property configuration.
+- **Cloudflare** supplies the look: the layout, components and spacing defined in [UI Reference](UI-REFERENCE.md).
+
+People with the right permission build modules inside the running application. The configuration they create is stored as metadata and published as releases (§12). Imam Mobile is the first application built this way.
 
 ## 2. Distribution and ownership model
 
@@ -140,17 +152,59 @@ Deployment / Application Instance
 
 Use stable opaque IDs. Routes, slugs and display labels may change independently; do not use labels as identifiers.
 
+### 5.1 Interface shell
+
+The runtime renders one shell, specified in [UI Reference](UI-REFERENCE.md):
+
+- a left navigator of application menus and modules, with quick search;
+- a top bar with the Super Menu at the top right;
+- a page area that renders the components of the selected module;
+- a reserved right-panel region, not built initially.
+
+The shell, design tokens and primitives are shared code. Menus, modules, pages and components come from configuration. A module is a page, and a page is an ordered layout of components.
+
+Component types in the first release: page header, text, container/layout, table (list), form, count (KPI), report and action button. Every table has an embedded search field unless configuration disables it. A page contains components only and cannot embed another page in release 1; tabs and sections use the container component ([Decisions D6](DECISIONS.md)).
+
+### 5.2 Edit mode
+
+There is no separate Admin Studio module. The Super Menu contains a lock/edit toggle. "Lock disabled", "editing enabled", "edit mode" and "configure mode" all name the same state ([Decisions C1](DECISIONS.md)):
+
+| State | Behavior |
+|---|---|
+| Locked (default) | The interface shows the published release. Configuration options are not shown. |
+| Unlocked (configure mode) | The interface shows the working draft and exposes configuration. |
+
+All configuration of menus, modules, components, properties, views and forms happens only in configure mode, through the Configure option of the element. No other screen edits configuration.
+
+In edit mode:
+
+- Right-clicking a configurable element opens a context menu with **Configure** and the actions that element supports, such as duplicate, move, disable and remove. The context-menu key, Shift+F10 and long press give the same menu on keyboard and touch.
+- Configurable elements are navigator menus and modules (add, rename, reorder, disable, remove), page components, table columns (property configuration, §7.1), views and forms.
+- Configure opens a panel generated from the element's registered configuration schema.
+- Changes are written to the draft. A draft bar shows the number of unpublished changes with Validate, Publish and Discard.
+- Normal users never see draft content.
+- Schema operations requested from edit mode go through the schema change service (§7.3).
+
+View operations on a table (sort, filter, search, show or hide columns, reorder) work in both states. Saving them into a shared view requires edit mode. Until accounts exist, settings kept for one person are stored in that browser.
+
+Unlocking becomes permission-gated in the security phase (§11.1). The toggle is a user-interface state and is never a security boundary.
+
 ## 6. Configuration, schema and code are different change classes
 
 | Change class | Examples | First-release policy |
 |---|---|---|
 | UI/application configuration | Rename label, hide/reorder column, layout, saved view, menu order, form presentation | Admin edits draft, validates and publishes |
-| Physical schema | Add table/column, change type, constraint, index or relation | Developer-controlled migration and deployment |
+| Physical schema | Add column, add index, convert type, add relation; new tables and constraints | Add column, add index and presentation conversions run through the platform schema service (§7.3). New tables, constraints and data-rewriting conversions use developer-controlled migrations until the service supports them |
 | Application code | New domain rule, integration, custom renderer or unsupported behavior | Reviewed code change in client fork or shared baseline |
 
-Administrators may configure supported metadata for approved existing tables. They cannot freely create or alter physical D1 schema through ordinary live configuration in v1.
+Edit mode may request physical schema operations such as adding a property, but only through the platform schema service (§7.3). The service accepts a closed set of operations and generates the SQL itself. It never runs SQL supplied by a person or by configuration. Arbitrary table creation, arbitrary DDL and free-form SQL remain excluded.
 
-A new field requiring a physical column must be delivered as a migration plus matching metadata update. Type conversion requires a reviewed conversion plan, data validation, recovery strategy and compatibility handling.
+Each environment sets `schema_change_mode`:
+
+- `guided_live`: the service applies an approved operation after preview and confirmation, and records it in the schema change log. This is the default for development.
+- `migration_controlled`: the service generates a migration file and the matching metadata change for review. Applying it is a deployment step. This is the default for production.
+
+Operations that rewrite existing data need the conversion plan in §7.3 in both modes.
 
 ## 7. Data architecture and source of truth
 
@@ -167,7 +221,49 @@ Required safeguards:
 - Migrations update physical schema and metadata in a controlled sequence.
 - Values use prepared statement bindings; identifiers are allowlisted and safely quoted.
 
-Initial property types: text/title, number, currency, select, multi-select, date, checkbox, email, phone, URL, relation and system-managed timestamps/actors where supported. Formula/rollup expressions and arbitrary executable formulas are deferred.
+Property types follow Notion's set where it fits relational storage (see [Notion database properties](https://notion.com/help/database-properties)).
+
+**Release 1:** title, text, number (with display formats), currency, select, multi-select, status (options grouped as To-do, In progress and Complete), date (optional end date and time), checkbox, URL, email, phone, relation, unique ID (prefix plus sequence), created time, last edited time, created by and last edited by. Actor values hold a placeholder until authentication exists.
+
+**Deferred**, with reasons: person (needs user accounts), files (needs object storage, a new Cloudflare product that requires demonstrated need), formula and rollup (need a reviewed expression language; configuration cannot contain executable expressions), place, and button as a property (use the action button component).
+
+Cloudflare D1 allows at most 100 columns per table ([D1 limits](https://developers.cloudflare.com/d1/platform/limits)). The platform shows the remaining capacity for each data source and refuses to add a property when the limit is reached. Multi-select values use a junction table and do not use a column.
+
+### 7.1 Property configuration
+
+In edit mode, right-clicking a column header or opening its menu shows **Configure property**. The panel offers, by type:
+
+- all types: name, description, type, required, default value, searchable, and sensitivity (stored now, enforced in the security phase);
+- number: display format (plain, with separators, percent); currency: ISO 4217 code and display;
+- select, multi-select and status: add, rename, recolor, reorder and deactivate options; status groups. Options have stable keys, and renaming changes only the label. An option in use by records is deactivated, not deleted, unless the person confirms reassignment;
+- date: include end date, include time, display format and time zone behavior;
+- relation: target data source, display property, one-way or two-way, delete behavior (default restrict);
+- unique ID: prefix;
+- Convert type, Insert left, Insert right, Duplicate and Delete, as defined in §7.3.
+
+The same header menu offers view operations (sort, filter, group, freeze, hide, calculate) in both lock states.
+
+### 7.2 Schema synchronization
+
+The table view stays synchronized with the physical table. For each data source the platform compares the actual columns with the property metadata and reports one of:
+
+- mapped and compatible;
+- unmapped column, offered in edit mode as **Add as property**;
+- mapped column that is missing or incompatible, which blocks publish.
+
+Inspection reads SQLite metadata (`PRAGMA table_info`, `PRAGMA index_list`) with allowlisted, quoted identifiers. It runs on demand and before publish.
+
+### 7.3 Schema change service
+
+The service accepts a closed set of operations. They are introduced in this order:
+
+1. **Add property:** `ALTER TABLE ... ADD COLUMN`, nullable or with a constant default, plus metadata. This is additive and is allowed live in `guided_live` mode.
+2. **Add or remove an index** on a mapped column.
+3. **Presentation conversions without data change:** text to email, phone or URL and back; number format; select to status with the option keys kept. The service validates existing values and reports non-conforming rows before applying.
+4. **Data-rewriting conversions** (for example text to number, text to select, select to multi-select), in a later phase. These require a preview of convertible and failing rows, an export or D1 Time Travel bookmark before applying, chunked execution within D1 limits, a SQLite table rebuild when `ALTER` is not enough (create the new table, copy and convert, verify, recreate indexes, foreign keys and triggers, swap), and a documented recovery step.
+5. **Delete property:** hides the property first. The physical column is dropped only after a second explicit confirmation and a backup.
+
+Every operation is authorized (in the security phase), previewed with the generated SQL shown read-only, recorded in the schema change log with actor, time and status, audited, idempotent per operation ID, checked against D1 limits, and fails closed. Contract details are in [Implementation Contracts §8](IMPLEMENTATION-CONTRACTS.md).
 
 ## 8. Metadata and deployment seed packages
 
@@ -204,9 +300,29 @@ Views reference data sources and define visible properties, column order, typed 
 
 The Worker validates field IDs, types, operators, sort directions, grouping and page size, then compiles parameterized SQL. Bound query complexity and result size. Complex domain queries use approved developer-defined query services rather than expanding the generic query language indefinitely.
 
+### 10.1 Table view capabilities
+
+The table follows Notion's table view ([views, filters, sorts and groups](https://notion.com/help/views-filters-and-sorts)) in the Cloudflare-style layout of [UI Reference](UI-REFERENCE.md).
+
+Release 1:
+
+- embedded search over configured properties;
+- sort by clicking column headers, with multiple ordered sorts;
+- typed filters: simple filters, and advanced AND/OR filter groups nested up to three levels;
+- group by one property;
+- per view: visible columns, column order and width, freeze up to a column, wrap cells;
+- footer calculations as bounded server-side aggregates (count, count values, empty, not empty, percent empty, sum, average, min, max);
+- server-side pagination with the "Showing x–y of z" summary;
+- row open mode: side panel (default), center dialog or full page;
+- row action menu;
+- several named views per data source, with view tabs; views can be renamed and duplicated;
+- settings saved for everyone (shared view, edit mode) or kept personal (browser-local until accounts exist).
+
+Deferred: sub-groups, sub-items, templates, and the board, timeline, calendar, gallery and chart views.
+
 ## 11. Authentication, authorization and audit
 
-Every API endpoint has an explicit access policy from the first implementation story. The lock/edit UI toggle is not a security control.
+Every API endpoint declares the permission it requires and calls the central authorize function from the first implementation story. Until Story 11 that function is a development-only placeholder ([Decisions D7](DECISIONS.md)); Story 11 enforces it. The lock/edit UI toggle is not a security control.
 
 - Select a supported authentication approach before real multi-user deployment.
 - Never ship secrets in Vite variables or browser assets.
@@ -215,6 +331,15 @@ Every API endpoint has an explicit access policy from the first implementation s
 - Protect sensitive fields at API/query level, not only by hiding columns.
 - Audit configuration changes, publish/restore, schema migrations, permission changes and sensitive/destructive operations.
 - Client deployments have independent credentials, sessions, secrets and data.
+
+### 11.1 Security phasing
+
+Authentication and authorization are implemented in the phase after the UI/UX phase. Until then:
+
+- each route and module documents the permission it will require, and enforcement is added in the security phase;
+- environments that run without authentication hold only test data, and no deployment that lacks authentication goes to production;
+- stories record their authorization acceptance criteria as deferred to the security phase instead of treating them as met;
+- the lock/edit toggle is not permission-gated until that phase.
 
 ## 12. Draft, validation and publishing
 
@@ -276,12 +401,23 @@ Forks do not automatically receive upstream commits. Each release needs notes an
 - Configuration: versioned JSON/metadata with fixed schemas.
 - Business records: physical relational tables.
 - Deployment settings: validated non-secret client/environment manifest plus provider secrets.
+- Interface: shared design tokens and primitives defined in [UI Reference](UI-REFERENCE.md).
 
 Do not add multi-tenant hosting, arbitrary plug-ins, custom scripting, microservices or additional Cloudflare products without demonstrated need.
 
+### 15.1 Resource budget
+
+The application must run within a free Cloudflare plan for a local business of about 5 users and about 100 sessions a day. The design limits are 1,000,000 D1 rows read, 100,000 rows written, 500 MB of storage and 100,000 Worker requests per day. Rows read count rows scanned, so unindexed search and counting are the main risk.
+
+Rules: the runtime reads configuration as a single snapshot; searchable properties are indexed; search and totals are bounded; old releases and audit events have retention; the interface handles a reached daily limit clearly. Per-operation budgets, the reference dataset and the CI checks are in [Implementation Contracts §9](IMPLEMENTATION-CONTRACTS.md). Keep the design simple: add measurements and bounded queries, not elaborate caching.
+
+### 15.2 Resource-aware data access
+
+Beyond the budget, the application is designed to stay well under its limits and to degrade before a limit is reached. Layers: a cached release snapshot with conditional requests, per-table version counters, keyset pagination, maintained counters, bounded and indexed search, no polling, and a resource governor with Normal, Conserve, Essential and Limit states. Users never see a raw limit error. See [Implementation Contracts §10](IMPLEMENTATION-CONTRACTS.md) and [Decisions D17](DECISIONS.md). A local copy of small tables is deferred until measurement justifies it.
+
 ## 16. Explicit first-release exclusions
 
-Unless validated by the second application, defer multi-tenant shared hosting, arbitrary admin DDL, arbitrary scripting/SQL, marketplace, advanced workflow/approval engine, formula/rollup language, advanced BI, offline-first sync, enterprise identity federation and multi-region data architecture.
+Unless validated by the second application, defer multi-tenant shared hosting, arbitrary admin DDL, arbitrary scripting/SQL, marketplace, advanced workflow/approval engine, formula/rollup language, advanced BI, offline-first sync, enterprise identity federation and multi-region data architecture. Also defer the person, files, formula, rollup and place property types, and the board, timeline, calendar, gallery and chart views.
 
 Record future requirements explicitly rather than silently treating them as forgotten.
 
@@ -297,8 +433,11 @@ Record future requirements explicitly rather than silently treating them as forg
 8. Compatibility is checked before publish and deployment.
 9. Each client owns independent runtime resources and data.
 10. Existing Imam Mobile workflows pass regression tests.
+11. The runtime interface follows [UI Reference](UI-REFERENCE.md) in light and dark themes.
+12. In edit mode, an authorized person can add, rename and remove menus and modules, configure components and properties, and publish the result without a code change.
+13. Adding a property and editing select options from a table column need no developer migration in `guided_live` mode.
 
 
 ## 18. Normative implementation contracts
 
-The detailed extension registration, seed ownership/upgrades, property storage, second-application proof, maintenance policy and CI rules are defined in [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md). These rules are part of the target architecture. Stories implement them incrementally. Evaluate the second-application proof after Stories 01–06; expand Stories 07–08 only where that evidence demonstrates a common need.
+The detailed extension registration, seed ownership/upgrades, property storage, edit-mode and schema change service contracts, second-application proof, maintenance policy and CI rules are defined in [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md). These rules are part of the target architecture. Stories implement them incrementally. Evaluate the second-application proof after Stories 01–06; expand Story 08 only where that evidence demonstrates a common need.

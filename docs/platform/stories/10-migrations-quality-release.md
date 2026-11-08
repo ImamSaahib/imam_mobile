@@ -1,6 +1,7 @@
 # Story 10 — Client Deployment, Upgrades, Testing and Release Readiness
 
-**Priority:** P0 · **Practices apply from Story 01** · **Depends on:** platform contracts from Stories 01–09  
+**Status:** Planned (waiting on dependencies)  
+**Priority:** P1 · **Practices apply from Story 01** · **Depends on:** platform contracts from Stories 01–09. Real-data readiness depends on Story 11.  
 **Goal:** Make a client-owned fork reproducibly installable, configurable, upgradeable and recoverable without maintainer-owned Cloudflare credentials.
 
 ## User story
@@ -19,7 +20,8 @@ As a client or implementation developer, I want to fork the baseline, enter clie
 8. Apply migrations to the explicitly selected database.
 9. Apply the application seed package.
 10. Deploy Worker and Pages.
-11. Run health, bootstrap, authentication, schema compatibility and core workflow smoke tests.
+11. Run health, bootstrap, schema compatibility and core workflow smoke tests, plus authentication smoke tests once Story 11 is complete.
+12. Confirm the environment is not running `AUTH_MODE=dev-open` before it holds real data.
 
 The process must be documented and should be automated with safe preparation/validation scripts where practical. It must not require the maintainer's Cloudflare account or API token.
 
@@ -65,10 +67,11 @@ Forks do not automatically receive upstream commits. Conflicts require review; d
 - Migration from an empty database and upgrade from prior supported schema.
 - Repeatable seed/import checks.
 - Schema compatibility validation.
-- API authorization and sensitive-field tests.
+- API authorization and sensitive-field tests (from Story 11).
 - Core inventory/customer/sales/ledger regression tests for Imam Mobile.
 - Health/bootstrap/list/form/action smoke tests.
 - Secret scan and environment-target verification.
+- Resource budget checks ([Contracts §9](../IMPLEMENTATION-CONTRACTS.md)): reference workflows on the reference dataset must stay within their rows-read and rows-written budgets, a simulated day of 100 sessions must stay at or below 500,000 reads and 20,000 writes, and the frontend bundle must stay within its cap.
 - Documented recovery/forward-fix notes.
 
 ## Acceptance criteria
@@ -86,6 +89,10 @@ Forks do not automatically receive upstream commits. Conflicts require review; d
 - [ ] Upstream release adoption is documented and tested in client development.
 - [ ] Production release requires explicit approval.
 - [ ] Recovery/forward-fix process is documented and rehearsed.
+- [ ] CI fails when a reference workflow exceeds its resource budget.
+- [ ] Tests force each governor state and confirm that users see no raw error, status code or mention of the database.
+- [ ] A simulated day of 100 sessions keeps the governor in Normal, and measured use is recorded against the 30% threshold that would justify a local copy of small tables.
+- [ ] Measured rows read and written for the main workflows are recorded as release evidence.
 
 ## Definition of done
 
@@ -97,7 +104,7 @@ One-click provisioning across arbitrary Cloudflare accounts using maintainer cre
 
 ## Second-application proof and maintenance policy
 
-After Stories 01–06, build one small, distinct operational application using the same runtime. Its identity, navigation, data sources, properties, standard lists, forms and views must be supplied by its own seed/configuration package. Ordinary CRUD must not require shared-core edits. At least one application-specific operation must use the documented extension contract. Install it into a clean development database, rerun its seed, and pass schema, authorization and workflow tests. Record configuration files, extension files, shared-core files (target zero for ordinary setup), migrations, tests, deployment result, implementation time and any blocker requiring a platform change. Use this evidence to decide whether Stories 07–08 need expansion.
+After Story 04, run the early reuse slice ([Decisions D12](../DECISIONS.md)). After Stories 01–06, build one small, distinct operational application using the same runtime. Its identity, navigation, data sources, properties, standard lists, forms and views must be supplied by its own seed/configuration package. Ordinary CRUD must not require shared-core edits. At least one application-specific operation must use the documented extension contract. Install it into a clean development database, rerun its seed, and pass schema, authorization and workflow tests. Record configuration files, extension files, shared-core files (target zero for ordinary setup), migrations, tests, deployment result, implementation time and any blocker requiring a platform change. Use this evidence to decide whether Story 08 needs expansion and whether the edit-mode contracts (Contracts §7) need changes.
 
 Support the latest tagged stable baseline as the primary supported line. Publish release notes, migration notes and compatibility requirements. Older-version backports are not promised unless announced. A client fork is unverified until it reviews upstream changes, resolves conflicts, applies migrations in its own development environment, passes build/security/schema/business regression tests and records baseline/extension versions. No automatic conflict-free merges, indefinite old-version support, SLA or automatic production updates are promised. Production promotion requires explicit client approval.
 

@@ -1,6 +1,7 @@
 # Story 09 — Audit, Operational Governance and Release Compatibility
 
-**Priority:** P0 requirements apply from Story 01; this story completes audit and governance · **Depends on:** Stories 01–08  
+**Status:** Planned (waiting on dependencies)  
+**Priority:** P1 · the audit event shape and actor columns exist from Story 01; this story completes audit and governance · **Depends on:** Stories 01–08. Items involving real users depend on Story 11.  
 **Goal:** Make important operations traceable and define safe compatibility rules across deployed code, configuration and database versions.
 
 ## Scope
@@ -12,7 +13,9 @@
 5. Add health/diagnostic output identifying incompatible configuration, missing schema or unsupported component/action versions without exposing sensitive data.
 6. Define rollback boundaries: configuration restore, code rollback and database recovery are separate operations.
 7. Document backup/restore expectations and client responsibility.
-8. Ensure every API route remains covered by an authorization policy established from the beginning.
+8. Ensure every API route remains covered by a declared permission and the central `authorize` call established in Story 01.
+9. Audit schema change service operations (Story 04), including the preview, actor and outcome, in addition to migrations.
+10. Diagnostics report the governor state, the estimated daily rows read and written, and the retention status of audit events and release snapshots, without exposing sensitive data.
 
 ## Compatibility policy
 
@@ -22,12 +25,13 @@ A deployment must not activate configuration requiring a newer platform/API vers
 
 - [ ] Sensitive operations create audit events.
 - [ ] Audit data excludes secrets and unnecessary personal information.
-- [ ] Audit events are not editable by normal application roles.
+- [ ] Audit events are not editable by normal application roles. *(Deferred to Story 11.)*
+- [ ] Schema change service operations create audit events.
 - [ ] Runtime reports incompatible platform/config/schema/action versions.
 - [ ] Deployment health check fails clearly for required missing migrations.
 - [ ] Configuration rollback is not represented as database rollback.
 - [ ] Backup and recovery procedure is documented and rehearsed in development.
-- [ ] All routes retain explicit authorization policies.
+- [ ] All routes retain a declared permission and the central `authorize` call; enforcement is completed in Story 11.
 
 ## Tests
 

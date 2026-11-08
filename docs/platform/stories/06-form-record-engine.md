@@ -1,6 +1,7 @@
 # Story 06 — Forms, Records and Domain Service Extensions
 
-**Priority:** P0 · **Depends on:** Stories 02 and 04  
+**Status:** Planned (waiting on dependencies)  
+**Priority:** P0 · **Depends on:** Stories 00, 02 and 04  
 **Goal:** Reuse forms and CRUD for ordinary records while keeping business transactions in explicit, versioned domain services.
 
 ## User story
@@ -17,6 +18,12 @@ As an application developer, I want forms generated from typed properties and a 
 6. Optimistic concurrency/version checks where appropriate.
 7. Preserve existing domain services for sales, ledger updates and stock status transitions.
 8. Define a first-class domain action contract for registered server operations.
+9. Open forms in a side panel (default), center dialog or full page, following the row-open setting of the view (Story 05).
+10. Support inline cell editing in tables where the property is writable and the view allows it.
+11. Row action menu entries (open, edit, duplicate, archive and registered actions) bind to record operations and action keys.
+12. Register a configure descriptor for forms (layout, field order, visibility) per Implementation Contracts §7.
+13. Every record write and domain action updates the affected counters and the data source version in the same `batch()` as the write ([Contracts §10.2 and §10.4](../IMPLEMENTATION-CONTRACTS.md)).
+14. In the Limit state, show a calm message with the reset time and do not queue financial writes for later.
 
 ## Domain action contract
 
@@ -30,7 +37,11 @@ Each action defines:
 - retryable/non-retryable error codes;
 - minimum supported platform/API version.
 
-Configured buttons may invoke an approved action key. They cannot contain JavaScript, SQL or arbitrary endpoint URLs. The Worker dispatches the action and enforces authorization.
+Configured buttons may invoke an approved action key. They cannot contain JavaScript, SQL or arbitrary endpoint URLs. The Worker dispatches the action and enforces authorization (placeholder policy until Story 11).
+
+### Atomic actions on D1
+
+D1 has no interactive transactions ([Decisions D9](../DECISIONS.md)). An action that checks and then writes uses one `batch()` containing a conditional update (for example `WHERE status = 'Available'`) and the insert, plus a database constraint that rejects a second record for the same subject so the whole batch fails if the update changed no row. An update that changes zero rows is not an error, so the insert must not depend on the update succeeding. Each action also takes an idempotency key. If a server-side sale operation does not exist today (see Story 01), this story creates it.
 
 ## Acceptance criteria
 
@@ -40,8 +51,14 @@ Configured buttons may invoke an approved action key. They cannot contain JavaSc
 - [ ] Hidden or read-only fields cannot be mass-assigned.
 - [ ] Related transactional writes are atomic or have a documented consistency strategy.
 - [ ] Duplicate financial/inventory actions are safely rejected or idempotent.
+- [ ] Selling the same device twice is rejected by a database constraint, with no duplicate sale rows, and a test proves the second attempt fails.
 - [ ] A domain action can be registered without changing generic form/list code.
-- [ ] Action permissions and audit behavior are enforced server-side.
+- [ ] Action permissions and audit behavior are enforced server-side. *(Permission enforcement is deferred to the security phase.)*
+- [ ] Forms open in the configured row-open mode, and inline editing respects property writability.
+- [ ] The form configure descriptor works by mouse, keyboard and touch.
+- [ ] Opening a record reads at most 10 rows. A domain action such as a sale reads at most 30 and writes at most 15, measured on the reference dataset.
+- [ ] A sale updates the device status, the sale rows, the counters and the version in one batch, and a failed batch changes none of them.
+- [ ] In the Limit state a write attempt shows the reset time and is not queued.
 - [ ] Existing device/customer/sale/ledger workflows pass regression tests.
 
 ## Tests

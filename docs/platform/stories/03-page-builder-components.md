@@ -1,6 +1,7 @@
 # Story 03 — Page Builder and Component Registry
 
-**Priority:** P0 · **Depends on:** Stories 01–02  
+**Status:** Planned (waiting on dependencies)  
+**Priority:** P0 · **Depends on:** Stories 00–02  
 **Goal:** Render pages from metadata using a fixed, versioned component registry and stable data-binding contracts.
 
 ## User story
@@ -11,12 +12,14 @@ As an application administrator, I want to compose pages from supported componen
 
 1. Render module pages from page/component metadata.
 2. Implement a fixed component registry with versioned configuration schemas.
-3. Initial component types: heading/text, layout/container, list, form, KPI/count and registered action button.
+3. Initial component types: page header (title, optional help pill link, description, optional primary action), heading/text, layout/container, table (list with embedded search), form, KPI/count and registered action button. Reports arrive in Story 08.
 4. Define stable data-source, view, form and action references using IDs/keys rather than labels or raw SQL.
 5. Validate component configuration before publish and at runtime.
 6. Provide safe diagnostics for unknown component types or unsupported schema versions.
 7. Preserve responsive design, white default theme and dark mode support.
 8. Keep client-specific component implementations in isolated extension modules, not shared core modifications where avoidable.
+9. Every component type registers a configure descriptor (Implementation Contracts §7): configuration schema, configure panel and context actions. In edit mode, right-click, the context-menu key, Shift+F10 and long press open the same menu.
+10. A page contains components only and cannot embed another page in release 1 ([Decisions D6](../DECISIONS.md)). Tabs and sections use the container component. Validation rejects a page reference inside a page.
 
 ## Dependency contracts
 
@@ -31,7 +34,10 @@ A component type has a stable type key, schema version, validated config shape a
 - [ ] Component bindings use stable IDs/keys.
 - [ ] Unsupported component types/schema versions fail visibly and safely.
 - [ ] Configuration contains no executable JavaScript or SQL.
-- [ ] Component registration cannot bypass authorization or data-source policies.
+- [ ] Component registration cannot bypass authorization or data-source policies. *(Enforcement is deferred to the security phase.)*
+- [ ] Every component type has a configure descriptor and its context menu works by mouse, keyboard and touch.
+- [ ] The page header component matches UI Reference §2.3.
+- [ ] Validation rejects a page embedded inside a page.
 - [ ] Client-specific additions have an isolated extension contract.
 - [ ] Keyboard and mobile interaction remain usable.
 - [ ] Existing Imam Mobile pages remain functional during migration.

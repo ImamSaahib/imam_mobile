@@ -1,5 +1,6 @@
 # Story 08 — Reports, Metrics and Registered Actions
 
+**Status:** Planned (waiting on dependencies)  
 **Priority:** P1 · **Depends on:** Stories 04–06 and action contract from Story 06  
 **Goal:** Add bounded operational summaries and reports only after reusable data and action contracts are proven.
 
@@ -29,7 +30,7 @@ As an application builder, I want to place approved KPIs, reports and action but
 
 - [ ] KPI values are generated from approved data sources.
 - [ ] Reports use typed, bounded queries.
-- [ ] Restricted data cannot leak through aggregates.
+- [ ] Restricted data cannot leak through aggregates. *(Deferred to Story 11; sensitivity is carried in the query model now.)*
 - [ ] Charts expose loading, empty, error and no-data states.
 - [ ] Currency/date formatting is explicit and locale-aware.
 - [ ] Buttons invoke only registered actions.
