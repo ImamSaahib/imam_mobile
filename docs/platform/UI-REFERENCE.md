@@ -9,7 +9,7 @@ This document defines the layout, components and behavior the runtime interface 
 
 - Reproduce the layout, proportions, spacing, component structure and interaction behavior of the reference.
 - Do not use Cloudflare logos, wordmarks, icons, source code or other assets. The product uses its own name, mark and an open-source icon set.
-- Cloudflare publishes an MIT-licensed React component library, Kumo (`@cloudflare/kumo`, built on Base UI). Story 00 evaluates it for primitives such as Button, Input and Dialog. Its documentation does not confirm table or sidebar components, and it does not state that the Cloudflare dashboard uses it. Verify before depending on it.
+- Cloudflare publishes an MIT-licensed React component library, Kumo (`@cloudflare/kumo`, built on Base UI). Story 00 evaluates it for primitives such as Button, Input and Dialog. Version 2.17.0 includes Sidebar, Table, Pagination, DropdownMenu, Dialog, Popover, Tooltip, Toast and a context menu primitive (Story 00 notes, 2026-11-09). It does not state that the Cloudflare dashboard uses it. Never use its Cloudflare logo component.
 - The right-hand panel in the reference (usage figures and changelog) is out of scope. Reserve an empty, hidden region for it.
 - Every element must work in a light theme (default) and a dark theme, and should use CSS logical properties instead of hard-coded left/right positions. Release 1 is single-language, and right-to-left testing is out of scope.
 
