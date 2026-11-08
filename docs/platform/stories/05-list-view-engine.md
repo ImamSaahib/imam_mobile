@@ -1,6 +1,6 @@
 # Story 05 — Lists, Views and Safe Query Engine
 
-**Priority:** P0 · **Depends on:** Stories 02 and 04  
+**Priority:** P1 · **Depends on:** Stories 03 and 04  
 **Goal:** Provide reusable, bounded list and table views over approved relational data sources.
 
 ## User story
@@ -25,24 +25,24 @@ A view stores data-source ID, layout, visible property IDs, column order, filter
 
 ## UI behavior
 
-Every table includes a search field unless authorized configuration explicitly disables it. Provide distinct loading, empty, error, no-results and permission-denied states. Search should debounce and ignore stale responses. Filters/operators must be type-specific.
+Every table includes a search field unless configuration explicitly disables it. Provide distinct loading, empty, error and no-results states. Search should debounce and ignore stale responses. Filters/operators must be type-specific. The first release is deliberately limited to visible columns, simple typed filters combined with AND, one or two sorts, server pagination and search. Nested filter groups, grouping, aggregates/calculations, row modes and advanced saved-view collaboration are deferred.
 
 ## Acceptance criteria
 
 - [ ] Lists are driven by data-source/property metadata.
-- [ ] Search is server-side, bounded and permission-aware.
+- [ ] Search is server-side and bounded.
 - [ ] Multiple views can show the same records with different settings.
 - [ ] Typed filters and deterministic sorting work.
 - [ ] Pagination is server-side and bounded.
 - [ ] Invalid property IDs/operators are rejected.
 - [ ] Query compiler uses prepared values and allowlisted identifiers.
-- [ ] Sensitive properties cannot leak through search, sort, grouping or aggregates.
+- [ ] Property sensitivity is represented in metadata for enforcement by the later security phase; do not claim protected-field enforcement is complete in this story.
 - [ ] Existing inventory/customer lists retain their business behavior.
 
 ## Tests
 
-Query compiler unit tests; injection cases; type/operator matrix; pagination; stable ordering; filter groups; view isolation; property-level authorization; stale search response behavior.
+Query compiler unit tests; injection cases; type/operator matrix; pagination; stable ordering; basic view isolation; stale search response behavior. Authorization and sensitive-field tests are completed in the security phase.
 
 ## Out of scope
 
-Full Notion parity, formula/rollup, collaborative views, advanced board/calendar/gallery and arbitrary query builder.
+Nested filter groups, OR logic, multiple grouping levels, group calculations, formula/rollup, collaborative views, advanced board/calendar/gallery, row-mode variants and arbitrary query builder. Revisit these only after the MVP is measured.
