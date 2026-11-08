@@ -1,4 +1,4 @@
-# Story 09 — Audit, Operational Governance and Release Compatibility
+# Story 09 — Authentication, Authorization, Audit and Release Compatibility
 
 **Priority:** P0 release gate after UI/UX MVP · **Depends on:** Stories 01–08  
 **Goal:** Implement authentication, authorization, audit and release governance before any real multi-user or production use.
