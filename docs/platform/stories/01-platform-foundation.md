@@ -1,4 +1,4 @@
-# Story 01 — Platform Foundation and Application Identity
+# Story 01 — Platform Foundation, Design System and Application Identity
 
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–10  
 **Goal:** Establish the persistent metadata foundation, stable application identity, shared visual design system, seed contract and runtime boundaries.
