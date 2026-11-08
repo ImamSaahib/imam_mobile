@@ -140,7 +140,11 @@ Deployment / Application Instance
 
 Use stable opaque IDs. Routes, slugs and display labels may change independently; do not use labels as identifiers.
 
-## 6. Configuration, schema and code are different change classes
+## 6. Shared visual design system
+
+Story 01 owns the shared design system: a restrained Cloudflare-Dashboard-inspired visual language, tokens for typography, spacing, colors, surfaces, borders, radii, elevation and focus states, responsive breakpoints, light/dark themes, and reusable primitives for shell, navigation, page headers, buttons, fields, dialogs, inspector panels, tabs, status indicators, tables and feedback states. Feature stories compose these primitives instead of introducing competing local styles. Require keyboard accessibility, visible focus, readable contrast and usable touch targets. Do not copy proprietary assets or branding.
+
+## 7. Configuration, schema and code are different change classes
 
 | Change class | Examples | First-release policy |
 |---|---|---|
@@ -150,13 +154,19 @@ Use stable opaque IDs. Routes, slugs and display labels may change independently
 
 Administrators may configure supported metadata for approved existing tables. They cannot freely create or alter physical D1 schema through ordinary live configuration in v1.
 
-A new field requiring a physical column must be delivered as a migration plus matching metadata update. Type conversion requires a reviewed conversion plan, data validation, recovery strategy and compatibility handling.
+A property may be defined through the UI when it maps to an existing approved physical column. A new physical column/table/index/constraint requires a developer-controlled migration and matching metadata update. Type conversion requires a reviewed conversion plan, data validation, recovery strategy and compatibility handling; it cannot be a metadata-only edit.
 
-## 7. Data architecture and source of truth
+## 8. Data architecture and source of truth
 
 Use physical relational D1 tables for business records and normalized metadata to describe their UI and behavior. Do not put all business records into a generic EAV/key-value table.
 
 A data source maps to an approved physical table. A property maps to a real column, except explicitly declared virtual/computed properties. Physical schema and property metadata are two representations that must be checked for compatibility.
+
+D1/SQLite constraints are part of the product contract:
+- Cloudflare D1 currently documents a maximum of 100 columns per table. Treat this as a hard ceiling and warn at a configurable lower threshold (default 80 columns); revalidate provider limits during implementation.
+- SQLite does not support a general in-place column-type alteration. Type/constraint changes commonly require a table rebuild and data copy/validation.
+- Rebuild plans must account for foreign keys, indexes, triggers, views, dependent queries and constraints; validate row counts and converted values before switching, and preserve a recovery path.
+- Property retirement is metadata deprecation first. Physical column removal is a separate reviewed migration.
 
 Required safeguards:
 - A migration/deployment check compares expected metadata with actual SQLite table/column definitions.
@@ -169,7 +179,7 @@ Required safeguards:
 
 Initial property types: text/title, number, currency, select, multi-select, date, checkbox, email, phone, URL, relation and system-managed timestamps/actors where supported. Formula/rollup expressions and arbitrary executable formulas are deferred.
 
-## 8. Metadata and deployment seed packages
+## 9. Metadata and deployment seed packages
 
 Separate client application identity/configuration from shared runtime code. Each application seed package contains:
 - application identity and branding defaults;
@@ -182,7 +192,7 @@ Separate client application identity/configuration from shared runtime code. Eac
 
 Seed operations must be repeatable and must not overwrite client data or silently replace client customizations. Distinguish initial installation from upgrade. Import/export validates package version, identifiers, references and compatibility before applying changes.
 
-## 9. Client customization and extension model
+## 10. Client customization and extension model
 
 Use three layers:
 
@@ -198,25 +208,24 @@ Each server-side action defines a stable key and implementation version, input/o
 
 A configured button may invoke an approved action key, but cannot provide executable code or SQL. Actions execute in the Worker, not the browser. Financial or inventory-changing actions protect against duplicate submissions and partial writes.
 
-## 10. Views and safe query contract
+## 11. Views and safe query contract
 
 Views reference data sources and define visible properties, column order, typed filters, sorts, grouping, pagination, search fields and row behavior. Start with table/list views and a deliberately small query language.
 
 The Worker validates field IDs, types, operators, sort directions, grouping and page size, then compiles parameterized SQL. Bound query complexity and result size. Complex domain queries use approved developer-defined query services rather than expanding the generic query language indefinitely.
 
-## 11. Authentication, authorization and audit
+## 12. Security implementation sequence
 
-Every API endpoint has an explicit access policy from the first implementation story. The lock/edit UI toggle is not a security control.
+Authentication and authorization are scheduled after the UI/UX and reusable-runtime foundation. Stories 01–08 establish policy hooks, stable actor/permission contracts and sensitivity metadata, but hidden navigation and edit-mode controls are not security. Story 09 implements authentication/session management, server-side permission evaluation, sensitive-field enforcement and audit. Real multi-user or production use is prohibited until Story 09's release gate and tests pass.
 
-- Select a supported authentication approach before real multi-user deployment.
 - Never ship secrets in Vite variables or browser assets.
-- Enforce permissions in Worker routes and data services.
-- Start with Admin, Manager and User role presets mapped to permissions, not hardcoded role-name checks.
+- Enforce permissions in Worker routes and data services when Story 09 is implemented.
+- Use Admin, Manager and User role presets mapped to permissions, not hardcoded role-name checks.
 - Protect sensitive fields at API/query level, not only by hiding columns.
 - Audit configuration changes, publish/restore, schema migrations, permission changes and sensitive/destructive operations.
 - Client deployments have independent credentials, sessions, secrets and data.
 
-## 12. Draft, validation and publishing
+## 13. Draft, validation and publishing
 
 Normal users read only the published configuration snapshot. Authorized administrators edit a draft.
 
@@ -226,7 +235,7 @@ Publish creates an immutable release and switches the active release atomically.
 
 A configuration rollback does not reverse a physical database migration. Schema rollback/recovery is a separate migration and data-recovery concern.
 
-## 13. Platform and configuration compatibility
+## 14. Platform and configuration compatibility
 
 Every release declares minimum supported platform version, configuration schema version, component/property schema versions, required API/action versions and required database migration level.
 
@@ -234,7 +243,7 @@ The runtime rejects or clearly marks configuration requiring a newer unsupported
 
 Promotion between client development and production validates target platform version and migration state. Promote a versioned configuration package/release; do not copy arbitrary database contents.
 
-## 14. Deployment and upgrade lifecycle
+## 15. Deployment and upgrade lifecycle
 
 ### First installation
 
