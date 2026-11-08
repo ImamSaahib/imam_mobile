@@ -202,7 +202,7 @@ Use three layers:
 
 Do not use patches as the normal customization mechanism. Patches against shared files are fragile when upstream changes. Prefer documented extension interfaces and isolated client-owned files/modules. If an exceptional patch is unavoidable, record its upstream base version, reason, affected files, tests and rebase plan.
 
-### 9.1 Domain action contract
+### 10.1 Domain action contract
 
 Each server-side action defines a stable key and implementation version, input/output schema, required permission, transaction/idempotency behavior, audit behavior, retry policy, error codes and supported platform/API version.
 
@@ -275,7 +275,7 @@ A client may use separate branches and Cloudflare resources for development and 
 
 Forks do not automatically receive upstream commits. Each release needs notes and an upgrade guide. Do not promise automatic conflict-free updates.
 
-## 15. Technology decisions
+## 16. Technology decisions
 
 - Frontend: React + Vite.
 - Hosting: Cloudflare Pages.
@@ -288,13 +288,13 @@ Forks do not automatically receive upstream commits. Each release needs notes an
 
 Do not add multi-tenant hosting, arbitrary plug-ins, custom scripting, microservices or additional Cloudflare products without demonstrated need.
 
-## 16. Explicit first-release exclusions
+## 17. Explicit first-release exclusions
 
 Unless validated by the second application, defer multi-tenant shared hosting, arbitrary admin DDL, arbitrary scripting/SQL, marketplace, advanced workflow/approval engine, formula/rollup language, advanced BI, offline-first sync, enterprise identity federation and multi-region data architecture.
 
 Record future requirements explicitly rather than silently treating them as forgotten.
 
-## 17. Platform success criteria
+## 18. Platform success criteria
 
 1. A client can fork and deploy without maintainer-owned Cloudflare resources.
 2. Client resource names and environment bindings can be prepared before first build/deploy.
@@ -308,6 +308,6 @@ Record future requirements explicitly rather than silently treating them as forg
 10. Existing Imam Mobile workflows pass regression tests.
 
 
-## 18. Normative implementation contracts
+## 19. Normative implementation contracts
 
 The detailed extension registration, seed ownership/upgrades, property storage, second-application proof, maintenance policy and CI rules are defined in [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md). These rules are part of the target architecture. Stories implement them incrementally. Evaluate the second-application proof after Stories 01–06; expand Stories 07–08 only where that evidence demonstrates a common need.
