@@ -6,6 +6,7 @@ declare global {
       DB: D1Database;
       ADMIN_CONFIG_TOKEN?: string;
       ENVIRONMENT?: string;
+      DEPLOYMENT_KEY?: string;
       AUTH_MODE?: string;
       TEST_MIGRATIONS: D1Migration[];
     }

@@ -1,6 +1,6 @@
 # Story 01 — Platform Foundation and Application Identity
 
-**Status:** In progress (slices 01a and 01b done; 01c and 01d remaining)  
+**Status:** In progress (slices 01a, 01b and 01c-1 done; 01c-2 and 01d remaining)  
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–11  
 **Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
 
@@ -58,12 +58,12 @@ Every metadata record must have an explicit application/global scope. Include ve
 
 - [ ] Existing Imam Mobile records and workflows remain intact.
 - [ ] Bootstrap loads the application shell from published metadata, not hardcoded React arrays.
-- [ ] Application identity is distinct from deployment/client identity.
-- [ ] Stable IDs are independent of display names and route labels.
-- [ ] Seed package can be applied twice without duplicate rows or data loss.
-- [ ] Seed package declares version and minimum supported platform/configuration version.
-- [ ] Schema compatibility check reports missing/incompatible mapped tables and columns.
-- [ ] Incompatible metadata is not silently accepted.
+- [x] Application identity is distinct from deployment/client identity. *(01c-1: `cfg_application` vs `DEPLOYMENT_KEY` var vs release; test.)*
+- [x] Stable IDs are independent of display names and route labels. *(01c-1: seed IDs derived from type and seed key; golden-value and rename tests.)*
+- [x] Seed package can be applied twice without duplicate rows or data loss. *(01c-1: second install is a no-op; test. Upgrades are 01c-2.)*
+- [x] Seed package declares version and minimum supported platform/configuration version. *(01c-1: `version` and `minPlatformVersion`; too-old platform refused.)*
+- [x] Schema compatibility check reports missing/incompatible mapped tables and columns. *(01c-1: `GET /api/platform/schema-compatibility`.)*
+- [x] Incompatible metadata is not silently accepted. *(01c-1: install fails with `SCHEMA_INCOMPATIBLE`, nothing written.)*
 - [x] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11. *(Slice 01b: 27 routes in `backend/src/platform/policy.ts`, with a test that fails when a route has no entry.)*
 - [x] `dev-open` is refused outside development, and the health check fails if it is active elsewhere. *(Slice 01b.)*
 - [x] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata. *(Worker routes: 35 tests, slice 01a.)*
@@ -74,12 +74,12 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [ ] Bootstrap reads at most 5 rows and writes none, measured on the reference dataset.
 - [ ] Rows read and written are recorded for each request in development and tests.
 - [ ] A reached daily limit returns `DAILY_LIMIT_REACHED`.
-- [ ] A bootstrap request with a matching release version reads at most one row.
+- [x] A bootstrap request with a matching release version reads at most one row. *(01c-1: query count verified as 1; rows-read measurement arrives with 01d's helper.)*
 - [ ] The governor changes between Normal, Conserve, Essential and Limit at the documented thresholds and resets at 00:00 UTC.
 - [ ] The governor state appears in the bootstrap response and the health check.
 - [ ] A looping client is rate limited without affecting other clients.
 - [ ] The service worker caches static files only.
-- [ ] Worker metadata SQL is behind service/repository boundaries.
+- [x] Worker metadata SQL is behind service/repository boundaries. *(01c-1: all `cfg_*` SQL lives in `backend/src/platform/config/`.)*
 - [ ] Development migration and tests pass; production remains untouched.
 
 ## Tests
@@ -187,3 +187,31 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - The bootstrap reads one row when the browser's version matches, and two rows otherwise, against the budget of 5.
 - Admin Studio is not seeded as a module. It becomes configure mode (Story 07).
 - Views and forms are deferred to Stories 05 and 06, and full property configuration to Story 04.
+
+#### Slice 01c-1 completion notes (2026-11-10)
+
+**Built**
+- Migration `0004_configuration_catalog.sql`: `cfg_application`, `cfg_page`, `cfg_menu`, `cfg_module`, `cfg_component`, `cfg_data_source`, `cfg_property`, `cfg_release`, `cfg_active_release`, `cfg_seed_package`, `cfg_seed_item`.
+- `backend/src/platform/config/`: ID derivation, canonical JSON and hashing, snapshot builder, compatibility inspection, seed expansion and install, bootstrap with ETag, registry of seed packages. `routes.ts` adds `GET /api/bootstrap`, `POST /api/platform/seed`, `GET /api/platform/schema-compatibility`, each with a policy entry.
+- Seed package `applications/imam-mobile/seed/package.ts`: 2 menus, 6 modules, 6 pages, 5 components, 4 data sources, 37 properties (61 seed items).
+- `DEPLOYMENT_KEY` var in `wrangler.toml`.
+
+**Decisions and behavior**
+- Snapshot ordering is deterministic: menus and modules by position, pages by id, data sources by key. Without this the stored snapshot and one rebuilt from rows differed.
+- Seed IDs are pinned by tests (application `app_6f8c8eb21614abbf`; digest of all 61 IDs), so a change that would orphan existing installations fails the build.
+- Errors use `PlatformError` with a code and plain message: `PLATFORM_TOO_OLD`, `SEED_UPGRADE_REQUIRED`, `SEED_COLLISION`, `SEED_INVALID`, `SCHEMA_INCOMPATIBLE`, `NOT_INSTALLED`.
+- D1 limits rechecked against the Cloudflare docs: `batch()` counts as one query toward the per-invocation limit, no interactive transactions, 100 bound parameters per statement. Install and bootstrap stay inside them.
+
+**Evidence**
+- `npm run check`: type check clean, 99 tests in 8 files pass (71 before this slice, 28 added in `test/catalog.test.ts`).
+- Frontend build unchanged (main chunk 62.8 KB gzip).
+- Bootstrap: 1 query on a matching ETag (304), 2 otherwise. Rows read and written are not yet measured; 01d adds the helper and this slice's budget claim is re-verified there.
+
+**Before deploying to the dev Worker**
+- Apply migrations `0003` and `0004` to the dev D1 database first. The new Worker code writes `created_by`/`updated_by` and reads `cfg_*` tables.
+- Then call `POST /api/platform/seed` once on dev.
+- Do not promote to `main` (see the promotion warning in TIMELINE).
+
+**Still open in 01c**
+- 01c-2: seed upgrade preview, three-way comparison, conflicts, reset to default.
+- The React shell still reads hardcoded arrays; it moves to bootstrap in Story 02.

@@ -40,6 +40,7 @@ export const PERMISSIONS = {
   ledgerCreate: "ledger.create",
   ledgerUpdate: "ledger.update",
   ledgerDelete: "ledger.delete",
+  platformSeed: "platform.seed",
   salesRead: "sales.read",
   salesCreate: "sales.create"
 } as const;
@@ -49,6 +50,9 @@ const P = PERMISSIONS;
 export const ROUTE_POLICY: RoutePolicy[] = [
   { method: "GET", pattern: "/api/health", permission: P.public },
   { method: "GET", pattern: "/api/configuration", permission: P.configurationRead },
+  { method: "GET", pattern: "/api/bootstrap", permission: P.configurationRead },
+  { method: "POST", pattern: "/api/platform/seed", permission: P.platformSeed },
+  { method: "GET", pattern: "/api/platform/schema-compatibility", permission: P.schemaInspect },
 
   // Legacy admin routes. The shared bearer token still guards them until Story 07 replaces them
   // and Story 11 removes the token (see docs/platform/legacy-inventory.md).

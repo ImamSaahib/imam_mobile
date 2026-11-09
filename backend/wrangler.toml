@@ -5,6 +5,7 @@ compatibility_date = "2026-10-30"
 # Placeholder policy (Decisions D7). Open access is allowed only in this development Worker.
 # Story 11 removes AUTH_MODE. Never copy these values to a production Worker.
 [vars]
+DEPLOYMENT_KEY = "imam-mobile-dev"
 ENVIRONMENT = "development"
 AUTH_MODE = "dev-open"
 

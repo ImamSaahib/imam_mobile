@@ -14,6 +14,17 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM mobile_devices"),
     env.DB.prepare("DELETE FROM customers"),
     env.DB.prepare("DELETE FROM custom_field_values"),
-    env.DB.prepare("DELETE FROM audit_events")
+    env.DB.prepare("DELETE FROM audit_events"),
+    env.DB.prepare("DELETE FROM cfg_active_release"),
+    env.DB.prepare("DELETE FROM cfg_release"),
+    env.DB.prepare("DELETE FROM cfg_seed_item"),
+    env.DB.prepare("DELETE FROM cfg_seed_package"),
+    env.DB.prepare("DELETE FROM cfg_property"),
+    env.DB.prepare("DELETE FROM cfg_data_source"),
+    env.DB.prepare("DELETE FROM cfg_component"),
+    env.DB.prepare("DELETE FROM cfg_module"),
+    env.DB.prepare("DELETE FROM cfg_menu"),
+    env.DB.prepare("DELETE FROM cfg_page"),
+    env.DB.prepare("DELETE FROM cfg_application")
   ]);
 });

@@ -1,4 +1,5 @@
 import { matchRoute, getActor, authorize, policyHealth } from "./platform/policy.ts";
+import { handlePlatformRoute } from "./platform/routes.ts";
 
 const FRONTEND_ORIGIN = "https://imam-mobile.pages.dev";
 const ALLOWED_ORIGINS = [
@@ -367,6 +368,8 @@ export default {
         return json({id:saleId,invoiceNumber:invoice,date:b.date||new Date().toISOString().slice(0,10),total,customerId:b.credit?Number(b.customerId):null,message:"Sale completed."},201,origin);
       }
 
+      const platform = await handlePlatformRoute(request, env, path, actor);
+      if (platform) return new Response(platform.body === undefined ? null : JSON.stringify(platform.body), { status: platform.status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...(platform.headers || {}) } });
       return error("Route not found.",404,origin);
     } catch (err) {
       if (err?.message?.includes("UNIQUE constraint failed: mobile_devices.imei")) return error("This IMEI already exists.",409,origin);

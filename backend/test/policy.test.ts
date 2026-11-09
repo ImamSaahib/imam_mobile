@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import indexSource from "../src/index.js?raw";
+import indexSource0 from "../src/index.js?raw";
+import routesSource from "../src/platform/routes.ts?raw";
+
+const indexSource = indexSource0 + "\n" + routesSource;
 import { ROUTE_POLICY, PERMISSIONS, matchRoute, authorize, getActor, policyHealth, devOpenActive } from "../src/platform/policy";
 import { call, callWithEnv } from "./helpers";
 

@@ -1,6 +1,6 @@
 # Development Timeline
 
-**Last updated:** 2026-11-08  
+**Last updated:** 2026-11-10  
 **Branch rule:** all development happens on `development`. `main` is locked by the "Protect main" ruleset and changes only after testing passes in the dev environment.  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
 
@@ -19,7 +19,7 @@
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
 | 00 | UI shell and design system | P0 | none | In progress (00a done) | Slice 00a: Kumo evaluation and decision D20. See Story 00 notes |
-| 01 | Platform foundation and application identity | P0 | none | In progress (01a, 01b done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory (71 tests). See Story 01 notes |
+| 01 | Platform foundation and application identity | P0 | none | In progress (01a, 01b, 01c-1 done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility (99 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
 | 04 | Data model, properties and schema compatibility | P0 | 01 | Planned | |
@@ -56,7 +56,7 @@ Work is done one slice at a time, each in a pull request into `development`.
 | 2 ✔ | **00a** Kumo evaluation, icon set (done). Design tokens wait for the reference screenshot | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
 | 3 ✔ | **01b** Policy placeholder, actor columns, audit shape, legacy inventory | Every later route declares its permission | Route-policy inventory exists |
 | 4 | **00b** Shell, primitives, context menu, gallery | Needs the tokens | Gallery and screenshot tests pass, bundle under 300 KB gzip |
-| 5 | **01c** Metadata catalog, release snapshots, bootstrap, seed | Core of the platform | Seed twice without duplicates, bootstrap reads at most 5 rows |
+| 5 (01c-1 ✔) | **01c** Metadata catalog, release snapshots, bootstrap, seed | Core of the platform | Seed twice without duplicates, bootstrap reads at most 5 rows |
 | 6 | **01d** Measurement helper, caches, `data_source_versions`, resource governor | Budgets must be measurable before features add load | Governor states and limit error mapping tested |
 | 7 | **Story 04** Properties, schema compatibility, schema change service | Needs only Story 01, and Stories 05 and 06 depend on it | Add-property works in both modes with preview and log |
 | 8 | **Story 02** Navigator | Needs 00 and 01 | Navigator matches the UI reference |
@@ -102,6 +102,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 | Date | Change |
 |---|---|
 | 2026-11-08 | Timeline created. Stories 00 and 01 marked Ready. |
+| 2026-11-10 | Slice 01c-1 done: `cfg_*` catalog, seed package (61 items), release snapshot, bootstrap with ETag, compatibility check. 99 Worker tests. 01c-2 (seed upgrades) remains. |
 | 2026-11-09 | Slice 01b done: policy layer with route inventory, actor columns, audit event shape, legacy inventory, folder layout. 71 Worker tests. |
 | 2026-11-09 | Slice 00a done: Kumo evaluated and adopted for primitives (D20), Phosphor icons, bundle cost measured. Design tokens wait for the reference screenshot. |
 | 2026-11-08 | Slice 01a done: Vitest with the Cloudflare plugin, 35 baseline tests, type checking, lockfiles and CI. Story 01 In progress. |
