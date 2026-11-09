@@ -174,3 +174,16 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - `README`s in `client/` and `deployment/` mention contents that arrive in later stories.
 
 **Still open for Story 01:** frontend test tooling, then slices 01c (metadata catalog, release snapshots, bootstrap, seed, compatibility inspection, items 2–7, 9, 14, 16, 19) and 01d (resource measurement, caches, governor, service worker, items 18, 20–23).
+
+### Slice 01c — metadata catalog, releases, bootstrap, seed (started 2026-11-09)
+
+**Plan.** The storage model, identifier rules, table list, release and bootstrap contract, compatibility rules and seed installation rules are recorded first in [Contracts §12](../IMPLEMENTATION-CONTRACTS.md) (scope item 14). The slice is split in two so each part is reviewable:
+
+- **01c-1:** migration `0004` with the `cfg_*` tables, ID derivation, snapshot builder and release publish, the Imam Mobile seed package (two menus, six modules and pages matching today's navigation, four data sources with their columns), initial seed installation, schema compatibility inspection, `GET /api/bootstrap` with ETag, deployment key var, and tests.
+- **01c-2:** seed upgrade preview with three-way comparison, apply for safe items, conflict reporting, explicit reset to upstream default, and tests (scope item 6 completion).
+
+**Decisions taken in the plan**
+- The normalized `cfg_*` rows are the editable working copy. The release snapshot is derived at publish and never edited (D1).
+- The bootstrap reads one row when the browser's version matches, and two rows otherwise, against the budget of 5.
+- Admin Studio is not seeded as a module. It becomes configure mode (Story 07).
+- Views and forms are deferred to Stories 05 and 06, and full property configuration to Story 04.

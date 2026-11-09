@@ -357,3 +357,80 @@ Keeping tables under about 2,000 rows in the browser, with incremental sync by `
 ## 11. UI/UX MVP and security release gate
 
 The UI/UX and reusable-runtime MVP establishes the design system, metadata-driven shell, page/component registry, early edit-mode/inspector interaction, typed property model, basic list/search and standard forms/CRUD. Authentication and authorization are implemented after this UI/UX phase in Story 11. The application must not be used with real multi-user business data or promoted to production before Story 11's authentication, authorization and sensitive-field tests pass. Development-only policy stubs must be clearly marked and must not be mistaken for security.
+
+## 12. Configuration storage, identifiers, releases and bootstrap
+
+Recorded in Story 01 slice 01c (2026-11-09), before any configuration table is created. It implements [Decisions D1, D5 and D13](DECISIONS.md).
+
+### 12.1 Identity layers
+
+| Layer | What it is | Where it lives |
+|---|---|---|
+| Deployment | One installed copy (a fork and its Cloudflare resources) | Non-secret Worker vars `DEPLOYMENT_KEY` and `ENVIRONMENT`. Reported by bootstrap as `deployment`. |
+| Application | A named product area inside the installation, for example `imam-mobile` | Row in `cfg_application`. Reported by bootstrap as `application`. |
+| Release | One immutable published configuration of an application | Row in `cfg_release`. |
+
+A deployment can hold several applications later. Nothing in the runtime assumes the deployment key equals an application key.
+
+### 12.2 Identifiers
+
+- Configuration IDs are opaque text: a type prefix, an underscore and 16 hexadecimal characters, for example `mnu_9f2c4a1b7d3e8a05`. Prefixes: `app`, `mnu` (menu), `mod` (module), `pge` (page), `cmp` (component), `dsr` (data source), `prp` (property), `rel` (release).
+- **Seed items** get a fixed ID derived once: the first 16 hex characters of SHA-256 over `<application key>:<type>:<seed key>`. The seed key is a stable name that never changes when the label changes. The seed package declares the key. The derived ID is pinned by a test, so a changed ID fails the build.
+- **Items created in configure mode** get random IDs with the same shape.
+- Labels, slugs and routes are separate columns and may change at any time. Nothing references them as identity.
+- Business tables keep integer primary keys. Data source properties reference columns by name, and relations reference the target data source ID.
+
+### 12.3 Tables
+
+All names start with `cfg_`. Every row has `created_at`, `updated_at` (UTC ISO text) and `created_by`, `updated_by` (actor id). Configuration rows are the editable working copy. Normal users never read them directly.
+
+| Table | Purpose | Main columns |
+|---|---|---|
+| `cfg_application` | Application identity | `id`, `key` (unique), `name`, `description`, `status` |
+| `cfg_menu` | Collection of modules | `id`, `application_id`, `label`, `icon`, `display` (`group` or `section`), `position` |
+| `cfg_module` | Navigable page entry | `id`, `application_id`, `menu_id`, `label`, `slug`, `icon`, `badge`, `page_id`, `position`, `enabled` |
+| `cfg_page` | A page of components | `id`, `application_id`, `title`, `description` |
+| `cfg_component` | Typed component on a page | `id`, `page_id`, `type`, `type_version`, `position`, `config_json` |
+| `cfg_data_source` | Approved physical table | `id`, `application_id`, `key`, `label`, `table_name`, `primary_key` |
+| `cfg_property` | Property mapped to a column | `id`, `data_source_id`, `key`, `label`, `column_name`, `type`, `nullable`, `position` |
+| `cfg_release` | Immutable snapshot | `id`, `application_id`, `version` (integer, unique per application), `snapshot_json`, `snapshot_hash`, `config_schema_version`, `min_platform_version`, `summary`, `created_at`, `created_by` |
+| `cfg_active_release` | Which release is live | `application_id` (primary key), `release_id`, `version`, `etag` |
+| `cfg_seed_package` | Installed seed packages | `package_id` (primary key), `application_key`, `version`, `min_platform_version`, `applied_at` |
+| `cfg_seed_item` | Seed ownership per item | `item_id` (primary key), `item_type`, `package_id`, `seed_key`, `ownership` (`seed_managed` or `client_owned`), `applied_version`, `baseline_hash`, `deprecated` |
+
+Views and forms (`cfg_view`, `cfg_form`) arrive with Stories 05 and 06. Properties gain their full configuration in Story 04.
+
+### 12.4 Releases and the snapshot
+
+- A release snapshot is canonical JSON derived from the `cfg_*` rows of one application: application, menus with modules, pages with components, data sources with properties. It carries `configSchemaVersion` and `minPlatformVersion`.
+- Publishing inserts the release row and updates `cfg_active_release` in one `batch()`. Either both happen or neither. A failed publish leaves the previous release active. Restoring creates a new release.
+- `snapshot_hash` is the SHA-256 of the canonical JSON. `etag` is `"<version>-<first 12 hash characters>"`.
+- The snapshot is never edited and is never a second source of truth: the rows are authoritative, and the snapshot is rebuilt from them at publish time.
+
+### 12.5 Bootstrap
+
+`GET /api/bootstrap` returns `{ deployment, platform, application, release, shell }`. The application comes from the default application (the one active release).
+
+- **Read cost:** one read of `cfg_active_release` to get the ETag, and when the browser's `If-None-Match` matches, a 304 with that single row read. Otherwise a join of the pointer row and its release row (two rows read). Never reads normalized configuration rows.
+- **Caching:** `Cache-Control: no-cache` with the `ETag`, so the browser revalidates on every load and a publish is visible on the next request (D13). No edge cache.
+- **Compatibility:** the response lists `platform.version` and `platform.configSchemaVersion`. If the release needs a newer platform version, bootstrap returns a `PLATFORM_TOO_OLD` error that the interface shows as a plain message.
+- **Permission:** `configuration.read`.
+- The legacy `GET /api/configuration` stays until Story 07 (see [legacy inventory](legacy-inventory.md)).
+
+### 12.6 Schema compatibility inspection
+
+An allowlisted, read-only service compares the data sources and properties of a snapshot or of the working rows with SQLite metadata (`PRAGMA table_info` with quoted identifiers). It reports per data source: mapped and compatible properties, unmapped physical columns (offered later as "Add as property"), and mapped properties whose column is missing or has an incompatible storage type (blocking). Seed installation and publish refuse blocking findings. Type compatibility:
+
+| Property type | Accepted SQLite types |
+|---|---|
+| text, title, select, status, date, timestamp, email, phone, url | TEXT |
+| number, currency, checkbox, unique ID | INTEGER (number also REAL) |
+| relation | INTEGER or TEXT, matching the target key |
+
+### 12.7 Seed installation
+
+- A seed package is a TypeScript module that declares `packageId`, `version`, `minPlatformVersion`, the application key and its items, each with a stable seed key.
+- Initial installation inserts every item, records ownership and baseline hashes, checks compatibility and publishes release 1, in one batch. Re-running the same package version changes nothing. If an item with the same derived ID exists but belongs to another package or seed key, installation stops with a clear error and writes nothing.
+- A partly applied installation is detected by a missing `cfg_seed_package` row, and a re-run completes it safely.
+- Business records are never part of a seed package.
+- Upgrades (slice 01c-2) follow [§2](#2-seed-ownership-and-upgrade-conflict-contract): preview, three-way comparison, per-item conflicts, explicit reset.
