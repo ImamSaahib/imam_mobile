@@ -164,7 +164,7 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 **Evidence**
 - `npm run check` in `backend`: type check clean, 7 test files, 71 tests passing (35 baseline from 01a, 14 policy, 8 actor and audit, 14 legacy admin).
 - The route inventory test scans the Worker source, so a new route without a policy entry fails the build, and a policy entry for a removed route fails too.
-- The policy tests call all 28 routes three ways: dev-open in development (never 403), no mode (always 403 except public), and dev-open outside development (always 403).
+- The policy tests call all 27 routes three ways: dev-open in development (never 403), no mode (always 403 except public), and dev-open outside development (always 403).
 - Frontend build passes. Same bundle size as the baseline (JS index 207.8 kB).
 
 **Risks and notes for later**
