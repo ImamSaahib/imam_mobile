@@ -2,7 +2,7 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-10 (after slice 01c-1, commit `8d18066` on `development`)
+**Last updated:** 2026-11-10 (after slice 01c-2)
 
 ## 1. What the project is
 
@@ -23,37 +23,35 @@ An environment for building, customizing and extending business modules (Service
 | Item | State |
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
-| Story 01 (platform foundation) | In progress. 01a, 01b, 01c-1 done. 01c-2 and 01d remaining |
+| Story 01 (platform foundation) | In progress. 01a, 01b, 01c (both parts) done. 01d remaining |
 | Stories 02–11 | Planned |
-| Worker tests | 99 passing in 8 files (`cd backend && npm run check`) |
+| Worker tests | 117 passing in 9 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | **Migrations 0003 and 0004 are not known to be applied to the dev D1 database, and `POST /api/platform/seed` has not been called.** Apply and seed before deploying the current Worker code |
 
-## 4. Next step: slice 01c-2 (seed upgrades)
+## 4. Next step: slice 01d (measurement, caches, governor)
 
-Requirement: [Contracts §2](platform/IMPLEMENTATION-CONTRACTS.md) and [§12](platform/IMPLEMENTATION-CONTRACTS.md), Story 01 "Seed ownership and upgrade contract".
+Requirement: [Contracts §9–10](platform/IMPLEMENTATION-CONTRACTS.md), Story 01 acceptance boxes still open, Decisions D13, D16, D17.
 
-Build, in `backend/src/platform/config/` (extend `seed.ts` or add `seed-upgrade.ts`):
-- **Upgrade preview** (no writes): compare the previous baseline (`cfg_seed_item.baseline_hash`), the new package, and the current row value. Report additions, updates, unchanged, client-owned, conflicts, deprecated items and incompatible references. Show old and proposed values.
-- **Apply** a validated plan: apply safe updates and additions, leave conflicts unchanged, mark items removed upstream as deprecated (never hard-delete), and publish a new release. Use one `db.batch()` per apply.
-- **Conflict resolution** per item: take upstream, keep client value, or merged value, with the actor recorded in the audit table.
-- **Reset to upstream default** as an explicit action after preview.
-- Routes with entries in `policy.ts` (a test fails if a route has none), and tests for each case, including re-running the same upgrade.
-- Remove the `SEED_UPGRADE_REQUIRED` shortcut in `installSeed` once upgrades exist, or keep it pointing to the new route.
+Build:
+- A measurement helper that records rows read and written per request (D1 result `meta`), exposed in development and tests, and used to verify the bootstrap budget (at most 5 rows read, 1 on a matching ETag) on the reference dataset.
+- In-memory snapshot cache in the Worker (at most 60 seconds) and `data_source_versions` counters.
+- Resource governor (Normal, Conserve, Essential, Limit; thresholds in §10.7, reset 00:00 UTC), `DAILY_LIMIT_REACHED` mapping for D1 limit errors, governor state in bootstrap and health, and per-client rate limiting.
+- Service worker that caches static files only; stop edge-caching `GET /api/configuration` (D13).
 
-Existing pieces to reuse: `installSeed`, `expandSeed`, `itemValue`, `deriveSeedId`, `hashOf`, `buildSnapshot`, `loadRows`, `PlatformError`. Tables: `cfg_seed_package`, `cfg_seed_item` (ownership, applied_version, baseline_hash, deprecated).
+Gate: governor states and limit error mapping tested; rows read and written recorded in the Story 01 notes; boxes ticked; TIMELINE and this file updated; pushed to `development`.
 
-Gate: Story 01 notes record what was built, decisions and test evidence; boxes ticked; TIMELINE updated; pushed to `development`.
+Seed upgrade API (done in 01c-2): `POST /api/platform/seed/preview`, then `POST /api/platform/seed/upgrade` with the `planHash`, optional `resolutions` and `reset`. Code in `backend/src/platform/config/seed-upgrade.ts`.
 
 ## 5. After that (from the sequence)
 
-01d (measurement helper for rows read/written, snapshot cache, `data_source_versions`, resource governor, `DAILY_LIMIT_REACHED`, static-only service worker, remove edge caching of `GET /api/configuration`), then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
+Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
 
 ## 6. How to verify the starting state
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 99 tests
+cd backend && npm ci && npm run check      # type check plus 117 tests
 cd ../frontend && npm ci && npm run build
 ```
 

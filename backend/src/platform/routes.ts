@@ -6,6 +6,7 @@ import type { Actor } from "./policy";
 import { PlatformError } from "./errors";
 import { getBootstrap } from "./config/bootstrap";
 import { installSeed } from "./config/seed";
+import { previewUpgrade, applyUpgrade, type UpgradeInput } from "./config/seed-upgrade";
 import { SEED_PACKAGES } from "./config/registry";
 import { inspectCompatibility } from "./config/compat";
 import { loadRows } from "./config/snapshot";
@@ -20,10 +21,16 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
       const headers = { ETag: result.etag, "Cache-Control": "no-cache" };
       return result.status === 304 ? { status: 304, headers } : { status: 200, body: result.body, headers };
     }
-    if (path === "/api/platform/seed" && request.method === "POST") {
-      const body = (await request.json().catch(() => null)) as { packageId?: string } | null;
+    if (request.method === "POST" && (path === "/api/platform/seed" || path === "/api/platform/seed/preview" || path === "/api/platform/seed/upgrade")) {
+      const body = (await request.json().catch(() => null)) as ({ packageId?: string } & Partial<UpgradeInput>) | null;
       const pkg = body?.packageId ? SEED_PACKAGES.find((p) => p.packageId === body.packageId) : SEED_PACKAGES.length === 1 ? SEED_PACKAGES[0] : undefined;
       if (!pkg) throw new PlatformError("SEED_UNKNOWN", "Choose one of the seed packages built into this installation.", 400, { available: SEED_PACKAGES.map((p) => p.packageId) });
+      if (path === "/api/platform/seed/preview") return { status: 200, body: await previewUpgrade(env.DB, pkg), headers: { "Cache-Control": "no-store" } };
+      if (path === "/api/platform/seed/upgrade") {
+        if (!body?.planHash) throw new PlatformError("SEED_PLAN_REQUIRED", "Send the planHash from the preview.", 400);
+        const result = await applyUpgrade(env.DB, pkg, { planHash: body.planHash, resolutions: body.resolutions, reset: body.reset }, actor);
+        return { status: 200, body: result, headers: { "Cache-Control": "no-store" } };
+      }
       const result = await installSeed(env.DB, pkg, actor);
       return { status: result.status === "installed" ? 201 : 200, body: result, headers: { "Cache-Control": "no-store" } };
     }

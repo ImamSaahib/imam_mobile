@@ -9,6 +9,7 @@ import { buildSnapshot } from "./snapshot";
 import { inspectCompatibility } from "./compat";
 import type { ConfigRows, SeedItemType } from "./types";
 import type { SeedPackage } from "./seed-types";
+import { INSERT_ORDER, insertStatement } from "./rows-sql";
 
 export type ExpandedSeed = {
   rows: ConfigRows;
@@ -112,17 +113,14 @@ export async function installSeed(db: D1Database, pkg: SeedPackage, actor: Actor
   const etag = `1-${snapshotHash.slice(0, 12)}`;
   const now = new Date().toISOString();
   const by = actor ? actor.id : null;
-  const stamp = [now, now, by, by] as const;
 
-  const statements: D1PreparedStatement[] = [];
+  const stamp = { now, by };
   const app = rows.application;
-  statements.push(db.prepare("INSERT INTO cfg_application (id,key,name,description,status,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?)").bind(app.id, app.key, app.name, app.description, app.status, ...stamp));
-  for (const x of rows.pages) statements.push(db.prepare("INSERT INTO cfg_page (id,application_id,title,description,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?)").bind(x.id, app.id, x.title, x.description, ...stamp));
-  for (const x of rows.menus) statements.push(db.prepare("INSERT INTO cfg_menu (id,application_id,label,icon,display,position,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(x.id, app.id, x.label, x.icon, x.display, x.position, ...stamp));
-  for (const x of rows.modules) statements.push(db.prepare("INSERT INTO cfg_module (id,application_id,menu_id,page_id,label,slug,icon,badge,position,enabled,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(x.id, app.id, x.menuId, x.pageId, x.label, x.slug, x.icon, x.badge, x.position, x.enabled ? 1 : 0, ...stamp));
-  for (const x of rows.components) statements.push(db.prepare("INSERT INTO cfg_component (id,page_id,type,type_version,position,config_json,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(x.id, x.pageId, x.type, x.typeVersion, x.position, canonicalJson(x.config), ...stamp));
-  for (const x of rows.dataSources) statements.push(db.prepare("INSERT INTO cfg_data_source (id,application_id,key,label,table_name,primary_key,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(x.id, app.id, x.key, x.label, x.tableName, x.primaryKey, ...stamp));
-  for (const x of rows.properties) statements.push(db.prepare("INSERT INTO cfg_property (id,data_source_id,key,label,column_name,type,nullable,position,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)").bind(x.id, x.dataSourceId, x.key, x.label, x.columnName, x.type, x.nullable ? 1 : 0, x.position, ...stamp));
+  const byType: Record<SeedItemType, ({ id: string } & Record<string, any>)[]> = {
+    application: [app], page: rows.pages, menu: rows.menus, dataSource: rows.dataSources, module: rows.modules, component: rows.components, property: rows.properties
+  };
+  const statements: D1PreparedStatement[] = [];
+  for (const type of INSERT_ORDER) for (const row of byType[type]) statements.push(insertStatement(db, type, row, app.id, stamp));
   statements.push(db.prepare("INSERT INTO cfg_seed_package (package_id,application_key,version,min_platform_version,applied_at) VALUES (?,?,?,?,?)").bind(pkg.packageId, pkg.applicationKey, pkg.version, pkg.minPlatformVersion, now));
   for (const item of items) statements.push(db.prepare("INSERT INTO cfg_seed_item (item_id,item_type,package_id,seed_key,ownership,applied_version,baseline_hash) VALUES (?,?,?,?,?,?,?)").bind(item.itemId, item.itemType, pkg.packageId, item.seedKey, "seed_managed", pkg.version, await hashOf(item.value)));
   statements.push(db.prepare("INSERT INTO cfg_release (id,application_id,version,snapshot_json,snapshot_hash,config_schema_version,min_platform_version,summary,created_at,created_by) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(releaseId, app.id, 1, snapshotJson, snapshotHash, CONFIG_SCHEMA_VERSION, pkg.minPlatformVersion, `Initial install of ${pkg.packageId} ${pkg.version}`, now, by));

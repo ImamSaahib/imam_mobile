@@ -1,6 +1,6 @@
 # Story 01 — Platform Foundation and Application Identity
 
-**Status:** In progress (slices 01a, 01b and 01c-1 done; 01c-2 and 01d remaining)  
+**Status:** In progress (slices 01a, 01b, 01c-1 and 01c-2 done; 01d remaining)  
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–11  
 **Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
 
@@ -60,11 +60,11 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [ ] Bootstrap loads the application shell from published metadata, not hardcoded React arrays.
 - [x] Application identity is distinct from deployment/client identity. *(01c-1: `cfg_application` vs `DEPLOYMENT_KEY` var vs release; test.)*
 - [x] Stable IDs are independent of display names and route labels. *(01c-1: seed IDs derived from type and seed key; golden-value and rename tests.)*
-- [x] Seed package can be applied twice without duplicate rows or data loss. *(01c-1: second install is a no-op; test. Upgrades are 01c-2.)*
+- [x] Seed package can be applied twice without duplicate rows or data loss. *(01c-1: second install is a no-op; test. Upgrades: 01c-2, idempotent by hash comparison.)*
 - [x] Seed package declares version and minimum supported platform/configuration version. *(01c-1: `version` and `minPlatformVersion`; too-old platform refused.)*
 - [x] Schema compatibility check reports missing/incompatible mapped tables and columns. *(01c-1: `GET /api/platform/schema-compatibility`.)*
 - [x] Incompatible metadata is not silently accepted. *(01c-1: install fails with `SCHEMA_INCOMPATIBLE`, nothing written.)*
-- [x] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11. *(Slice 01b: 27 routes in `backend/src/platform/policy.ts`, with a test that fails when a route has no entry.)*
+- [x] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11. *(Slice 01b: 29 routes in `backend/src/platform/policy.ts` after 01c-2, with a test that fails when a route has no entry.)*
 - [x] `dev-open` is refused outside development, and the health check fails if it is active elsewhere. *(Slice 01b.)*
 - [x] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata. *(Worker routes: 35 tests, slice 01a.)*
 - [x] The test runner and TypeScript build are in place. *(Worker side done in slice 01a. Frontend test tooling is still open, see notes.)*
@@ -212,6 +212,32 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - Then call `POST /api/platform/seed` once on dev.
 - Do not promote to `main` (see the promotion warning in TIMELINE).
 
-**Still open in 01c**
-- 01c-2: seed upgrade preview, three-way comparison, conflicts, reset to default.
+**Still open after 01c-1**
 - The React shell still reads hardcoded arrays; it moves to bootstrap in Story 02.
+
+#### Slice 01c-2 completion notes (2026-11-10)
+
+**Built**
+- `config/seed-upgrade.ts`: `previewUpgrade` (no writes) and `applyUpgrade`. `config/rows-sql.ts` holds the insert and update SQL shared with `installSeed`.
+- Routes `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade`, both with the `platform.seed` permission (29 routes in the policy inventory).
+
+**How it decides (Contracts §2)** For each seed item the baseline hash (stored at last apply), the proposed hash (new package) and the current hash (database row) are compared:
+- not known yet: `add`.
+- proposed equals baseline: `unchanged` (a local edit is kept, and flagged `locallyModified` so it can be reset).
+- current equals baseline: `update`, applied.
+- current already equals proposed: `unchanged`, only the baseline moves.
+- all three differ: `conflict`, left unchanged.
+- item is `client_owned`: never touched.
+- item removed upstream: `deprecate` (flag set, row kept).
+- row deleted locally: `missing`, reported only.
+
+**Resolution and reset.** Apply takes the `planHash` from the preview (stale plans are refused with `STALE_PLAN`), optional per-conflict `resolutions` (`upstream`, `keep`, `own`, or a merged `{value}` with exactly the proposed fields) and an explicit `reset` list that restores the upstream value and `seed_managed` ownership for any item. Unresolved conflicts stay reported in later previews.
+
+**Safety.** The plan is computed from hashes only, so a repeated apply changes nothing (no new release). The result is checked before any write: references between menus, modules, pages, components, data sources and properties must resolve, and mapped tables and columns must exist (`SCHEMA_INCOMPATIBLE`, `SEED_INVALID`). All item writes, seed bookkeeping, the new release, the active-release pointer and an audit event (`seed.upgrade`, actor recorded) go in one `db.batch()`; a failure reports `UPGRADE_FAILED` and changes nothing. Older package versions are refused (`SEED_DOWNGRADE`).
+
+**Evidence.** `npm run check`: type check clean, 117 tests in 9 files pass (99 before, 18 added in `test/seed-upgrade.test.ts`) covering add, update, deprecate, preserve-local-change, conflict, each resolution, client-owned, reset, idempotence, stale plan, invalid resolutions, incompatible column, business data untouched, and the routes. Rows read and written are not measured yet (01d helper); an upgrade is an administrator action, not a per-request path.
+
+**Known limits**
+- A change made between the plan check and the batch (milliseconds) is not detected. Acceptable for an administrator action with about 5 users; Story 07 publishing adds a version check.
+- Deprecated items are not shown in the navigator or removed; Story 07 decides how configure mode presents them.
+- Renaming a seed key upstream is treated as remove plus add by design.

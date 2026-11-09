@@ -52,6 +52,8 @@ export const ROUTE_POLICY: RoutePolicy[] = [
   { method: "GET", pattern: "/api/configuration", permission: P.configurationRead },
   { method: "GET", pattern: "/api/bootstrap", permission: P.configurationRead },
   { method: "POST", pattern: "/api/platform/seed", permission: P.platformSeed },
+  { method: "POST", pattern: "/api/platform/seed/preview", permission: P.platformSeed },
+  { method: "POST", pattern: "/api/platform/seed/upgrade", permission: P.platformSeed },
   { method: "GET", pattern: "/api/platform/schema-compatibility", permission: P.schemaInspect },
 
   // Legacy admin routes. The shared bearer token still guards them until Story 07 replaces them
