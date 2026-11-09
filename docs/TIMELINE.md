@@ -2,6 +2,7 @@
 
 **Last updated:** 2026-11-10  
 **Branch rule:** all development happens on `development`. `main` is locked by the "Protect main" ruleset and changes only after testing passes in the dev environment.  
+**Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
 
 ## Status values

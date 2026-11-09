@@ -33,6 +33,7 @@ The product is an environment for building, customizing and extending modules in
 
 ## Read in this order
 
+0. [Handoff](../HANDOFF.md): current state and next step (start here when continuing the work)
 1. [Architecture](ARCHITECTURE.md)
 2. [UI Reference](UI-REFERENCE.md)
 3. [Decisions Record](DECISIONS.md)
