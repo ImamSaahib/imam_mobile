@@ -15,6 +15,7 @@ import { canonicalJson, hashOf } from "./canonical";
 import { buildSnapshot, loadRows } from "./snapshot";
 import { inspectCompatibility } from "./compat";
 import { expandSeed, itemValue } from "./seed";
+import { invalidateBootstrapCache } from "./bootstrap";
 import { INSERT_ORDER, insertStatement, updateStatement } from "./rows-sql";
 import type { ConfigRows, SeedItemType } from "./types";
 import type { SeedPackage } from "./seed-types";
@@ -275,5 +276,6 @@ export async function applyUpgrade(db: D1Database, pkg: SeedPackage, input: Upgr
   } catch {
     throw new PlatformError("UPGRADE_FAILED", "The upgrade could not be written and nothing was changed. It is safe to preview and try again.", 409);
   }
+  invalidateBootstrapCache();
   return { status: "applied", packageId: pkg.packageId, version: pkg.version, releaseVersion, applied: tally, conflictsRemaining: unresolved };
 }

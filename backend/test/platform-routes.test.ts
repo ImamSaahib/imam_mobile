@@ -5,7 +5,7 @@ describe("health, CORS and routing", () => {
   it("reports health with a connected database", async () => {
     const r = await call("GET", "/api/health");
     expect(r.status).toBe(200);
-    expect(r.json).toEqual({ ok: true, service: "imam-mobile-api", database: "connected", auth: "dev-open" });
+    expect(r.json).toMatchObject({ ok: true, service: "imam-mobile-api", database: "connected", auth: "dev-open", resources: { state: "normal" } });
   });
   it("answers preflight requests", async () => {
     const r = await call("OPTIONS", "/api/devices");
@@ -26,10 +26,11 @@ describe("health, CORS and routing", () => {
 });
 
 describe("published configuration", () => {
-  it("is readable without authentication and is edge-cacheable", async () => {
+  it("is readable without authentication and is revalidated, not edge-cached", async () => {
     const r = await call("GET", "/api/configuration");
     expect(r.status).toBe(200);
-    expect(r.headers.get("Cache-Control")).toContain("max-age=60");
+    expect(r.headers.get("Cache-Control")).toBe("no-cache");
+    expect(r.headers.get("ETag")).toBeTruthy();
   });
 });
 

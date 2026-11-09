@@ -21,7 +21,19 @@ function matches(ifNoneMatch: string | null, etag: string): boolean {
   return ifNoneMatch.split(",").map((t) => t.trim().replace(/^W\//, "")).some((t) => t === etag || t === "*");
 }
 
-export async function getBootstrap(db: D1Database, env: BootstrapEnv, ifNoneMatch: string | null): Promise<BootstrapResult> {
+export const BOOTSTRAP_CACHE_MS = 60_000;
+export const BOOTSTRAP_CACHE_RELAXED_MS = 300_000;
+
+// The active release held in this Worker instance's memory (Contracts section 10.1). A publish or upgrade
+// in the same instance clears it; other instances serve the old release for at most the cache time.
+let cache: { etag: string; body: unknown; expiresAt: number } | null = null;
+export function invalidateBootstrapCache() { cache = null; }
+
+/** `cacheMs` is longer when the resource governor is conserving reads. */
+export async function getBootstrap(db: D1Database, env: BootstrapEnv, ifNoneMatch: string | null, cacheMs = BOOTSTRAP_CACHE_MS, now = Date.now()): Promise<BootstrapResult> {
+  if (cache && cache.expiresAt > now) {
+    return matches(ifNoneMatch, cache.etag) ? { status: 304, etag: cache.etag } : { status: 200, etag: cache.etag, body: cache.body };
+  }
   const active = await db.prepare("SELECT application_id, release_id, version, etag FROM cfg_active_release ORDER BY application_id LIMIT 1").first<{ application_id: string; release_id: string; version: number; etag: string }>();
   if (!active) throw new PlatformError("NOT_INSTALLED", "The application has not been installed yet. Install its seed package first.", 404);
   const etag = httpEtag(active.etag);
@@ -33,15 +45,13 @@ export async function getBootstrap(db: D1Database, env: BootstrapEnv, ifNoneMatc
     throw new PlatformError("PLATFORM_TOO_OLD", `This configuration needs platform ${release.min_platform_version} or newer. This installation runs ${PLATFORM_VERSION}.`, 409);
   }
   const snapshot = JSON.parse(release.snapshot_json) as Snapshot;
-  return {
-    status: 200,
-    etag,
-    body: {
+  const body = {
       deployment: { key: env.DEPLOYMENT_KEY ?? null, environment: env.ENVIRONMENT ?? null },
       platform: { version: PLATFORM_VERSION, configSchemaVersion: CONFIG_SCHEMA_VERSION },
       application: snapshot.application,
       release: { id: active.release_id, version: active.version, createdAt: release.created_at },
       shell: { menus: snapshot.menus, pages: snapshot.pages, dataSources: snapshot.dataSources }
-    }
   };
+  cache = { etag, body, expiresAt: now + cacheMs };
+  return { status: 200, etag, body };
 }

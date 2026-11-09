@@ -2,7 +2,7 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-10 (after slice 01c-2)
+**Last updated:** 2026-11-10 (after slice 01d)
 
 ## 1. What the project is
 
@@ -23,25 +23,21 @@ An environment for building, customizing and extending business modules (Service
 | Item | State |
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
-| Story 01 (platform foundation) | In progress. 01a, 01b, 01c (both parts) done. 01d remaining |
+| Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
 | Stories 02–11 | Planned |
-| Worker tests | 117 passing in 9 files (`cd backend && npm run check`) |
+| Worker tests | 139 passing in 10 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
-| Dev database | **Migrations 0003 and 0004 are not known to be applied to the dev D1 database, and `POST /api/platform/seed` has not been called.** Apply and seed before deploying the current Worker code |
+| Dev database | **Migrations 0003, 0004 and 0005 are not known to be applied to the dev D1 database, and `POST /api/platform/seed` has not been called.** Apply and seed before deploying the current Worker code |
 
-## 4. Next step: slice 01d (measurement, caches, governor)
+## 4. Next step: Story 04 (data model, properties, schema compatibility)
 
-Requirement: [Contracts §9–10](platform/IMPLEMENTATION-CONTRACTS.md), Story 01 acceptance boxes still open, Decisions D13, D16, D17.
+Story 00b (shell and tokens) is blocked until the reference screenshot is attached, so the next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. It needs only Story 01.
 
-Build:
-- A measurement helper that records rows read and written per request (D1 result `meta`), exposed in development and tests, and used to verify the bootstrap budget (at most 5 rows read, 1 on a matching ETag) on the reference dataset.
-- In-memory snapshot cache in the Worker (at most 60 seconds) and `data_source_versions` counters.
-- Resource governor (Normal, Conserve, Essential, Limit; thresholds in §10.7, reset 00:00 UTC), `DAILY_LIMIT_REACHED` mapping for D1 limit errors, governor state in bootstrap and health, and per-client rate limiting.
-- Service worker that caches static files only; stop edge-caching `GET /api/configuration` (D13).
+Start the way slice 01c started: read [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md), [Contracts §3 and §8](platform/IMPLEMENTATION-CONTRACTS.md), split the story into reviewable slices, and write that plan into the story's Implementation notes before building. Reuse: the `cfg_property` table and `ACCEPTED` type map in `config/compat.ts`, `inspectCompatibility`, `rows-sql.ts`, `PlatformError`, `auditStatement`, `bumpVersionStatement`, and the test helpers (`call`, `callWithEnv`, `X-Rows-Read` headers for measuring).
 
-Gate: governor states and limit error mapping tested; rows read and written recorded in the Story 01 notes; boxes ticked; TIMELINE and this file updated; pushed to `development`.
+What slice 01d added, for reference: request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping, and configuration revalidation. Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
 
-Seed upgrade API (done in 01c-2): `POST /api/platform/seed/preview`, then `POST /api/platform/seed/upgrade` with the `planHash`, optional `resolutions` and `reset`. Code in `backend/src/platform/config/seed-upgrade.ts`.
+Gate: see TIMELINE step 7 (add-property works in both modes with preview and log).
 
 ## 5. After that (from the sequence)
 
@@ -51,7 +47,7 @@ Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse che
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 117 tests
+cd backend && npm ci && npm run check      # type check plus 139 tests
 cd ../frontend && npm ci && npm run build
 ```
 

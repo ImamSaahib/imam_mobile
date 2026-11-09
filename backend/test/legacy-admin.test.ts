@@ -19,11 +19,13 @@ beforeEach(async () => {
 });
 
 describe("legacy configuration routes", () => {
-  it("serves the seeded published configuration publicly with an edge cache", async () => {
+  it("serves the seeded published configuration publicly and tells the browser to revalidate", async () => {
     const r = await callWithEnv({}, "GET", "/api/configuration");
     expect(r.json.version).toBe(1);
     expect(r.json.configuration.pages.map((p: any) => p.id)).toContain("inventory");
-    expect(r.headers.get("Cache-Control")).toBe("public, max-age=60, s-maxage=300");
+    expect(r.headers.get("Cache-Control")).toBe("no-cache"); // no edge cache (Decisions D13)
+    const again = await callWithEnv({}, "GET", "/api/configuration", undefined, { "If-None-Match": r.headers.get("ETag")! });
+    expect(again.status).toBe(304);
   });
   it("saves a draft without changing what is published", async () => {
     expect((await admin("PUT", "/api/admin/configuration", { configuration: validConfig("Draft title") })).status).toBe(200);

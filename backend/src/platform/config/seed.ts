@@ -9,6 +9,7 @@ import { buildSnapshot } from "./snapshot";
 import { inspectCompatibility } from "./compat";
 import type { ConfigRows, SeedItemType } from "./types";
 import type { SeedPackage } from "./seed-types";
+import { invalidateBootstrapCache } from "./bootstrap";
 import { INSERT_ORDER, insertStatement } from "./rows-sql";
 
 export type ExpandedSeed = {
@@ -127,5 +128,6 @@ export async function installSeed(db: D1Database, pkg: SeedPackage, actor: Actor
   statements.push(db.prepare("INSERT INTO cfg_active_release (application_id,release_id,version,etag) VALUES (?,?,?,?)").bind(app.id, releaseId, 1, etag));
 
   await db.batch(statements); // one batch: all rows and the release appear together or not at all
+  invalidateBootstrapCache();
   return { status: "installed", packageId: pkg.packageId, version: pkg.version, releaseVersion: 1, itemCount: items.length };
 }

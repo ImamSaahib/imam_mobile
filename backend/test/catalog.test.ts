@@ -6,7 +6,7 @@ import { canonicalJson } from "../src/platform/config/canonical";
 import { expandSeed, installSeed } from "../src/platform/config/seed";
 import { buildSnapshot, loadRows } from "../src/platform/config/snapshot";
 import { inspectCompatibility } from "../src/platform/config/compat";
-import { getBootstrap } from "../src/platform/config/bootstrap";
+import { getBootstrap, invalidateBootstrapCache } from "../src/platform/config/bootstrap";
 import { PlatformError } from "../src/platform/errors";
 import { imamMobileSeed } from "../../applications/imam-mobile/seed/package";
 import type { SeedPackage } from "../src/platform/config/seed-types";
@@ -233,6 +233,10 @@ describe("bootstrap", () => {
     const warm: string[] = [];
     const first = await getBootstrap(record(env.DB, warm), env, null);
     expect(warm).toHaveLength(2);
+    const hot: string[] = [];
+    await getBootstrap(record(env.DB, hot), env, first.etag); // answered from the instance's memory
+    expect(hot).toHaveLength(0);
+    invalidateBootstrapCache();
     const cold: string[] = [];
     await getBootstrap(record(env.DB, cold), env, first.etag);
     expect(cold).toHaveLength(1);

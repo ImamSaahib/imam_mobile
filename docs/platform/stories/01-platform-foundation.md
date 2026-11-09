@@ -1,6 +1,6 @@
 # Story 01 — Platform Foundation and Application Identity
 
-**Status:** In progress (slices 01a, 01b, 01c-1 and 01c-2 done; 01d remaining)  
+**Status:** In progress (slices 01a, 01b, 01c-1, 01c-2 and 01d done; final review and Story 00 shell remaining)  
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–11  
 **Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
 
@@ -71,14 +71,14 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [x] The legacy admin code and `custom_field_values` inventory and plan are recorded. *(Slice 01b: [legacy-inventory.md](../legacy-inventory.md).)*
 - [x] Actor columns and the audit event shape exist with a placeholder actor. *(Slice 01b: migration 0003.)*
 - [x] The owner's confirmation that production holds no real data is recorded. *(Decisions C4, and the legacy inventory.)*
-- [ ] Bootstrap reads at most 5 rows and writes none, measured on the reference dataset.
-- [ ] Rows read and written are recorded for each request in development and tests.
-- [ ] A reached daily limit returns `DAILY_LIMIT_REACHED`.
+- [x] Bootstrap reads at most 5 rows and writes none, measured on the reference dataset. *(01d: measured through the request meter in `test/resources.test.ts`. Cold: at most 5 rows read, 0 written.)*
+- [x] Rows read and written are recorded for each request in development and tests. *(01d: `backend/src/platform/usage.ts`; `X-Rows-Read` and `X-Rows-Written` headers when `ENVIRONMENT=development`.)*
+- [x] A reached daily limit returns `DAILY_LIMIT_REACHED`. *(01d: 503 with `DAILY_LIMIT_REACHED` and the reset time; the legacy UI shows the plain message.)*
 - [x] A bootstrap request with a matching release version reads at most one row. *(01c-1: query count verified as 1; rows-read measurement arrives with 01d's helper.)*
-- [ ] The governor changes between Normal, Conserve, Essential and Limit at the documented thresholds and resets at 00:00 UTC.
-- [ ] The governor state appears in the bootstrap response and the health check.
-- [ ] A looping client is rate limited without affecting other clients.
-- [ ] The service worker caches static files only.
+- [x] The governor changes between Normal, Conserve, Essential and Limit at the documented thresholds and resets at 00:00 UTC. *(01d: unit tests at 70% and 90%, UTC day roll.)*
+- [x] The governor state appears in the bootstrap response and the health check. *(01d: `resources` in the body, `X-Resource-State` header, health `resources`.)*
+- [x] A looping client is rate limited without affecting other clients. *(01d: 120 requests a minute per client; other clients and health unaffected.)*
+- [x] The service worker caches static files only. *(01d: source-scan test of `frontend/public/sw.js`; no change was needed.)*
 - [x] Worker metadata SQL is behind service/repository boundaries. *(01c-1: all `cfg_*` SQL lives in `backend/src/platform/config/`.)*
 - [ ] Development migration and tests pass; production remains untouched.
 
@@ -241,3 +241,27 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - A change made between the plan check and the batch (milliseconds) is not detected. Acceptable for an administrator action with about 5 users; Story 07 publishing adds a version check.
 - Deprecated items are not shown in the navigator or removed; Story 07 decides how configure mode presents them.
 - Renaming a seed key upstream is treated as remove plus add by design.
+
+#### Slice 01d completion notes (2026-11-10)
+
+**Built**
+- `platform/usage.ts`: `meterDb` wraps D1 and adds `rows_read` and `rows_written` from each result's metadata (field names confirmed in the local D1 used by tests; `first()` goes through `all()` because only `all`, `run` and `batch` return metadata). Every request is metered. In development the response carries `X-Rows-Read` and `X-Rows-Written`.
+- `platform/governor.ts`: Normal below 70%, Conserve 70–90%, Essential from 90% of the larger of the read (1,000,000) and write (100,000) design budgets; Limit only when D1 reports the daily limit. Each instance flushes to `usage_daily` at most every 5 minutes (one statement, `INSERT … RETURNING`), so a request costs no extra read in between. Limit ends at 00:00 UTC or when a request succeeds; while in Limit, one probe request a minute reaches D1 and the rest are answered without any query.
+- Daily limit mapping: the Cloudflare message "…exceeded D1's free tier daily row read/write limit…" (changelog of 2026-09-01) becomes 503 `DAILY_LIMIT_REACHED` with `resetAt` and `Retry-After`. The text has no technical wording. The legacy `api()` helper in `App.jsx` now shows this text alone, without path or status code.
+- Essential and Limit: reads stay available; writes other than `sales.create` and `ledger.create` answer 503 `RESOURCE_CONSERVING`.
+- Rate limit: 120 requests a minute per client (`CF-Connecting-IP`), per instance, health exempt, 500 clients tracked.
+- Bootstrap memory cache: 60 seconds (300 seconds when conserving), cleared on seed install and upgrade in the same instance. State is in the body, the `X-Resource-State` header (also on 304) and the health check.
+- `data_source_versions` (migration `0005`, seeded for devices, customers, ledger, sales) with `bumpVersionStatement`, `getVersion` and `dataSourceEtag`. `usage_daily` in the same migration.
+- `GET /api/configuration` no longer caches at the edge: `no-cache` with an `ETag` and 304 (Decisions D13). The legacy tests that asserted the edge cache were changed to match.
+- Service worker: already static-only (ignores `/api/`, non-GET and other origins). A source-scan test now pins that.
+
+**Evidence.** `npm run check`: type check clean, 139 tests in 10 files pass (117 before, 22 added in `test/resources.test.ts`, 3 legacy assertions updated). Measured on the test database: bootstrap cold at most 5 rows read and 0 written; 304 revalidation at most 1 row read; from the instance cache 0. Frontend build unchanged (main chunk 62.8 KB gzip).
+
+**Decisions and limits**
+- The version counter is not yet wired into the legacy write routes. Stories 05 and 06 rebuild those writes and add `bumpVersionStatement` to each batch (the helper and its atomicity are tested here).
+- Cache time of 60 seconds means another Worker instance may serve the old release for up to a minute after a publish (Contracts §10.1). D13 says a publish is visible on the next request; Story 07 must decide whether the publish response tells the browser to refetch.
+- The governor's own flush query is not counted in its estimate (one statement per instance per 5 minutes).
+- Not done here, by design: counters (`data_source_counters`), keyset pagination, local copy. They belong to Stories 05 and 06 (Contracts §10.3–10.4). The simulated day of 100 sessions and the 20,000-device growth test need the list and search routes, so they move to the phase review (TIMELINE step 14).
+- Banner and calm message in the interface: the Worker side is done; the visible banner arrives with the shell in Story 00b.
+
+**Before deploying to the dev Worker.** Apply migration `0005` as well (`usage_daily`, `data_source_versions`), after `0003` and `0004`. Without `usage_daily` the governor cannot store its estimate and logs nothing, but requests still work.

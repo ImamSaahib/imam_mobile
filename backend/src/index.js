@@ -1,5 +1,7 @@
 import { matchRoute, getActor, authorize, policyHealth } from "./platform/policy.ts";
 import { handlePlatformRoute } from "./platform/routes.ts";
+import { meterDb, newUsage } from "./platform/usage.ts";
+import { governor, rateLimiter, isLimitError, nextResetIso, CORE_PERMISSIONS } from "./platform/governor.ts";
 
 const FRONTEND_ORIGIN = "https://imam-mobile.pages.dev";
 const ALLOWED_ORIGINS = [
@@ -12,6 +14,7 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : FRONTEND_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Expose-Headers": "ETag, Retry-After, X-Resource-State",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
   };
@@ -20,7 +23,18 @@ function json(data, status = 200, origin = FRONTEND_ORIGIN) {
   return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 }
 function error(message, status = 400, origin) { return json({ error: message }, status, origin); }
-function cachedJson(data, status = 200, origin = FRONTEND_ORIGIN) { return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "public, max-age=60, s-maxage=300" } }); }
+// Revalidated by the browser on every use and never cached at the edge (Decisions D13): a publish shows on the next request.
+function revalidatedJson(request, data, version, status = 200, origin = FRONTEND_ORIGIN) {
+  const etag = '"cfg-' + version + '"';
+  const headers = { ...corsHeaders(origin), "Cache-Control": "no-cache", "ETag": etag };
+  if ((request.headers.get("If-None-Match") || "").split(",").some((t) => t.trim().replace(/^W\//, "") === etag)) return new Response(null, { status: 304, headers });
+  return new Response(JSON.stringify(data), { status, headers: { ...headers, "Content-Type": "application/json; charset=utf-8" } });
+}
+function limitResponse(origin, now = Date.now()) {
+  const resetAt = nextResetIso(now);
+  const seconds = Math.max(1, Math.ceil((Date.parse(resetAt) - now) / 1000));
+  return new Response(JSON.stringify({ error: "The daily usage limit has been reached. Everything works again at 00:00 UTC.", code: "DAILY_LIMIT_REACHED", resetAt }), { status: 503, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Retry-After": String(seconds) } });
+}
 async function readJson(request) { try { return await request.json(); } catch { return null; } }
 function deviceRow(r) {
   return { id:r.id, model:r.model, company:r.company, color:r.color, condition:r.condition, status:r.status, imei:r.imei, purchasePrice:r.purchase_price, salePrice:r.sale_price ?? 0, purchaseDate:r.purchase_date, saleDate:r.sale_date || "" };
@@ -31,8 +45,7 @@ function entryRow(r) {
 }
 function validId(value) { return /^\d+$/.test(String(value)) && Number(value) > 0; }
 
-export default {
-  async fetch(request, env) {
+async function handleRequest(request, env) {
     const origin = request.headers.get("Origin") || FRONTEND_ORIGIN;
     if (request.method === "OPTIONS") return new Response(null, { status:204, headers:corsHeaders(origin) });
     if (request.headers.has("Origin") && !ALLOWED_ORIGINS.includes(origin)) return error("Origin not allowed.",403,origin);
@@ -49,8 +62,8 @@ export default {
       // Published configuration is read-only and cached briefly at the edge/browser.
       if (path === "/api/configuration" && request.method === "GET") {
         const row = await env.DB.prepare("SELECT published_json, published_version, updated_at FROM app_configuration WHERE id=1").first();
-        if (!row) return cachedJson({ configuration:null, version:0 },200,origin);
-        return cachedJson({ configuration:JSON.parse(row.published_json), version:row.published_version, updatedAt:row.updated_at },200,origin);
+        if (!row) return revalidatedJson(request,{ configuration:null, version:0 },0,200,origin);
+        return revalidatedJson(request,{ configuration:JSON.parse(row.published_json), version:row.published_version, updatedAt:row.updated_at },row.published_version,200,origin);
       }
       if (path === "/api/admin/configuration" && request.method === "GET") {
         if (!env.ADMIN_CONFIG_TOKEN || request.headers.get("Authorization") !== "Bearer " + env.ADMIN_CONFIG_TOKEN) return error("Admin configuration access is not authorized. Configure ADMIN_CONFIG_TOKEN on the Worker.",401,origin);
@@ -257,7 +270,7 @@ export default {
         await env.DB.prepare("SELECT 1").first();
         const policy = policyHealth(env);
         if (!policy.ok) return json({ ok:false, service:"imam-mobile-api", database:"connected", auth:policy.mode, error:policy.message },503,origin);
-        return json({ ok:true, service:"imam-mobile-api", database:"connected", auth:policy.mode },200,origin);
+        return json({ ok:true, service:"imam-mobile-api", database:"connected", auth:policy.mode, resources:governor.snapshot() },200,origin);
       }
 
       if (path === "/api/devices" && request.method === "GET") {
@@ -372,9 +385,56 @@ export default {
       if (platform) return new Response(platform.body === undefined ? null : JSON.stringify(platform.body), { status: platform.status, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...(platform.headers || {}) } });
       return error("Route not found.",404,origin);
     } catch (err) {
+      if (isLimitError(err)) throw err; // mapped to DAILY_LIMIT_REACHED by the wrapper below
       if (err?.message?.includes("UNIQUE constraint failed: mobile_devices.imei")) return error("This IMEI already exists.",409,origin);
       if (err?.message?.includes("FOREIGN KEY constraint failed")) return error("This record is linked to existing sales or ledger entries and cannot be deleted.",409,origin);
       return error("An unexpected server error occurred.",500,origin);
     }
+}
+
+// Wrapper around every request: rows read and written are counted, the resource governor and the per-client
+// rate limit run first, and a D1 daily limit becomes one calm DAILY_LIMIT_REACHED response (Contracts section 10.7).
+async function guarded(request, env, rawDb, origin) {
+  const path = new URL(request.url).pathname.replace(/\/$/,"") || "/";
+  if (path !== "/api/health") {
+    const wait = rateLimiter.check(request.headers.get("CF-Connecting-IP") || "unknown");
+    if (wait > 0) return new Response(JSON.stringify({ error: "Too many requests. Please wait a moment and try again.", code: "RATE_LIMITED" }), { status: 429, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Retry-After": String(wait) } });
+  }
+  await governor.sync(rawDb);
+  const state = governor.state();
+  if (state === "limit" && path !== "/api/health" && !governor.shouldProbe()) return limitResponse(origin);
+  if ((state === "essential" || state === "limit") && request.method !== "GET") {
+    const route = matchRoute(request.method, path);
+    if (route && route.permission !== "public" && !CORE_PERMISSIONS.has(route.permission)) {
+      return new Response(JSON.stringify({ error: "This action is paused for a short time to protect the system. Please try again later.", code: "RESOURCE_CONSERVING" }), { status: 503, headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "300" } });
+    }
+  }
+  return handleRequest(request, env);
+}
+
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS" || !env.DB) return handleRequest(request, env);
+    const origin = request.headers.get("Origin") || FRONTEND_ORIGIN;
+    if (request.headers.has("Origin") && !ALLOWED_ORIGINS.includes(origin)) return error("Origin not allowed.",403,origin);
+    const usage = newUsage();
+    let response;
+    let limited = false;
+    try {
+      response = await guarded(request, { ...env, DB: meterDb(env.DB, usage) }, env.DB, origin);
+    } catch (err) {
+      if (!isLimitError(err)) throw err;
+      governor.markLimit();
+      limited = true;
+      response = limitResponse(origin);
+    }
+    governor.record(usage);
+    if (!limited && usage.queries > 0 && response.status < 500) governor.clearLimit();
+    if (env.ENVIRONMENT === "development") {
+      response = new Response(response.body, response);
+      response.headers.set("X-Rows-Read", String(usage.rowsRead));
+      response.headers.set("X-Rows-Written", String(usage.rowsWritten));
+    }
+    return response;
   }
 };

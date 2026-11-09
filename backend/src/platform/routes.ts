@@ -4,7 +4,8 @@
 
 import type { Actor } from "./policy";
 import { PlatformError } from "./errors";
-import { getBootstrap } from "./config/bootstrap";
+import { getBootstrap, BOOTSTRAP_CACHE_MS, BOOTSTRAP_CACHE_RELAXED_MS } from "./config/bootstrap";
+import { governor } from "./governor";
 import { installSeed } from "./config/seed";
 import { previewUpgrade, applyUpgrade, type UpgradeInput } from "./config/seed-upgrade";
 import { SEED_PACKAGES } from "./config/registry";
@@ -17,9 +18,11 @@ export type PlatformResponse = { status: number; body?: unknown; headers?: Recor
 export async function handlePlatformRoute(request: Request, env: PlatformEnv, path: string, actor: Actor | null): Promise<PlatformResponse | null> {
   try {
     if (path === "/api/bootstrap" && request.method === "GET") {
-      const result = await getBootstrap(env.DB, env, request.headers.get("If-None-Match"));
-      const headers = { ETag: result.etag, "Cache-Control": "no-cache" };
-      return result.status === 304 ? { status: 304, headers } : { status: 200, body: result.body, headers };
+      const state = governor.state();
+      const result = await getBootstrap(env.DB, env, request.headers.get("If-None-Match"), state === "normal" ? BOOTSTRAP_CACHE_MS : BOOTSTRAP_CACHE_RELAXED_MS);
+      // The state travels in a header as well, because a 304 has no body.
+      const headers = { ETag: result.etag, "Cache-Control": "no-cache", "X-Resource-State": state };
+      return result.status === 304 ? { status: 304, headers } : { status: 200, body: { ...(result.body as object), resources: governor.snapshot() }, headers };
     }
     if (request.method === "POST" && (path === "/api/platform/seed" || path === "/api/platform/seed/preview" || path === "/api/platform/seed/upgrade")) {
       const body = (await request.json().catch(() => null)) as ({ packageId?: string } & Partial<UpgradeInput>) | null;
