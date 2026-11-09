@@ -5,6 +5,8 @@ declare global {
     interface Env {
       DB: D1Database;
       ADMIN_CONFIG_TOKEN?: string;
+      ENVIRONMENT?: string;
+      AUTH_MODE?: string;
       TEST_MIGRATIONS: D1Migration[];
     }
   }

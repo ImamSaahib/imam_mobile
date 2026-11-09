@@ -1,3 +1,5 @@
+import { matchRoute, getActor, authorize, policyHealth } from "./platform/policy.ts";
+
 const FRONTEND_ORIGIN = "https://imam-mobile.pages.dev";
 const ALLOWED_ORIGINS = [
   FRONTEND_ORIGIN,
@@ -37,6 +39,11 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/,"") || "/";
     const parts = path.split("/").filter(Boolean);
+    // Placeholder policy layer (Decisions D7): one decision point for every route.
+    const route = matchRoute(request.method, path);
+    const actor = getActor(request, env);
+    if (route && !authorize(actor, route.permission)) return error("You do not have access to this action.",403,origin);
+    const actorId = actor ? actor.id : null;
     try {
       // Published configuration is read-only and cached briefly at the edge/browser.
       if (path === "/api/configuration" && request.method === "GET") {
@@ -247,7 +254,9 @@ export default {
 
       if (path === "/api/health" && request.method === "GET") {
         await env.DB.prepare("SELECT 1").first();
-        return json({ ok:true, service:"imam-mobile-api", database:"connected" },200,origin);
+        const policy = policyHealth(env);
+        if (!policy.ok) return json({ ok:false, service:"imam-mobile-api", database:"connected", auth:policy.mode, error:policy.message },503,origin);
+        return json({ ok:true, service:"imam-mobile-api", database:"connected", auth:policy.mode },200,origin);
       }
 
       if (path === "/api/devices" && request.method === "GET") {
@@ -262,7 +271,7 @@ export default {
         if (request.method==="PATCH") {
           const b=await readJson(request);
           if (!b || !b.model || !b.company || !b.imei || !b.condition || !b.purchaseDate || !Number.isFinite(Number(b.purchasePrice)) || Number(b.purchasePrice)<0) return error("Required device fields are missing or invalid.",400,origin);
-          const r=await env.DB.prepare(`UPDATE mobile_devices SET model=?,company=?,color=?,condition=?,status=?,imei=?,purchase_price=?,sale_price=?,purchase_date=?,sale_date=?,updated_at=datetime('now') WHERE id=?`).bind(String(b.model).trim(),String(b.company).trim(),b.color||null,b.condition,b.status||"Available",String(b.imei).trim(),Number(b.purchasePrice),Number(b.salePrice||0),b.purchaseDate,b.saleDate||null,id).run();
+          const r=await env.DB.prepare(`UPDATE mobile_devices SET model=?,company=?,color=?,condition=?,status=?,imei=?,purchase_price=?,sale_price=?,purchase_date=?,sale_date=?,updated_at=datetime('now'),updated_by=? WHERE id=?`).bind(String(b.model).trim(),String(b.company).trim(),b.color||null,b.condition,b.status||"Available",String(b.imei).trim(),Number(b.purchasePrice),Number(b.salePrice||0),b.purchaseDate,b.saleDate||null,actorId,id).run();
           if (!r.meta.changes) return error("Device not found.",404,origin);
           return json({id,message:"Device updated."},200,origin);
         }
@@ -274,7 +283,7 @@ export default {
       if (path==="/api/devices" && request.method==="POST") {
         const b=await readJson(request);
         if (!b || !b.model || !b.company || !b.imei || !b.condition || !b.purchaseDate || !Number.isFinite(Number(b.purchasePrice)) || Number(b.purchasePrice)<0) return error("Required device fields are missing or invalid.",400,origin);
-        const r=await env.DB.prepare("INSERT INTO mobile_devices (model,company,color,condition,status,imei,purchase_price,sale_price,purchase_date,sale_date) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(String(b.model).trim(),String(b.company).trim(),b.color||null,b.condition,b.status||"Available",String(b.imei).trim(),Number(b.purchasePrice),Number(b.salePrice||0),b.purchaseDate,b.saleDate||null).run();
+        const r=await env.DB.prepare("INSERT INTO mobile_devices (model,company,color,condition,status,imei,purchase_price,sale_price,purchase_date,sale_date,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)").bind(String(b.model).trim(),String(b.company).trim(),b.color||null,b.condition,b.status||"Available",String(b.imei).trim(),Number(b.purchasePrice),Number(b.salePrice||0),b.purchaseDate,b.saleDate||null,actorId,actorId).run();
         return json({id:r.meta.last_row_id,message:"Device created."},201,origin);
       }
 
@@ -287,7 +296,7 @@ export default {
         if (request.method==="PATCH") {
           const b=await readJson(request);
           if (!b || !String(b.name||"").trim()) return error("Customer name is required.",400,origin);
-          const r=await env.DB.prepare("UPDATE customers SET name=?,mobile_number=?,type=?,updated_at=datetime('now') WHERE id=?").bind(String(b.name).trim(),b.mobileNumber?String(b.mobileNumber).trim():null,b.type||"Regular",id).run();
+          const r=await env.DB.prepare("UPDATE customers SET name=?,mobile_number=?,type=?,updated_at=datetime('now'),updated_by=? WHERE id=?").bind(String(b.name).trim(),b.mobileNumber?String(b.mobileNumber).trim():null,b.type||"Regular",actorId,id).run();
           return r.meta.changes ? json({id,message:"Customer updated."},200,origin) : error("Customer not found.",404,origin);
         }
         if (request.method==="DELETE") {
@@ -298,7 +307,7 @@ export default {
       if (path==="/api/customers" && request.method==="POST") {
         const b=await readJson(request);
         if (!b || !String(b.name||"").trim()) return error("Customer name is required.",400,origin);
-        const r=await env.DB.prepare("INSERT INTO customers (name,mobile_number,type) VALUES (?,?,?)").bind(String(b.name).trim(),b.mobileNumber?String(b.mobileNumber).trim():null,b.type||"Regular").run();
+        const r=await env.DB.prepare("INSERT INTO customers (name,mobile_number,type,created_by,updated_by) VALUES (?,?,?,?,?)").bind(String(b.name).trim(),b.mobileNumber?String(b.mobileNumber).trim():null,b.type||"Regular",actorId,actorId).run();
         return json({id:r.meta.last_row_id,message:"Customer created."},201,origin);
       }
 
@@ -311,7 +320,7 @@ export default {
         if (request.method==="PATCH") {
           const b=await readJson(request);
           if (!b || !validId(b.customerId) || !b.date || !["In (+)","Out (-)"].includes(b.direction) || !Number.isFinite(Number(b.amount)) || Number(b.amount)<=0) return error("Required entry fields are missing or invalid.",400,origin);
-          const r=await env.DB.prepare("UPDATE customer_entries SET customer_id=?,device_id=?,entry_date=?,due_date=?,direction=?,amount=?,note=? WHERE id=?").bind(Number(b.customerId),b.deviceId?Number(b.deviceId):null,b.date,b.dueDate||null,b.direction,Number(b.amount),b.note||null,id).run();
+          const r=await env.DB.prepare("UPDATE customer_entries SET customer_id=?,device_id=?,entry_date=?,due_date=?,direction=?,amount=?,note=?,updated_by=? WHERE id=?").bind(Number(b.customerId),b.deviceId?Number(b.deviceId):null,b.date,b.dueDate||null,b.direction,Number(b.amount),b.note||null,actorId,id).run();
           return r.meta.changes ? json({id,message:"Entry updated."},200,origin) : error("Entry not found.",404,origin);
         }
         if (request.method==="DELETE") {
@@ -322,7 +331,7 @@ export default {
       if (path==="/api/customer-entries" && request.method==="POST") {
         const b=await readJson(request);
         if (!b || !validId(b.customerId) || !b.date || !["In (+)","Out (-)"].includes(b.direction) || !Number.isFinite(Number(b.amount)) || Number(b.amount)<=0) return error("Required entry fields are missing or invalid.",400,origin);
-        const r=await env.DB.prepare("INSERT INTO customer_entries (customer_id,device_id,entry_date,due_date,direction,amount,note) VALUES (?,?,?,?,?,?,?)").bind(Number(b.customerId),b.deviceId?Number(b.deviceId):null,b.date,b.dueDate||null,b.direction,Number(b.amount),b.note||null).run();
+        const r=await env.DB.prepare("INSERT INTO customer_entries (customer_id,device_id,entry_date,due_date,direction,amount,note,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?)").bind(Number(b.customerId),b.deviceId?Number(b.deviceId):null,b.date,b.dueDate||null,b.direction,Number(b.amount),b.note||null,actorId,actorId).run();
         return json({id:r.meta.last_row_id,message:"Entry created."},201,origin);
       }
 
@@ -346,14 +355,14 @@ export default {
         }
         const total=ids.reduce((sum,id)=>sum+Number(b.prices[id]),0);
         const invoice="S-"+crypto.randomUUID();
-        const sale=await env.DB.prepare("INSERT INTO sales (invoice_number,customer_id,sale_date,total_amount,payment_type) VALUES (?,?,?,?,?)").bind(invoice,b.credit?Number(b.customerId):null,b.date||new Date().toISOString().slice(0,10),total,b.credit?"Credit":"Cash").run();
+        const sale=await env.DB.prepare("INSERT INTO sales (invoice_number,customer_id,sale_date,total_amount,payment_type,created_by,updated_by) VALUES (?,?,?,?,?,?,?)").bind(invoice,b.credit?Number(b.customerId):null,b.date||new Date().toISOString().slice(0,10),total,b.credit?"Credit":"Cash",actorId,actorId).run();
         const saleId=sale.meta.last_row_id;
         const statements=[];
         for (const id of ids) {
           statements.push(env.DB.prepare("INSERT INTO sale_items (sale_id,device_id,sale_price) VALUES (?,?,?)").bind(saleId,id,Number(b.prices[id])));
-          statements.push(env.DB.prepare("UPDATE mobile_devices SET status='Sold Out',sale_price=?,sale_date=?,updated_at=datetime('now') WHERE id=? AND status!='Sold Out'").bind(Number(b.prices[id]),b.date||new Date().toISOString().slice(0,10),id));
+          statements.push(env.DB.prepare("UPDATE mobile_devices SET status='Sold Out',sale_price=?,sale_date=?,updated_at=datetime('now'),updated_by=? WHERE id=? AND status!='Sold Out'").bind(Number(b.prices[id]),b.date||new Date().toISOString().slice(0,10),actorId,id));
         }
-        if (b.credit) statements.push(env.DB.prepare("INSERT INTO customer_entries (customer_id,sale_id,device_id,entry_date,due_date,direction,amount,note) VALUES (?,?,NULL,?,?, 'Out (-)',?,?)").bind(Number(b.customerId),saleId,b.date||new Date().toISOString().slice(0,10),b.dueDate||null,total,"Credit sale · Invoice "+invoice));
+        if (b.credit) statements.push(env.DB.prepare("INSERT INTO customer_entries (customer_id,sale_id,device_id,entry_date,due_date,direction,amount,note,created_by,updated_by) VALUES (?,?,NULL,?,?, 'Out (-)',?,?,?,?)").bind(Number(b.customerId),saleId,b.date||new Date().toISOString().slice(0,10),b.dueDate||null,total,"Credit sale · Invoice "+invoice,actorId,actorId));
         await env.DB.batch(statements);
         return json({id:saleId,invoiceNumber:invoice,date:b.date||new Date().toISOString().slice(0,10),total,customerId:b.credit?Number(b.customerId):null,message:"Sale completed."},201,origin);
       }

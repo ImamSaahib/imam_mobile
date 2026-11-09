@@ -5,7 +5,7 @@ describe("health, CORS and routing", () => {
   it("reports health with a connected database", async () => {
     const r = await call("GET", "/api/health");
     expect(r.status).toBe(200);
-    expect(r.json).toEqual({ ok: true, service: "imam-mobile-api", database: "connected" });
+    expect(r.json).toEqual({ ok: true, service: "imam-mobile-api", database: "connected", auth: "dev-open" });
   });
   it("answers preflight requests", async () => {
     const r = await call("OPTIONS", "/api/devices");

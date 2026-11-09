@@ -1,6 +1,6 @@
 # Story 01 — Platform Foundation and Application Identity
 
-**Status:** In progress (slice 01a done; 01b–01d remaining)  
+**Status:** In progress (slices 01a and 01b done; 01c and 01d remaining)  
 **Priority:** P0 · **Depends on:** none · **Unlocks:** Stories 02–11  
 **Goal:** Establish the smallest persistent metadata model, stable application identity, seed package contract and foundational security/schema rules.
 
@@ -64,13 +64,13 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [ ] Seed package declares version and minimum supported platform/configuration version.
 - [ ] Schema compatibility check reports missing/incompatible mapped tables and columns.
 - [ ] Incompatible metadata is not silently accepted.
-- [ ] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11.
-- [ ] `dev-open` is refused outside development, and the health check fails if it is active elsewhere.
+- [x] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11. *(Slice 01b: 27 routes in `backend/src/platform/policy.ts`, with a test that fails when a route has no entry.)*
+- [x] `dev-open` is refused outside development, and the health check fails if it is active elsewhere. *(Slice 01b.)*
 - [x] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata. *(Worker routes: 35 tests, slice 01a.)*
 - [x] The test runner and TypeScript build are in place. *(Worker side done in slice 01a. Frontend test tooling is still open, see notes.)*
-- [ ] The legacy admin code and `custom_field_values` inventory and plan are recorded.
-- [ ] Actor columns and the audit event shape exist with a placeholder actor.
-- [ ] The owner's confirmation that production holds no real data is recorded.
+- [x] The legacy admin code and `custom_field_values` inventory and plan are recorded. *(Slice 01b: [legacy-inventory.md](../legacy-inventory.md).)*
+- [x] Actor columns and the audit event shape exist with a placeholder actor. *(Slice 01b: migration 0003.)*
+- [x] The owner's confirmation that production holds no real data is recorded. *(Decisions C4, and the legacy inventory.)*
 - [ ] Bootstrap reads at most 5 rows and writes none, measured on the reference dataset.
 - [ ] Rows read and written are recorded for each request in development and tests.
 - [ ] A reached daily limit returns `DAILY_LIMIT_REACHED`.
@@ -141,3 +141,36 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - Tests for `custom_field_values` and the legacy schema endpoints, and the written legacy inventory and removal plan (item 11).
 - Slices 01b (policy placeholder, actor columns, audit shape, folder layout), 01c (metadata catalog, snapshots, bootstrap, seed) and 01d (measurement helper, caches, governor, service worker).
 - Confirm the D1 result fields for rows read and written (item 18).
+
+### Slice 01b — policy layer, actors and audit shape, legacy inventory, layout (2026-11-09)
+
+**Scope items covered:** 8 (placeholder policy), 11 (legacy inventory and tests), 13 (folder layout), 15 (actor columns and audit shape), and the API base URL fix noted in slice 01a. Still open: 2–7, 9, 14, 16–23.
+
+**What was built**
+- `backend/src/platform/policy.ts`: the permission names (defined in code), `ROUTE_POLICY` (every route with its method, path pattern and permission), `matchRoute`, `getActor`, `authorize` and `policyHealth`. The Worker resolves the route once, resolves the actor once and calls `authorize` once, before any route logic, so route handlers were not rewritten. Story 11 replaces `getActor` and `authorize`.
+- Open access exists only as `AUTH_MODE=dev-open` together with `ENVIRONMENT=development`. Any other combination denies every route except those marked `public`. The `/api/health` route returns 503 with `ok:false` when `dev-open` is set outside development. Today only `/api/health` is `public`.
+- `backend/wrangler.toml` sets `ENVIRONMENT=development` and `AUTH_MODE=dev-open` for the development Worker only.
+- Migration `0003_actor_columns_and_audit_events.sql`: `created_by` and `updated_by` on devices, customers, sales and ledger entries, and an `audit_events` table (opaque id, UTC time, actor id and kind, action, entity, outcome of success, denied or failed, summary, details, request id) with three indexes. Existing rows keep NULL. All insert and update routes now fill the actor, including the sale batch.
+- `backend/src/platform/audit.ts`: `auditStatement()` builds one audit insert so a business write and its audit event can share one D1 batch. Details are truncated at 2,000 characters. Which events are recorded, retention and read access are decided in Story 09. No route records audit events yet, because each event costs a write.
+- Folder layout from D4: `applications/imam-mobile/seed/`, `client/configuration/`, `client/extensions/`, `deployment/`, each with a short README. They are empty on purpose.
+- `frontend/src/App.jsx` and `AdminStudio.jsx` read `VITE_API_BASE`, with the dev Worker as the default. `frontend/.env.example` documents it.
+
+**Decisions made during the slice**
+- **Public routes.** Only `/api/health` is `public`. `GET /api/configuration` is `configuration.read`, so Story 11 can decide whether the shell needs it before sign-in.
+- **Actor ids are text.** The placeholder is the string `dev-placeholder`. Story 11 will store user ids in the same columns.
+- **No audit writes yet.** Writing an event on every change would add a write per change against the 100,000 daily write limit before the audit design (Story 09) decides what matters.
+- **The shared admin token stays** until Story 11, in addition to the policy layer.
+
+**Evidence**
+- `npm run check` in `backend`: type check clean, 7 test files, 71 tests passing (35 baseline from 01a, 14 policy, 8 actor and audit, 14 legacy admin).
+- The route inventory test scans the Worker source, so a new route without a policy entry fails the build, and a policy entry for a removed route fails too.
+- The policy tests call all 28 routes three ways: dev-open in development (never 403), no mode (always 403 except public), and dev-open outside development (always 403).
+- Frontend build passes. Same bundle size as the baseline (JS index 207.8 kB).
+
+**Risks and notes for later**
+- **Promotion to `main`:** this code denies every route except health when `AUTH_MODE` and `ENVIRONMENT` are not set to `dev-open` and `development`. A production Worker without those variables would stop serving data. Do not promote the policy layer to `main` until Story 11 is done, or a production Worker exists that has been deliberately set up for it. Recorded in the timeline.
+- The legacy `ADMIN_CONFIG_TOKEN` has no value in the dev Worker's checked-in config, as before.
+- The development database may contain test rows. Check `custom_field_values` and `schema_changes` before dropping them (legacy inventory, Story 04).
+- `README`s in `client/` and `deployment/` mention contents that arrive in later stories.
+
+**Still open for Story 01:** frontend test tooling, then slices 01c (metadata catalog, release snapshots, bootstrap, seed, compatibility inspection, items 2–7, 9, 14, 16, 19) and 01d (resource measurement, caches, governor, service worker, items 18, 20–23).

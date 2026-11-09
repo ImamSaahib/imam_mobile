@@ -13,6 +13,7 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM sales"),
     env.DB.prepare("DELETE FROM mobile_devices"),
     env.DB.prepare("DELETE FROM customers"),
-    env.DB.prepare("DELETE FROM custom_field_values")
+    env.DB.prepare("DELETE FROM custom_field_values"),
+    env.DB.prepare("DELETE FROM audit_events")
   ]);
 });
