@@ -154,4 +154,6 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 1. Currency scale (finding 3): confirm that a per-property `scale` is acceptable, so whole-rupee columns stay as they are. The alternative is to rewrite existing amounts to minor units, which is a data-rewriting conversion and belongs to Phase B.
 2. Until Story 07 adds drafts, a schema change publishes a new release immediately. Confirm this is acceptable for development-only data.
 
+**Measured on the dev Worker (2026-11-10, after the seed was installed).** `GET /api/platform/schema-compatibility` for the four data sources read 79 rows and wrote none. Part of that cost is `PRAGMA table_info`, which counts one row per column. Slice 04b must measure its new report the same way and keep it within a stated budget, because the report adds index and capacity queries. The report currently lists `created_by` and `updated_by` as unmapped columns on all four tables; slice 04b decides whether they are system columns (hidden from adoption) or adoptable properties, and records the decision.
+
 **Not started.** No code has been changed for this story yet.
