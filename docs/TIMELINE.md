@@ -23,7 +23,7 @@
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
-| 04 | Data model, properties and schema compatibility | P0 | 01 | Planned | |
+| 04 | Data model, properties and schema compatibility | P0 | 01 | In progress (plan written, 04a next) | Slice plan 04a to 04f in Story 04 notes (2026-11-10). No code yet |
 | 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | Planned | |
 | 06 | Forms, records and domain service extensions | P0 | 00, 02, 04 | Planned | |
 | 07 | Edit mode, configuration drafts and publishing | P0 | 00–06 | Planned | |
@@ -59,7 +59,7 @@ Work is done one slice at a time, each in a pull request into `development`.
 | 4 | **00b** Shell, primitives, context menu, gallery | Needs the tokens | Gallery and screenshot tests pass, bundle under 300 KB gzip |
 | 5 ✔ | **01c** Metadata catalog, release snapshots, bootstrap, seed | Core of the platform | Seed twice without duplicates, bootstrap reads at most 5 rows |
 | 6 ✔ | **01d** Measurement helper, caches, `data_source_versions`, resource governor | Budgets must be measurable before features add load | Governor states and limit error mapping tested |
-| 7 | **Story 04** Properties, schema compatibility, schema change service | Needs only Story 01, and Stories 05 and 06 depend on it | Add-property works in both modes with preview and log |
+| 7 (in progress) | **Story 04** Properties, schema compatibility, schema change service | Needs only Story 01, and Stories 05 and 06 depend on it | Add-property works in both modes with preview and log |
 | 8 | **Story 02** Navigator | Needs 00 and 01 | Navigator matches the UI reference |
 | 9 | **Story 03** Page builder, component registry, shared configure panel | Needs 02 | Pages render from metadata |
 | 10 | **Early reuse checkpoint** (Decisions D12) | Tests the metadata model before the full CRUD and view surface | Second data source, list and form from configuration with no shared-core edits. If it fails, revise the model before step 11 |
@@ -103,6 +103,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 | Date | Change |
 |---|---|
 | 2026-11-08 | Timeline created. Stories 00 and 01 marked Ready. |
+| 2026-11-10 | Story 04 planned: six slices (04a property contracts and configuration, 04b schema inspection and adoption, 04c schema change service and add property, 04d remaining operations and migration-controlled mode, 04e counters, versions and `updated_at`, 04f migration process and review). Plan and two owner questions are in the Story 04 notes. Story 00b stays blocked: the screenshots attached this session were the 00a Kumo demo renders, not the Cloudflare reference. |
 | 2026-11-10 | Slice 01d done: request metering with rows read and written, resource governor, `DAILY_LIMIT_REACHED`, rate limit, bootstrap cache, `data_source_versions`, configuration revalidation. 139 Worker tests. Story 01 code complete; final review pending. |
 | 2026-11-10 | Slice 01c-2 done: seed upgrade preview and apply with three-way comparison, conflict resolution, client ownership, reset to default, deprecation. 117 Worker tests. Slice 01c complete. |
 | 2026-11-10 | Slice 01c-1 done: `cfg_*` catalog, seed package (61 items), release snapshot, bootstrap with ETag, compatibility check. 99 Worker tests. 01c-2 (seed upgrades) remains. |

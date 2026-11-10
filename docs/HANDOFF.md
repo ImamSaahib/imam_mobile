@@ -2,7 +2,7 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-10 (after slice 01d)
+**Last updated:** 2026-11-10 (after slice 01d; Story 04 plan written)
 
 ## 1. What the project is
 
@@ -24,16 +24,17 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Stories 02–11 | Planned |
+| Story 04 (data model, properties) | In progress. The slice plan (04a to 04f) is written in the story notes. No code yet |
+| Stories 02, 03, 05–11 | Planned |
 | Worker tests | 139 passing in 10 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | **Migrations 0003, 0004 and 0005 are not known to be applied to the dev D1 database, and `POST /api/platform/seed` has not been called.** Apply and seed before deploying the current Worker code |
 
-## 4. Next step: Story 04 (data model, properties, schema compatibility)
+## 4. Next step: Story 04, slice 04a (property contracts and configuration model)
 
-Story 00b (shell and tokens) is blocked until the reference screenshot is attached, so the next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. It needs only Story 01.
+Story 00b (shell and tokens) is blocked until the real Cloudflare reference screenshot is attached. The two images attached on 2026-11-10 were the 00a Kumo demo renders already stored in `docs/platform/evidence/`, so they do not unblock it. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
 
-Start the way slice 01c started: read [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md), [Contracts §3 and §8](platform/IMPLEMENTATION-CONTRACTS.md), split the story into reviewable slices, and write that plan into the story's Implementation notes before building. Reuse: the `cfg_property` table and `ACCEPTED` type map in `config/compat.ts`, `inspectCompatibility`, `rows-sql.ts`, `PlatformError`, `auditStatement`, `bumpVersionStatement`, and the test helpers (`call`, `callWithEnv`, `X-Rows-Read` headers for measuring).
+The slice plan is written in [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md) (Implementation notes, "Slice plan"): 04a property contracts and configuration model, 04b schema inspection and adoption, 04c schema change service and add property, 04d remaining operations and migration-controlled mode, 04e counters, versions and `updated_at`, 04f migration process and review. Start with 04a. Two owner questions (currency scale, immediate release on schema change) are listed at the end of the plan; proceed with the stated defaults unless the owner answers otherwise. Reuse: the `cfg_property` table and `ACCEPTED` type map in `config/compat.ts`, `inspectCompatibility`, `rows-sql.ts`, `PlatformError`, `auditStatement`, `bumpVersionStatement`, and the test helpers (`call`, `callWithEnv`, `X-Rows-Read` headers for measuring).
 
 What slice 01d added, for reference: request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping, and configuration revalidation. Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
 
