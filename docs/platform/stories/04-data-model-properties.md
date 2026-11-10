@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slice plan written 2026-11-10; slices 04a to 04f not started)  
+**Status:** In progress (slice 04a done 2026-11-11; slices 04b to 04f not started)  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -63,7 +63,7 @@ A person building a module may configure supported metadata and request allowlis
 
 - [ ] Every data source maps to an approved physical table.
 - [ ] Every non-virtual property maps to a real column.
-- [ ] Type/storage contracts are explicit and tested.
+- [x] Type/storage contracts are explicit and tested. (04a: `TYPE_CONTRACTS` for 19 types, 33 unit tests)
 - [ ] Schema drift is detected before publish and deployment.
 - [ ] Metadata cannot expose a column absent from physical schema.
 - [ ] An unmapped column can be adopted as a property.
@@ -72,7 +72,7 @@ A person building a module may configure supported metadata and request allowlis
 - [ ] Repeating an operation with the same operation ID does not repeat the change.
 - [ ] A failed physical change leaves metadata unchanged; a partial failure is recoverable through **Add as property**.
 - [ ] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown.
-- [ ] Select and status options can be added, renamed, recolored, reordered and deactivated without changing stored keys.
+- [x] Select and status options can be added, renamed, recolored, reordered and deactivated without changing stored keys. (04a: `PATCH /api/platform/properties`; removing a key is refused)
 - [ ] Presentation conversions validate existing values and report non-conforming rows before applying.
 - [ ] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery.
 - [ ] Values are bound parameters; identifiers are allowlisted and safely quoted.
@@ -107,11 +107,11 @@ Arbitrary DDL, an arbitrary SQL editor, formula language, rollups, person, files
 
 ## Additional acceptance criteria
 
-- [ ] Currency calculations use integer minor units and explicit currency codes.
-- [ ] Multi-select values are normalized and referentially validated.
-- [ ] Date and timestamp semantics are tested separately, including timezone boundaries.
-- [ ] Relation deletion behavior is explicit and tested.
-- [ ] Property type/operator support is consistent across forms, lists, filters, sorting and import/export.
+- [ ] Currency calculations use integer minor units and explicit currency codes. (04a: stored integers, explicit code and a per-property `scale` are validated. Calculations arrive with Story 06)
+- [ ] Multi-select values are normalized and referentially validated. (04a: validation and normalization done. Junction storage is not built yet)
+- [ ] Date and timestamp semantics are tested separately, including timezone boundaries. (04a: value validation tested. Filter semantics arrive with Story 05)
+- [ ] Relation deletion behavior is explicit and tested. (04a: `onDelete` is configured and validated. Enforcement arrives with Story 06)
+- [ ] Property type/operator support is consistent across forms, lists, filters, sorting and import/export. (04a: one registry and a table-driven consistency test. The forms, lists, filters and import/export consumers do not exist yet)
 
 ## Implementation notes
 
@@ -156,4 +156,40 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 
 **Measured on the dev Worker (2026-11-10, after the seed was installed).** `GET /api/platform/schema-compatibility` for the four data sources read 79 rows and wrote none. Part of that cost is `PRAGMA table_info`, which counts one row per column. Slice 04b must measure its new report the same way and keep it within a stated budget, because the report adds index and capacity queries. The report currently lists `created_by` and `updated_by` as unmapped columns on all four tables; slice 04b decides whether they are system columns (hidden from adoption) or adoptable properties, and records the decision.
 
-**Not started.** No code has been changed for this story yet.
+### Slice 04a: property contracts and configuration model (2026-11-11)
+
+**Built**
+- Migration `0006_property_configuration.sql` adds six columns to `cfg_property`, each with a constant default: `description`, `required`, `default_json`, `searchable`, `sensitivity`, `config_json`. The planned `hidden` and `index_exception_reason` columns are left for slice 04d, where they are first used.
+- `config/property-types.ts`: the type registry for 19 types (text, title, number, currency, select, multiSelect, status, date, timestamp, checkbox, email, phone, url, relation, uniqueId, createdTime, lastEditedTime, createdBy, lastEditedBy). Each type declares its storage, accepted SQLite types, writability, operators, sortability, searchability, option use, editor, display and import/export. It also holds option rules, strict configuration validation, value validation and settings validation.
+- `config/property-config.ts`: `listProperties` and `updateProperty`. A change is one `db.batch()` with the property row, a new release, the active-release pointer and an audit event.
+- Routes: `GET /api/platform/property-types`, `GET /api/platform/properties?dataSource=`, `PATCH /api/platform/properties`. Policy: `schemaInspect` for the two reads, `configurationConfigure` for the update.
+- `config/compat.ts` now uses the registry instead of its own type map. A property whose type is stored in a junction table is reported as incompatible with a column.
+- Seed package version 2 (`applications/imam-mobile/seed/package.ts`): options for the six select and status columns, currency (PKR, scale 0) for four amount columns, and relation targets for four foreign keys. 14 properties change. No item is added or removed (61 items). No seed ID changes.
+
+**Decisions**
+- Option keys equal the strings already stored (`Sold Out`, `In (+)`), so no stored value is rewritten. Keys for options created later come from `newOptionKey`. An option key can never be removed, only deactivated.
+- Currency limits (owner answer, 2026-11-10): 0 to 100,000,000 PKR. `devices.purchase_price`, `devices.sale_price` and `sales.total_amount` use min 0 and max 100,000,000. `ledger.amount` uses min 1 and the same maximum. Currency has a per-property `scale`. The existing columns use scale 0. This is recorded in Contracts §3. Owner question 1 is therefore answered.
+- Owner question 2 (a schema change publishes a release immediately until Story 07 adds drafts) has no answer yet. The default stays in use. `PATCH /api/platform/properties` also publishes a release immediately.
+- Settings equal to their default are left out of seed values and snapshots, so an unchanged property keeps its old shape and hash.
+- Options on select, status and multiSelect, and the target of a relation, are optional. Seed version 1 is installed without them and must still validate. When present they are validated strictly.
+- Locked after creation (409 `CONFIG_LOCKED`): currency code, currency scale, relation target once set, multiSelect junction. Setting a relation target that was never set is allowed.
+- Optimistic guard: `cfg_release` has `UNIQUE (application_id, version)`. Two changes made from the same release both insert the same next version, so the second batch fails as a whole and nothing is half written. The Worker returns 409 `UPDATE_FAILED`. An optional `releaseVersion` in the request returns 409 `STALE_RELEASE` when it is not the active version.
+- Updating with the same values returns `unchanged` and publishes no release.
+
+**Tests**
+- Backend: 191 passing in 12 files (was 139 in 10). New: `property-types.test.ts` (33) and `property-config.test.ts` (19).
+- `test/fixtures/seed-v1.ts` is a frozen copy of the version 1 package. `catalog.test.ts` and `seed-upgrade.test.ts` use it as the baseline. The route test now expects the real 1 to 2 upgrade (14 updates, 47 unchanged), then 0 updates and 61 unchanged after applying.
+- The seed IDs of version 1 and 2 are equal. The golden digest test is unchanged.
+- The option keys in the seed equal the CHECK literals in the table SQL for all six option properties.
+- A property update is asserted to write at most 10 rows and read at most 100. An unchanged request publishes nothing. A competing release leaves no partial write. A request without a dev-open actor returns 403.
+- Frontend build passes.
+
+**Findings for later slices**
+- `GET /api/platform/properties` reads one row per property: 111 rows for all data sources and 31 for one. Slice 04b can read from the active snapshot (2 rows) instead.
+- `updateProperty` repeats part of the release-publishing code in `seed-upgrade.ts`. Slice 04c adds a third caller, so extract a shared helper there.
+- Existing stored values are not checked again when a setting changes. Only new writes are validated. A setting that existing data violates needs the conforming-rows report planned for slice 04d.
+- `created_by` and `updated_by` still appear as unmapped columns. Slice 04b decides how to treat them.
+
+**Required on the dev environment before the new Worker is deployed:** apply migration 0006 (`npx wrangler d1 migrations apply imam-mobile-dev-db --remote`), deploy, then call `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade`. Expect 14 property updates and release 2.
+
+**Not started:** slices 04b to 04f.

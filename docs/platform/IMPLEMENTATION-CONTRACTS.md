@@ -98,7 +98,7 @@ All values are validated on the Worker. SQLite affinity alone is not validation.
 |---|---|---|
 | text/title | TEXT | UTF-8 string; configured maximum length; title is a presentation/required variant |
 | number | INTEGER for whole values; REAL only for explicitly fractional values | finite value; range/precision rules; reject NaN/infinity; display format (plain, separators, percent) is configuration only and does not change storage |
-| currency | INTEGER minor units plus ISO 4217 currency code | never use floating-point arithmetic for money; locale-aware display |
+| currency | INTEGER in stored units (`10^-scale` of the currency unit) plus ISO 4217 currency code | never use floating-point arithmetic for money; locale-aware display; `scale` is 0 to 4 and cannot change once set |
 | select | TEXT stable option key | must match an active configured option; labels may change |
 | multi-select | normalized junction rows keyed by record and option | validate every option; deduplicate; never store comma-separated values |
 | date | TEXT YYYY-MM-DD | calendar-valid date without time-zone conversion |
@@ -110,7 +110,7 @@ All values are validated on the Worker. SQLite affinity alone is not validation.
 | unique ID | INTEGER assigned by the server; optional text prefix in metadata | server-assigned, unique, never reused, not writable; the number is allocated atomically in the same batch as the insert |
 | system actor/timestamps | stable actor ID and UTC timestamp | server-managed; clients cannot mass-assign |
 
-Currency requires a currency code at property or record level. Preserve exact minor-unit storage and reject unsafe integer overflow. Display whole rupees where a business UI requires it, without changing stored precision.
+Currency requires a currency code at property or record level. Preserve exact integer storage and reject unsafe integer overflow. A currency property declares a `scale`: the number of decimal digits of the currency unit that are stored. New properties default to scale 2 (minor units, for example paisa). The existing Imam Mobile amount columns hold whole rupees, so they use scale 0 and no data is rewritten. The stored value is always an integer in stored units. A property's `min` and `max` limits are written in whole currency units, and they are converted to stored units for validation. The currency code and the scale are locked after creation, because changing either one changes the meaning of stored values and is a data-rewriting conversion (Phase B). Display whole rupees where a business UI requires it, without changing stored precision.
 
 Every property declares supported filter/sort/search operators, nullability, required/unique behavior, limits, default policy, sensitivity and writability. Indexes are added through migrations based on measured query needs. Relation deletion defaults to RESTRICT; cascading business-record deletion is not implicit.
 

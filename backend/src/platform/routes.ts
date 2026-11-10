@@ -11,6 +11,8 @@ import { previewUpgrade, applyUpgrade, type UpgradeInput } from "./config/seed-u
 import { SEED_PACKAGES } from "./config/registry";
 import { inspectCompatibility } from "./config/compat";
 import { loadRows } from "./config/snapshot";
+import { describeTypes } from "./config/property-types";
+import { listProperties, updateProperty, type PropertyUpdate } from "./config/property-config";
 
 export type PlatformEnv = { DB: D1Database; DEPLOYMENT_KEY?: string; ENVIRONMENT?: string };
 export type PlatformResponse = { status: number; body?: unknown; headers?: Record<string, string> };
@@ -43,6 +45,18 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
       const rows = await loadRows(env.DB, app.id);
       const report = await inspectCompatibility(env.DB, rows!.dataSources.map((ds) => ({ key: ds.key, tableName: ds.tableName, properties: rows!.properties.filter((p) => p.dataSourceId === ds.id) })));
       return { status: 200, body: report, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/property-types" && request.method === "GET") {
+      return { status: 200, body: { types: describeTypes() }, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/properties" && request.method === "GET") {
+      const dataSource = new URL(request.url).searchParams.get("dataSource") ?? undefined;
+      return { status: 200, body: { properties: await listProperties(env.DB, dataSource) }, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/properties" && request.method === "PATCH") {
+      const body = (await request.json().catch(() => null)) as PropertyUpdate | null;
+      if (!body) throw new PlatformError("PROPERTY_INVALID", "Send a JSON body.", 400);
+      return { status: 200, body: await updateProperty(env.DB, body, actor), headers: { "Cache-Control": "no-store" } };
     }
     return null;
   } catch (err) {

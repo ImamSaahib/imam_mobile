@@ -24,19 +24,23 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Story 04 (data model, properties) | In progress. The slice plan (04a to 04f) is written in the story notes. No code yet |
+| Story 04 (data model, properties) | In progress. 04a done (2026-11-11): type registry, property configuration routes, seed package version 2. Next: 04b |
 | Stories 02, 03, 05–11 | Planned |
-| Worker tests | 139 passing in 10 files (`cd backend && npm run check`) |
+| Worker tests | 191 passing in 12 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
-| Dev database | Migrations 0001 to 0005 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, 1 release, 1 active release. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables |
+| Dev database | Migrations 0001 to 0005 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, 1 release, 1 active release. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. **Migration 0006 and the seed version 2 upgrade are not applied yet.** Apply 0006 before deploying the 04a Worker: `npx wrangler d1 migrations apply imam-mobile-dev-db --remote`, then deploy, then `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade` with the `planHash` (expect 14 property updates, release 2) |
 
-## 4. Next step: Story 04, slice 04a (property contracts and configuration model)
+## 4. Next step: Story 04, slice 04b (schema inspection and adoption)
 
-Story 00b (shell and tokens) is blocked until the real Cloudflare reference screenshot is attached. The two images attached on 2026-11-10 were the 00a Kumo demo renders already stored in `docs/platform/evidence/`, so they do not unblock it. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
+Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
 
-The slice plan is written in [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md) (Implementation notes, "Slice plan"): 04a property contracts and configuration model, 04b schema inspection and adoption, 04c schema change service and add property, 04d remaining operations and migration-controlled mode, 04e counters, versions and `updated_at`, 04f migration process and review. Start with 04a. Two owner questions (currency scale, immediate release on schema change) are listed at the end of the plan; proceed with the stated defaults unless the owner answers otherwise. Reuse: the `cfg_property` table and `ACCEPTED` type map in `config/compat.ts`, `inspectCompatibility`, `rows-sql.ts`, `PlatformError`, `auditStatement`, `bumpVersionStatement`, and the test helpers (`call`, `callWithEnv`, `X-Rows-Read` headers for measuring).
+Slice 04a is done. It added migration 0006, `config/property-types.ts` (type registry), `config/property-config.ts`, three routes (`GET /api/platform/property-types`, `GET /api/platform/properties`, `PATCH /api/platform/properties`) and seed package version 2. A frozen copy of seed version 1 is in `backend/test/fixtures/seed-v1.ts` and is the baseline for upgrade tests. Details, decisions and findings are in the Story 04 notes, "Slice 04a".
 
-What slice 01d added, for reference: request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping, and configuration revalidation. Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
+Slice 04b scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): index and capacity inspection, bounded row count, system columns (decide how `created_by` and `updated_by` are treated), `GET /api/platform/data-sources/:key/schema`, and adopting an unmapped column as a property. Measure the rows read by the new report. Consider reading properties from the active snapshot instead of `cfg_property`.
+
+Owner question 1 (currency scale) is answered: 0 to 100,000,000 PKR, scale 0. Owner question 2 (immediate release on schema change) is unanswered, so the default stays.
+
+Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch. Slice 01d added request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), the bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping and configuration revalidation.
 
 Gate: see TIMELINE step 7 (add-property works in both modes with preview and log).
 
@@ -48,7 +52,7 @@ Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse che
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 139 tests
+cd backend && npm ci && npm run check      # type check plus 191 tests
 cd ../frontend && npm ci && npm run build
 ```
 
@@ -61,7 +65,7 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 | Worker entry, legacy routes | `backend/src/index.js` |
 | Policy placeholder, route inventory | `backend/src/platform/policy.ts` |
 | Configuration catalog, seed, snapshot, bootstrap, compatibility | `backend/src/platform/config/`, `backend/src/platform/routes.ts` |
-| Migrations | `backend/migrations/` (0001–0004) |
+| Migrations | `backend/migrations/` (0001–0006) |
 | Imam Mobile seed package | `applications/imam-mobile/seed/package.ts` |
 | Tests | `backend/test/` (`catalog.test.ts`, `policy.test.ts`, baseline workflow tests) |
 | Decisions (D1–D20, owner confirmations C1–C7) | [platform/DECISIONS.md](platform/DECISIONS.md) |
@@ -83,6 +87,7 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
+- Whether the `db:local` and `db:remote` scripts in `backend/package.json` should name `imam-mobile-dev-db` (they name `imam-mobile-db`).
 - Real Cloudflare reference screenshot to measure design tokens (Story 00b).
 - Frontend test tooling (Vitest and Testing Library) before 00b.
 - 15 older commits on `development` show as Unverified on GitHub because they are authored under the owner's noreply address. Fixing that needs a history rewrite and force-push. The owner has not asked for it.

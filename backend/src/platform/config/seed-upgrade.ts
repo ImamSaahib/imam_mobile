@@ -126,7 +126,7 @@ async function computeContext(db: D1Database, pkg: SeedPackage): Promise<Ctx> {
     const proposedHash = await hashOf(item.value);
     const rec = known.get(item.itemId);
     const row = current[item.itemType].get(item.itemId);
-    const currentValue = row ? itemValue(row) : undefined;
+    const currentValue = row ? itemValue(row, item.itemType) : undefined;
     const currentHash = currentValue ? await hashOf(currentValue) : null;
     const base = { itemId: item.itemId, itemType: item.itemType, seedKey: item.seedKey, proposedHash, currentHash };
     if (!rec) {
@@ -149,7 +149,7 @@ async function computeContext(db: D1Database, pkg: SeedPackage): Promise<Ctx> {
     const row = current[rec.item_type].get(rec.item_id);
     entries.push({
       itemId: rec.item_id, itemType: rec.item_type, seedKey: rec.seed_key, status: "deprecate", locallyModified: false,
-      current: row ? itemValue(row) : undefined, baselineHash: rec.baseline_hash, currentHash: null, proposedHash: null, ownership: rec.ownership, deprecatedFlag: false
+      current: row ? itemValue(row, rec.item_type) : undefined, baselineHash: rec.baseline_hash, currentHash: null, proposedHash: null, ownership: rec.ownership, deprecatedFlag: false
     });
   }
 

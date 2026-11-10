@@ -11,15 +11,25 @@ import type { ConfigRows, SeedItemType } from "./types";
 import type { SeedPackage } from "./seed-types";
 import { invalidateBootstrapCache } from "./bootstrap";
 import { INSERT_ORDER, insertStatement } from "./rows-sql";
+import { SETTINGS_DEFAULTS, isDefaultSetting, normalizeSettings } from "./property-types";
 
 export type ExpandedSeed = {
   rows: ConfigRows;
   items: { itemId: string; itemType: SeedItemType; seedKey: string; value: Record<string, unknown> }[];
 };
 
-/** The editable value of an item: its row without the ID. Baseline hashes and merges compare these. */
-export function itemValue(row: { id: string } & Record<string, unknown>): Record<string, unknown> {
+/**
+ * The editable value of an item: its row without the ID. Baseline hashes and merges compare these.
+ * Property settings that equal the default are left out, so a property without settings has the same
+ * value, and the same hash, as it had before settings existed (Story 04, slice 04a).
+ */
+export function itemValue(row: { id: string } & Record<string, unknown>, itemType?: SeedItemType): Record<string, unknown> {
   const { id: _id, ...value } = row;
+  if (itemType === "property") {
+    for (const key of Object.keys(SETTINGS_DEFAULTS) as (keyof typeof SETTINGS_DEFAULTS)[]) {
+      if (key in value && isDefaultSetting(key, value[key])) delete value[key];
+    }
+  }
   return value;
 }
 
@@ -29,7 +39,7 @@ export async function expandSeed(pkg: SeedPackage): Promise<ExpandedSeed> {
   const id = (type: ItemType, seedKey: string) => deriveSeedId(key, type, seedKey);
   const items: ExpandedSeed["items"] = [];
   const track = (itemType: SeedItemType, seedKey: string, row: { id: string } & Record<string, unknown>) =>
-    items.push({ itemId: row.id, itemType, seedKey, value: itemValue(row) });
+    items.push({ itemId: row.id, itemType, seedKey, value: itemValue(row, itemType) });
 
   const application = { id: await id("application", key), key, name: pkg.application.name, description: pkg.application.description ?? null, status: "active" as const };
   track("application", key, application);
@@ -46,7 +56,14 @@ export async function expandSeed(pkg: SeedPackage): Promise<ExpandedSeed> {
     rows.dataSources.push(dsRow); track("dataSource", ds.seedKey, dsRow);
     let position = 0;
     for (const prop of ds.properties) {
-      const row = { id: await id("property", `${ds.seedKey}.${prop.seedKey}`), dataSourceId: dsRow.id, key: prop.key, label: prop.label, columnName: prop.columnName, type: prop.type, nullable: prop.nullable, position: ++position };
+      let settings;
+      try {
+        settings = normalizeSettings({ type: prop.type, nullable: prop.nullable, description: prop.description, required: prop.required, defaultValue: prop.defaultValue, searchable: prop.searchable, sensitivity: prop.sensitivity, config: prop.config });
+      } catch (err) {
+        if (err instanceof PlatformError) throw new PlatformError("SEED_INVALID", `Property ${ds.seedKey}.${prop.seedKey}: ${err.message}`, 400);
+        throw err;
+      }
+      const row = { id: await id("property", `${ds.seedKey}.${prop.seedKey}`), dataSourceId: dsRow.id, key: prop.key, label: prop.label, columnName: prop.columnName, type: prop.type, nullable: prop.nullable, position: ++position, ...settings };
       rows.properties.push(row); track("property", `${ds.seedKey}.${prop.seedKey}`, row);
     }
   }

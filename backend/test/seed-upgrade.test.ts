@@ -6,7 +6,7 @@ import { installSeed } from "../src/platform/config/seed";
 import { previewUpgrade, applyUpgrade } from "../src/platform/config/seed-upgrade";
 import { getBootstrap } from "../src/platform/config/bootstrap";
 import { PlatformError } from "../src/platform/errors";
-import { imamMobileSeed } from "../../applications/imam-mobile/seed/package";
+import { imamMobileSeedV1 as imamMobileSeed } from "./fixtures/seed-v1";
 import type { SeedPackage } from "../src/platform/config/seed-types";
 
 const actor = { id: "dev-placeholder", kind: "placeholder" as const, permissions: ["*"] };
@@ -182,13 +182,17 @@ describe("seed upgrade apply", () => {
 
 describe("seed upgrade routes", () => {
   it("previews and applies through the API", async () => {
-    // The registered package is version 1, so the preview shows nothing to do and apply reports unchanged.
+    // The registered package is version 2 and the installed one is the frozen version 1, so this is the real upgrade.
     const preview = await call("POST", "/api/platform/seed/preview", {});
     expect(preview.status).toBe(200);
-    expect(preview.json.counts.unchanged).toBe(61);
+    expect(preview.json.fromVersion).toBe(1);
+    expect(preview.json.toVersion).toBe(2);
+    expect(preview.json.counts).toMatchObject({ add: 0, conflict: 0, deprecate: 0, update: 14, unchanged: 47 });
     const applied = await call("POST", "/api/platform/seed/upgrade", { planHash: preview.json.planHash });
     expect(applied.status).toBe(200);
-    expect(applied.json.status).toBe("unchanged");
+    expect(applied.json).toMatchObject({ status: "applied", version: 2, releaseVersion: 2 });
+    const again = await call("POST", "/api/platform/seed/preview", {});
+    expect(again.json.counts).toMatchObject({ update: 0, unchanged: 61 });
   });
   it("requires the plan from the preview", async () => {
     const r = await call("POST", "/api/platform/seed/upgrade", {});

@@ -23,7 +23,7 @@
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
-| 04 | Data model, properties and schema compatibility | P0 | 01 | In progress (plan written, 04a next) | Slice plan 04a to 04f in Story 04 notes (2026-11-10). No code yet |
+| 04 | Data model, properties and schema compatibility | P0 | 01 | In progress (04a done, 04b next) | Slice plan 04a to 04f in Story 04 notes. 04a: type registry (19 types), property configuration routes, seed v2 (2026-11-11) |
 | 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | Planned | |
 | 06 | Forms, records and domain service extensions | P0 | 00, 02, 04 | Planned | |
 | 07 | Edit mode, configuration drafts and publishing | P0 | 00–06 | Planned | |
@@ -104,6 +104,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 |---|---|
 | 2026-11-08 | Timeline created. Stories 00 and 01 marked Ready. |
 | 2026-11-10 | Story 04 planned: six slices (04a property contracts and configuration, 04b schema inspection and adoption, 04c schema change service and add property, 04d remaining operations and migration-controlled mode, 04e counters, versions and `updated_at`, 04f migration process and review). Plan and two owner questions are in the Story 04 notes. Story 00b stays blocked: the screenshots attached this session were the 00a Kumo demo renders, not the Cloudflare reference. |
+| 2026-11-11 | Story 04 slice 04a done: migration 0006, type registry for 19 types, property configuration routes, seed package version 2 (options, currency scale 0 with a 0 to 100,000,000 PKR limit, relation targets), Contracts §3 currency scale rule. 191 backend tests pass. Migration 0006 and the seed upgrade are not yet applied to the dev database. |
 | 2026-11-10 | Slice 01d done: request metering with rows read and written, resource governor, `DAILY_LIMIT_REACHED`, rate limit, bootstrap cache, `data_source_versions`, configuration revalidation. 139 Worker tests. Story 01 code complete; final review pending. |
 | 2026-11-10 | Slice 01c-2 done: seed upgrade preview and apply with three-way comparison, conflict resolution, client ownership, reset to default, deprecation. 117 Worker tests. Slice 01c complete. |
 | 2026-11-10 | Slice 01c-1 done: `cfg_*` catalog, seed package (61 items), release snapshot, bootstrap with ETag, compatibility check. 99 Worker tests. 01c-2 (seed upgrades) remains. |

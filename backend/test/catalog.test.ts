@@ -8,7 +8,7 @@ import { buildSnapshot, loadRows } from "../src/platform/config/snapshot";
 import { inspectCompatibility } from "../src/platform/config/compat";
 import { getBootstrap, invalidateBootstrapCache } from "../src/platform/config/bootstrap";
 import { PlatformError } from "../src/platform/errors";
-import { imamMobileSeed } from "../../applications/imam-mobile/seed/package";
+import { imamMobileSeedV1 as imamMobileSeed } from "./fixtures/seed-v1";
 import type { SeedPackage } from "../src/platform/config/seed-types";
 
 const actor = { id: "dev-placeholder", kind: "placeholder" as const, permissions: ["*"] };

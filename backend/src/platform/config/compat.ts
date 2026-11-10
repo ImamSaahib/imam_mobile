@@ -2,6 +2,7 @@
 // Read-only. Table and column names are validated and quoted, never concatenated raw.
 
 import type { PropertyType } from "./types";
+import { acceptedSqliteTypes, TYPE_CONTRACTS } from "./property-types";
 
 export type DataSourceDef = {
   key: string;
@@ -25,13 +26,6 @@ export type CompatibilityReport = { ok: boolean; dataSources: DataSourceReport[]
 const NAME = /^[a-z][a-z0-9_]{0,63}$/;
 const PLATFORM_TABLES = new Set(["audit_events", "app_configuration", "configuration_versions", "schema_changes", "custom_field_values"]);
 
-const ACCEPTED: Record<PropertyType, string[]> = {
-  text: ["TEXT"], title: ["TEXT"], select: ["TEXT"], status: ["TEXT"], date: ["TEXT"], timestamp: ["TEXT"],
-  email: ["TEXT"], phone: ["TEXT"], url: ["TEXT"],
-  number: ["INTEGER", "REAL"], currency: ["INTEGER"], checkbox: ["INTEGER"], uniqueId: ["INTEGER"],
-  relation: ["INTEGER", "TEXT"]
-};
-
 export function isBlockedTable(name: string): boolean {
   return !NAME.test(name) || name.startsWith("cfg_") || name.startsWith("sqlite_") || name.startsWith("_cf_") || name.startsWith("d1_") || PLATFORM_TABLES.has(name);
 }
@@ -52,9 +46,14 @@ export async function inspectCompatibility(db: D1Database, dataSources: DataSour
     report.tableExists = columns.size > 0;
     const mappedColumns = new Set<string>();
     for (const property of ds.properties) {
+      if (TYPE_CONTRACTS[property.type]?.physical === "junction") {
+        // Junction tables are inspected from slice 04b. Until then such a property is reported, never silently accepted.
+        report.incompatible.push({ property: property.key, column: property.columnName, type: property.type, sqliteType: "junction" });
+        continue;
+      }
       const sqliteType = columns.get(property.columnName);
       if (sqliteType === undefined || !NAME.test(property.columnName)) report.missing.push({ property: property.key, column: property.columnName });
-      else if (!ACCEPTED[property.type]?.includes(sqliteType)) report.incompatible.push({ property: property.key, column: property.columnName, type: property.type, sqliteType });
+      else if (!acceptedSqliteTypes(property.type).includes(sqliteType)) report.incompatible.push({ property: property.key, column: property.columnName, type: property.type, sqliteType });
       else report.mapped.push({ property: property.key, column: property.columnName, sqliteType });
       mappedColumns.add(property.columnName);
     }
