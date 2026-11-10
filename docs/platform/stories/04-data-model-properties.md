@@ -169,7 +169,7 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 **Decisions**
 - Option keys equal the strings already stored (`Sold Out`, `In (+)`), so no stored value is rewritten. Keys for options created later come from `newOptionKey`. An option key can never be removed, only deactivated.
 - Currency limits (owner answer, 2026-11-10): 0 to 100,000,000 PKR. `devices.purchase_price`, `devices.sale_price` and `sales.total_amount` use min 0 and max 100,000,000. `ledger.amount` uses min 1 and the same maximum. Currency has a per-property `scale`. The existing columns use scale 0. This is recorded in Contracts §3. Owner question 1 is therefore answered.
-- Owner question 2 (a schema change publishes a release immediately until Story 07 adds drafts) has no answer yet. The default stays in use. `PATCH /api/platform/properties` also publishes a release immediately.
+- Owner question 2 (a schema change publishes a release immediately until Story 07 adds drafts): answered 2026-11-11, acceptable while development stays on track. `PATCH /api/platform/properties` also publishes a release immediately.
 - Settings equal to their default are left out of seed values and snapshots, so an unchanged property keeps its old shape and hash.
 - Options on select, status and multiSelect, and the target of a relation, are optional. Seed version 1 is installed without them and must still validate. When present they are validated strictly.
 - Locked after creation (409 `CONFIG_LOCKED`): currency code, currency scale, relation target once set, multiSelect junction. Setting a relation target that was never set is allowed.

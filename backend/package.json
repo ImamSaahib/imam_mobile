@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:local": "wrangler d1 migrations apply imam-mobile-db --local",
-    "db:remote": "wrangler d1 migrations apply imam-mobile-db --remote",
+    "db:local": "wrangler d1 migrations apply imam-mobile-dev-db --local",
+    "db:remote": "wrangler d1 migrations apply imam-mobile-dev-db --remote",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

@@ -28,7 +28,7 @@ An environment for building, customizing and extending business modules (Service
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 191 passing in 12 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
-| Dev database | Migrations 0001 to 0005 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, 1 release, 1 active release. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. **Migration 0006 and the seed version 2 upgrade are not applied yet.** Apply 0006 before deploying the 04a Worker: `npx wrangler d1 migrations apply imam-mobile-dev-db --remote`, then deploy, then `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade` with the `planHash` (expect 14 property updates, release 2) |
+| Dev database | Migrations 0001 to 0005 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, 1 release, 1 active release. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. **Migration 0006 and the seed version 2 upgrade are not applied yet (the first attempt on 2026-11-11 ran from an outdated local checkout; run `git pull origin development` first).** Apply 0006 before deploying the 04a Worker: `npx wrangler d1 migrations apply imam-mobile-dev-db --remote`, then deploy, then `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade` with the `planHash` (expect 14 property updates, release 2) |
 
 ## 4. Next step: Story 04, slice 04b (schema inspection and adoption)
 
@@ -38,7 +38,7 @@ Slice 04a is done. It added migration 0006, `config/property-types.ts` (type reg
 
 Slice 04b scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): index and capacity inspection, bounded row count, system columns (decide how `created_by` and `updated_by` are treated), `GET /api/platform/data-sources/:key/schema`, and adopting an unmapped column as a property. Measure the rows read by the new report. Consider reading properties from the active snapshot instead of `cfg_property`.
 
-Owner question 1 (currency scale) is answered: 0 to 100,000,000 PKR, scale 0. Owner question 2 (immediate release on schema change) is unanswered, so the default stays.
+Owner question 1 (currency scale) is answered: 0 to 100,000,000 PKR, scale 0. Owner question 2 (immediate release on schema change) is answered: acceptable while development stays on track.
 
 Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch. Slice 01d added request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), the bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping and configuration revalidation.
 
@@ -87,7 +87,6 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
-- Whether the `db:local` and `db:remote` scripts in `backend/package.json` should name `imam-mobile-dev-db` (they name `imam-mobile-db`).
 - Real Cloudflare reference screenshot to measure design tokens (Story 00b).
 - Frontend test tooling (Vitest and Testing Library) before 00b.
 - 15 older commits on `development` show as Unverified on GitHub because they are authored under the owner's noreply address. Fixing that needs a history rewrite and force-push. The owner has not asked for it.
