@@ -28,7 +28,7 @@ An environment for building, customizing and extending business modules (Service
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 139 passing in 10 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
-| Dev database | **Migrations 0003, 0004 and 0005 are not known to be applied to the dev D1 database, and `POST /api/platform/seed` has not been called.** Apply and seed before deploying the current Worker code |
+| Dev database | Migrations 0001 to 0005 are applied to the dev D1 database `imam-mobile-dev-db` (confirmed from `d1_migrations` on 2026-11-10). **`POST /api/platform/seed` has not been called:** `cfg_application`, `cfg_seed_item`, `cfg_release` and `cfg_active_release` all have 0 rows (checked 2026-11-10). Deploy the current Worker, then call the seed once |
 
 ## 4. Next step: Story 04, slice 04a (property contracts and configuration model)
 
