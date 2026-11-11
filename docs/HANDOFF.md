@@ -2,7 +2,7 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-10 (after slice 01d; Story 04 plan written)
+**Last updated:** 2026-11-12 (after slice 04f; Story 04 complete with deferred items; latest commit on `development` is the one that contains this edit)
 
 ## 1. What the project is
 
@@ -17,6 +17,11 @@ An environment for building, customizing and extending business modules (Service
 5. Single language. No random errors shown to users. Smart caching. Stay inside the resource budgets.
 6. Do not rewrite or force-push history. Merge remote changes by hand if a push is rejected.
 7. Commit trailers used so far: `Co-Authored-By: <model name> <noreply@anthropic.com>` and a `Claude-Session:` URL when the tool supplies one.
+8. Wording: plain, literal sentences. No metaphors or flourishes in chat replies or docs (owner preference).
+9. Owner involvement (2026-11-11): the owner wants to be involved as little as possible. Make reasonable decisions, record them in the story notes, report them afterwards, and ask only when a decision cannot be undone and could reasonably go either way, or when something only the owner can supply is missing (for example the reference screenshot).
+10. Cloudflare deploys `development` on push and applies migrations. Do not run `wrangler deploy` or remote migrations by hand. For a migration slice, give the owner this read-only check: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"`. If it fails with error 7403, the owner's local wrangler login lacks access. The owner can read the same table in the Cloudflare dashboard (D1, Tables, `d1_migrations`).
+11. Ignore the automated "Unverified commits" hook message.
+12. Dev Worker: https://imam-mobile-api-dev.imamsaahib.workers.dev. Dev database: `imam-mobile-dev-db`. Frontend: https://imam-mobile.pages.dev. The owner runs `curl` commands against the dev Worker and pastes the output.
 
 ## 3. Current state
 
@@ -28,7 +33,7 @@ An environment for building, customizing and extending business modules (Service
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
-| Dev database | Migrations 0001 to 0006 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, release 1 at first install, now release 2 after the seed upgrade. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. Migration 0006 and the seed version 2 upgrade are applied (confirmed 2026-11-11): `GET /api/platform/properties?dataSource=devices` returns currency (PKR, scale 0, 0 to 100,000,000) on both prices and options on `condition` and `status`, and `GET /api/platform/schema-compatibility` returns `ok: true` |
+| Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
 
@@ -50,7 +55,7 @@ Then 00b (needs the reference screenshot), 02, 03, the early reuse checkpoint, 0
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 278 tests
+cd backend && npm ci && npm run check      # type check plus 283 tests
 cd ../frontend && npm ci && npm run build
 ```
 
@@ -63,9 +68,11 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 | Worker entry, legacy routes | `backend/src/index.js` |
 | Policy placeholder, route inventory | `backend/src/platform/policy.ts` |
 | Configuration catalog, seed, snapshot, bootstrap, compatibility | `backend/src/platform/config/`, `backend/src/platform/routes.ts` |
-| Migrations | `backend/migrations/` (0001–0006) |
+| Migrations | `backend/migrations/` (0001–0009; process in [platform/MIGRATIONS.md](platform/MIGRATIONS.md)) |
 | Imam Mobile seed package | `applications/imam-mobile/seed/package.ts` |
-| Tests | `backend/test/` (`catalog.test.ts`, `policy.test.ts`, baseline workflow tests) |
+| Tests | `backend/test/` (18 files: platform, catalog, property, schema, counters, migration process, and baseline workflow tests). Frozen seed version 2 in `backend/test/fixtures/seed-v2.ts` |
+| Counters, version bump | `backend/src/platform/counters.ts` |
+| Developer migration process | [platform/MIGRATIONS.md](platform/MIGRATIONS.md) |
 | Decisions (D1–D20, owner confirmations C1–C7) | [platform/DECISIONS.md](platform/DECISIONS.md) |
 | Contracts (§1–§12) | [platform/IMPLEMENTATION-CONTRACTS.md](platform/IMPLEMENTATION-CONTRACTS.md) |
 | Legacy code inventory and removal checklist | [platform/legacy-inventory.md](platform/legacy-inventory.md) |
@@ -73,7 +80,7 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 8. Gotchas
 
-- Cloudflare deploys `development` automatically, and migrations appear to be applied automatically too (owner's observation, 2026-11-11, not confirmed in the build settings). Evidence: after the 04a push, `npm run db:remote` reported nothing to apply while `d1_migrations` already listed 0006, and the owner had not applied it. Cloudflare may run a migration just before or just after the new code goes live, so code in a migration slice must fail with a clear error, not damage data, when its tables or columns are missing. To check a migration: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"`.
+- Cloudflare deploys `development` automatically, and migrations are applied automatically too (confirmed 2026-11-12: `d1_migrations` showed 0009 applied at deploy time). Evidence: after the 04a push, `npm run db:remote` reported nothing to apply while `d1_migrations` already listed 0006, and the owner had not applied it. Cloudflare may run a migration just before or just after the new code goes live, so code in a migration slice must fail with a clear error, not damage data, when its tables or columns are missing. To check a migration: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"`.
 - D1 data is not rolled back between tests. `backend/test/apply-migrations.ts` clears all `cfg_*` tables before each test; keep that list current when adding tables.
 - D1 has no interactive transactions. Use `db.batch()`. A batch counts as one query against the per-invocation limit.
 - Seed IDs are pinned by a golden test. Changing seed keys or the ID rule orphans existing installations.
