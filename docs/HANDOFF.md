@@ -75,7 +75,7 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 8. Gotchas
 
-- Cloudflare's automatic deployment ships code only. Migrations are not applied by it. A slice that adds a migration must say so in its final report, and the owner runs `cd backend && npm run db:remote` (targets `imam-mobile-dev-db`). Code from that slice can be live before the migration is applied, so it must fail with a clear error, not damage data, when its tables or columns are missing.
+- Cloudflare deploys `development` automatically, and migrations appear to be applied automatically too (owner's observation, 2026-11-11, not confirmed in the build settings). Evidence: after the 04a push, `npm run db:remote` reported nothing to apply while `d1_migrations` already listed 0006, and the owner had not applied it. Cloudflare may run a migration just before or just after the new code goes live, so code in a migration slice must fail with a clear error, not damage data, when its tables or columns are missing. To check a migration: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"`.
 - D1 data is not rolled back between tests. `backend/test/apply-migrations.ts` clears all `cfg_*` tables before each test; keep that list current when adding tables.
 - D1 has no interactive transactions. Use `db.batch()`. A batch counts as one query against the per-invocation limit.
 - Seed IDs are pinned by a golden test. Changing seed keys or the ID rule orphans existing installations.
