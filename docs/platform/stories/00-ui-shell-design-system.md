@@ -104,6 +104,10 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 5. Re-check the budget when the shell is built (slice 00b) and again at the Story 07 phase review.
 
 **Open**
-- **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. Measuring colors, row heights, sidebar width and spacing needs the image again. Until then the token file is not written, so no values are guessed. Needed by slice 00b.
+- **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. The original image was received privately on 2026-11-12. Measure colors, row heights, sidebar width and spacing in slice 00b, accounting for screenshot scale; the token file is still pending.
 - Frontend test tooling (Vitest with Testing Library) for component and screenshot tests, shared with Story 01.
 - Slice 00b: shell, remaining primitives, our context-menu service, gallery and screenshot tests.
+
+### Original reference received — 2026-11-12
+
+The owner supplied the original Cloudflare D1 dashboard screenshot privately. The missing-image dependency is resolved; measurement and acceptance verification remain open. Follow UI-REFERENCE, prioritize application navigation and table/search controls, exclude the right panel, and keep the original out of Git. No visual acceptance box is marked complete by receipt alone.

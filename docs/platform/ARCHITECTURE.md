@@ -446,3 +446,7 @@ Record future requirements explicitly rather than silently treating them as forg
 ## 18. Normative implementation contracts
 
 The detailed extension registration, seed ownership/upgrades, property storage, edit-mode and schema change service contracts, second-application proof, maintenance policy and CI rules are defined in [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md). These rules are part of the target architecture. Stories implement them incrementally. Evaluate the second-application proof after Stories 01–06; expand Story 08 only where that evidence demonstrates a common need.
+
+### Owner release clarification (C9, 2026-11-12)
+
+Main is the stable client distribution baseline after approved Product Phase 1 promotion. Story 10 must provide a coordinated manifest-driven workflow for migrations, versioned configuration/seed installation or upgrade, Worker/Pages deployment and verification. A merge moves source, not D1 state. Preserve target data and customizations through validated upgrades, exclude development records and secrets, and rehearse interruption/recovery. Production approval remains required; initial client account/secrets/resource setup is explicit.

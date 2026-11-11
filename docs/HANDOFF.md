@@ -33,7 +33,7 @@ The owner will test the integrated application after Phase 1 development is comp
 
 | Item | State |
 |---|---|
-| Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
+| Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Original reference received privately on 2026-11-12; tokens and shell (00b) remain to implement |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
@@ -45,7 +45,7 @@ The owner will test the integrated application after Phase 1 development is comp
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 
-**Blocked on the owner:** the next steps in [TIMELINE.md](TIMELINE.md) (00b, then Story 02 Navigator, Story 03, the reuse checkpoint, Stories 05 and 06) all depend on the UI shell. Story 00b needs the real Cloudflare reference screenshot attached. No other owner decision is open.
+**UI dependency:** the original reference is now available. Continue 00b, then the dependent navigator/page/list/form stories in TIMELINE order. Resolve existing preflight CI/deployment blockers before merging their changes.
 
 **Owner actions still open on dev (not blocking):**
 1. Seed upgrade to version 3: `POST /api/platform/seed/preview` (expect `toVersion: 3`, `add: 4`), then `POST /api/platform/seed/upgrade` with the `planHash`.
@@ -55,7 +55,7 @@ Rules for the stories that follow: Stories 05 and 06 must use `countersOnCreate`
 
 ## 5. After that (from the sequence)
 
-Then 00b (needs the reference screenshot), 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
+Then 00b (reference received; measurements pending), 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
 
 ## 6. How to verify the starting state
 
@@ -99,10 +99,16 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
-- Real Cloudflare reference screenshot to measure design tokens (Story 00b).
+- Measure design tokens from the received private reference (Story 00b).
 - Frontend test tooling (Vitest and Testing Library) before 00b.
 - 15 older commits on `development` show as Unverified on GitHub because they are authored under the owner's noreply address. Fixing that needs a history rewrite and force-push. The owner has not asked for it.
 
 ## 10. Updating this file
 
 Update sections 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE.
+
+## Visual reference and release direction — 2026-11-12
+
+The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
+
+Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.

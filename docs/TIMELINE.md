@@ -64,7 +64,7 @@ Work is done one slice at a time, each in a pull request into `development`.
 | Step | Work | Why this order | Gate before moving on |
 |---|---|---|---|
 | 1 ✔ | **01a** Test runner, TypeScript build, baseline tests of current workflows | Nothing moves onto metadata until the current behavior is pinned by tests | Baseline tests pass on `development` |
-| 2 ✔ | **00a** Kumo evaluation, icon set (done). Design tokens wait for the reference screenshot | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
+| 2 ✔ | **00a** Kumo evaluation, icon set (done). Reference received; design token measurement pending | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
 | 3 ✔ | **01b** Policy placeholder, actor columns, audit shape, legacy inventory | Every later route declares its permission | Route-policy inventory exists |
 | 4 | **00b** Shell, primitives, context menu, gallery | Needs the tokens | Gallery and screenshot tests pass, bundle under 300 KB gzip |
 | 5 ✔ | **01c** Metadata catalog, release snapshots, bootstrap, seed | Core of the platform | Seed twice without duplicates, bootstrap reads at most 5 rows |
@@ -101,7 +101,7 @@ The policy layer denies every route except health unless `AUTH_MODE=dev-open` an
 | Rough customer and sales counts (for the reference dataset) | Step 6 |
 | Whether Admin, Manager and User are enough as roles | Step 15 |
 | Password hashing spike result | Step 15 |
-| Reference screenshot (re-attach) to measure design tokens | Step 4 (00b) |
+| Measure tokens from the original reference received 2026-11-12 | Step 4 (00b) |
 | Frontend test tooling (Vitest with Testing Library) | Before Story 00b screenshot and component tests |
 
 ## Recommended model per step
@@ -130,3 +130,9 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 ### Owner direction update — 2026-11-12
 
 Recorded Product Phase 1 as Stories 00–11, followed by owner testing and owner-defined Phase 2 stories. Delivery prioritizes existing functionality and required quality gates; optional side work is deferred. This documentation change does not change story status or acceptance criteria.
+
+## Visual reference and release direction — 2026-11-12
+
+The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
+
+Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.
