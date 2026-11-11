@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (slice 00a: evaluation done; 00b preflight under review; tokens and shell remaining)  
+**Status:** In progress (slice 00a: evaluation done; 00b preflight under review; tokens and shell remaining)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
