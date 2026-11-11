@@ -34,7 +34,7 @@ An environment for building, customizing and extending business modules (Service
 
 Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
 
-Done in Story 04: 04a (migration 0006, type registry, property configuration routes, seed v2, applied on dev) and 04b (no migration; `GET /api/platform/schema?dataSource=`, `POST /api/platform/properties/adopt`, `config/schema-inspect.ts`, `config/release.ts`, `SCHEMA_DRIFT` check, system columns). Details, decisions and measured rows are in the Story 04 notes. The 04b Worker code is not deployed to dev yet; it needs `npx wrangler deploy` only (no migration).
+Done in Story 04: 04a (migration 0006, type registry, property configuration routes, seed v2, applied on dev) and 04b (no migration; `GET /api/platform/schema?dataSource=`, `POST /api/platform/properties/adopt`, `config/schema-inspect.ts`, `config/release.ts`, `SCHEMA_DRIFT` check, system columns). Details, decisions and measured rows are in the Story 04 notes. The owner reports that Cloudflare deploys the repository automatically on each push, so no manual `wrangler deploy` is needed (check the dev Worker's deployment list if a change does not appear). 04b has no migration.
 
 Slice 04c scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): migration 0007 (`schema_change_log`), the closed operation list, preview with generated SQL, apply with operation ID and confirmation, idempotent repeat, the 100-column refusal, and `add_property` in `guided_live` mode. First confirm on the D1 runtime whether an `ALTER TABLE` and metadata inserts in one `batch()` roll back together (plan finding 7). Reuse `releaseStatements`, `assertNoDrift`, `inspectSchema` and `adoptColumn` (the recovery path after a partial failure).
 
@@ -75,6 +75,7 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 8. Gotchas
 
+- Cloudflare's automatic deployment ships code only. Migrations are not applied by it. A slice that adds a migration must say so in its final report, and the owner runs `cd backend && npm run db:remote` (targets `imam-mobile-dev-db`). Code from that slice can be live before the migration is applied, so it must fail with a clear error, not damage data, when its tables or columns are missing.
 - D1 data is not rolled back between tests. `backend/test/apply-migrations.ts` clears all `cfg_*` tables before each test; keep that list current when adding tables.
 - D1 has no interactive transactions. Use `db.batch()`. A batch counts as one query against the per-invocation limit.
 - Seed IDs are pinned by a golden test. Changing seed keys or the ID rule orphans existing installations.
