@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import {focusQuickSearch} from "./platform/ui-interactions.js";
+import {focusQuickSearch} from "./platform/ui-interactions.ts";
 const AdminStudio = lazy(() => import("./AdminStudio.jsx"));
 import { Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Eye, EyeOff, LayoutDashboard, Menu, Moon, MoreHorizontal, Package, Plus, Search, Settings, ShoppingCart, Smartphone, Sun, Users, Wallet, X, Save, Printer, ArrowLeft, ArrowUpDown, Filter, HandCoins } from "lucide-react";
 

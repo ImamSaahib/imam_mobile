@@ -56,3 +56,5 @@ Run `npm run check` for interaction unit tests, Vite build, and a conservative 3
 ## Planned next phase
 
 Finish Story 00b (shell, Kumo wrappers and measured design tokens), then build metadata-driven navigation, lists, forms and configuration. Authentication follows the UI phase.
+
+New platform helpers use TypeScript (D3). `npm test` compiles `src/platform` with strict checking into ignored `.test-build/` and runs the interaction tests against that output. `npm run typecheck` checks without emitting files. Component and browser tests remain pending.

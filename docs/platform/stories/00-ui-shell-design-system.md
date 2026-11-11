@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (slice 00a: evaluation done; tokens and shell remaining)  
+**Status:** In progress (slice 00a: evaluation done; 00b preflight under review; tokens and shell remaining)  
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -113,3 +113,11 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 **Built:** Reusable keyboard shortcuts, context-menu positioning and long-press input helpers; working ⌘K/Ctrl+K focus on existing search; 12 dependency-free Node tests; and CI test/build/300 KiB gzip JS gate. Updated outdated frontend README. No backend, D1 or production changes. Resource cost: zero D1 reads/writes.
 
 **Verification:** `cd frontend && npm run check` (run by Development CI). This is a prerequisite, not completed Story 00b. Full Kumo wrappers, visual tokens and shell, central context menu, gallery, Vitest/Testing Library, screenshot and browser request tests remain pending. The screenshot is not in GitHub, so exact visual values were not guessed.
+
+### Preflight review follow-up (2026-11-12)
+
+PR #3 remains unmerged. Its GitHub Actions run 43098394510 is completed/failure, while both jobs report queued with no runner or steps; the downloaded log archive is empty. Both Pages previews succeeded. The development Worker build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c failed, but its error is not included in GitHub checks; Cloudflare dashboard access currently requires sign-in. No deployment configuration fix is justified without that log. PR #4 was reviewed: its distinction between unmerged work and the development baseline is accurate; its historical CI observations remain applicable. Neither PR is cleared for merge by this review.
+
+D3 correction: new UI interaction helpers now use TypeScript with strict compilation before the existing Node tests; Vite consumes the same source. Legacy screens are not converted in this slice. Validation on Node 26: frontend 12/12 tests, production build, total JavaScript 69.0 KiB gzip; backend type check and 283/283 tests in 18 files. CI uses Node 22 and must still pass independently. No browser regression, screenshot or first-load request-count claim is made. Context-menu helpers remain unconnected to a shared shell, and the shortcut currently focuses legacy record search, not the future navigator filter. All remaining Story 00 acceptance boxes stay open.
+
+No migrations or backend changes; this slice adds zero D1 reads/writes. Recovery: revert the TypeScript conversion and tooling commit. Next: obtain the Worker log and build settings, resolve the CI scheduling failure, then add frontend component tests and Kumo wrappers; exact tokens still require the private reference screenshot.

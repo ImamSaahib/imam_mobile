@@ -3,7 +3,22 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview", "test": "node --test test/*.test.mjs", "check:bundle": "node scripts/check-build-budget.mjs", "check": "npm run test && npm run build && npm run check:bundle" },
-  "dependencies": { "lucide-react": "^0.468.0", "react": "^18.3.1", "react-dom": "^18.3.1" },
-  "devDependencies": { "vite": "^6.0.5" }
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "tsc && node --test test/*.test.mjs",
+    "check:bundle": "node scripts/check-build-budget.mjs",
+    "check": "npm run test && npm run build && npm run check:bundle",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "^6.0.5"
+  }
 }

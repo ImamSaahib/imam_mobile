@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {quickSearchKey,focusQuickSearch,contextMenuKey,clampMenu,longPress} from "../src/platform/ui-interactions.js";
+import {quickSearchKey,focusQuickSearch,contextMenuKey,clampMenu,longPress} from "../.test-build/ui-interactions.js";
 test("Ctrl and Command K accepted",()=>{assert.equal(quickSearchKey({key:"k",ctrlKey:true}),true);assert.equal(quickSearchKey({key:"K",metaKey:true}),true)});
 test("bare K ignored",()=>assert.equal(quickSearchKey({key:"k"}),false));
 test("other modifiers ignored",()=>{assert.equal(quickSearchKey({key:"k",ctrlKey:true,shiftKey:true}),false);assert.equal(quickSearchKey({key:"k",metaKey:true,altKey:true}),false)});
