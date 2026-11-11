@@ -53,7 +53,7 @@ export async function loadRows(db: D1Database, applicationId: string): Promise<C
     db.prepare("SELECT id, title, description FROM cfg_page WHERE application_id=?").bind(applicationId),
     db.prepare("SELECT c.id, c.page_id, c.type, c.type_version, c.position, c.config_json FROM cfg_component c JOIN cfg_page p ON p.id=c.page_id WHERE p.application_id=?").bind(applicationId),
     db.prepare("SELECT id, key, label, table_name, primary_key FROM cfg_data_source WHERE application_id=?").bind(applicationId),
-    db.prepare("SELECT p.id, p.data_source_id, p.key, p.label, p.column_name, p.type, p.nullable, p.position, p.description, p.required, p.default_json, p.searchable, p.sensitivity, p.config_json FROM cfg_property p JOIN cfg_data_source d ON d.id=p.data_source_id WHERE d.application_id=?").bind(applicationId)
+    db.prepare("SELECT p.id, p.data_source_id, p.key, p.label, p.column_name, p.type, p.nullable, p.position, p.description, p.required, p.default_json, p.searchable, p.sensitivity, p.config_json, p.hidden, p.index_exception_reason FROM cfg_property p JOIN cfg_data_source d ON d.id=p.data_source_id WHERE d.application_id=?").bind(applicationId)
   ]);
   const r = (x: D1Result) => x.results as Record<string, any>[];
   return {
@@ -72,6 +72,6 @@ export function propertyFromRow(x: Record<string, any>): ConfigRows["properties"
   return {
     id: x.id, dataSourceId: x.data_source_id, key: x.key, label: x.label, columnName: x.column_name, type: x.type, nullable: x.nullable === 1, position: x.position,
     description: x.description ?? null, required: x.required === 1, defaultValue: x.default_json === null || x.default_json === undefined ? null : JSON.parse(x.default_json),
-    searchable: x.searchable === 1, sensitivity: x.sensitivity ?? "normal", config: JSON.parse(x.config_json ?? "{}")
+    searchable: x.searchable === 1, sensitivity: x.sensitivity ?? "normal", hidden: x.hidden === 1, indexExceptionReason: x.index_exception_reason ?? null, config: JSON.parse(x.config_json ?? "{}")
   };
 }

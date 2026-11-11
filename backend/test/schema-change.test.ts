@@ -194,14 +194,13 @@ describe("what is not accepted", () => {
     expect(await count("schema_change_log")).toBe(0);
   });
 
-  it("refuses reserved column names, unknown operations, unavailable types and migration_controlled", async () => {
+  it("refuses reserved column names, unknown operations, unavailable types and unknown modes", async () => {
     for (const columnName of ["id", "rowid", "created_at", "updated_at", "created_by", "updated_by"]) expect((await apply({ columnName })).status, columnName).toBe(400);
     expect((await call("POST", "/api/platform/schema-changes/preview", { operation: "drop_table", params: {} })).status).toBe(400);
     for (const type of ["relation", "multiSelect", "uniqueId", "createdTime", "bogus"]) expect((await apply({ type })).status, type).toBe(400);
     expect((await apply({ type: "relation" })).json.code).toBe("TYPE_UNAVAILABLE");
-    const m = await call("POST", "/api/platform/schema-changes", add({}, { operationId: opId(), confirm: true, mode: "migration_controlled" }));
+    const m = await call("POST", "/api/platform/schema-changes", add({}, { operationId: opId(), confirm: true, mode: "bogus" }));
     expect(m.status).toBe(400);
-    expect(m.json.code).toBe("MODE_UNAVAILABLE");
   });
 
   it("validates settings with the same rules as property updates", async () => {

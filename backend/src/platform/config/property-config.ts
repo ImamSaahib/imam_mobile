@@ -12,7 +12,7 @@ import { canonicalJson } from "./canonical";
 import { invalidateBootstrapCache } from "./bootstrap";
 import { loadRows, propertyFromRow } from "./snapshot";
 import { readActiveRelease, releaseStatements } from "./release";
-import { assertNoDrift } from "./schema-inspect";
+import { assertNoDrift, assertSearchIndexRule } from "./schema-inspect";
 import { checkOptionChanges, normalizeSettings, optionsOf, SETTINGS_DEFAULTS, TYPE_CONTRACTS } from "./property-types";
 import type { PropertySettings } from "./types";
 
@@ -20,7 +20,7 @@ export type PropertyView = {
   id: string; dataSource: string; key: string; label: string; columnName: string; type: string; nullable: boolean; position: number;
 } & PropertySettings;
 
-const PROPERTY_COLUMNS = "p.id, p.data_source_id, p.key, p.label, p.column_name, p.type, p.nullable, p.position, p.description, p.required, p.default_json, p.searchable, p.sensitivity, p.config_json, d.key AS data_source_key";
+const PROPERTY_COLUMNS = "p.id, p.data_source_id, p.key, p.label, p.column_name, p.type, p.nullable, p.position, p.description, p.required, p.default_json, p.searchable, p.sensitivity, p.config_json, p.hidden, p.index_exception_reason, d.key AS data_source_key";
 
 type RawRow = Record<string, any>;
 const toView = (r: RawRow): PropertyView => ({ ...propertyFromRow(r), dataSource: r.data_source_key } as unknown as PropertyView);
@@ -48,12 +48,13 @@ export type PropertyUpdate = {
   defaultValue?: unknown;
   searchable?: boolean;
   sensitivity?: PropertySettings["sensitivity"];
+  indexExceptionReason?: string | null;
   config?: Record<string, unknown>;
 };
 
 export type PropertyUpdateResult = { status: "applied" | "unchanged"; property: PropertyView; releaseVersion: number; changed: string[] };
 
-const ALLOWED = ["propertyId", "releaseVersion", "label", "description", "required", "defaultValue", "searchable", "sensitivity", "config"];
+const ALLOWED = ["propertyId", "releaseVersion", "label", "description", "required", "defaultValue", "searchable", "sensitivity", "indexExceptionReason", "config"];
 
 /** Settings that give stored values their meaning. Changing them needs a data conversion (Phase B), so they are locked here. */
 const LOCKED_CONFIG: Record<string, string[]> = { currency: ["currency", "scale"], relation: ["target"], multiSelect: ["junction"] };
@@ -96,6 +97,9 @@ export async function updateProperty(db: D1Database, input: PropertyUpdate, acto
     defaultValue: input.defaultValue !== undefined ? input.defaultValue : before.defaultValue,
     searchable: input.searchable !== undefined ? input.searchable : before.searchable,
     sensitivity: input.sensitivity !== undefined ? input.sensitivity : before.sensitivity,
+    hidden: before.hidden,
+    // The reason belongs to the searchable setting: turning search off clears it unless the request says otherwise.
+    indexExceptionReason: input.indexExceptionReason !== undefined ? input.indexExceptionReason : (input.searchable === false ? null : before.indexExceptionReason),
     config: input.config !== undefined ? input.config : before.config
   };
   const next = normalizeSettings(merged);
@@ -122,13 +126,17 @@ export async function updateProperty(db: D1Database, input: PropertyUpdate, acto
   const rows = await loadRows(db, applicationId);
   if (!rows) throw new PlatformError("NOT_INSTALLED", "The application has not been installed yet.", 404);
   await assertNoDrift(db, rows, rawRow.data_source_id);
+  if (next.searchable && (!before.searchable || next.indexExceptionReason !== before.indexExceptionReason)) {
+    const table = rows.dataSources.find((d) => d.id === rawRow.data_source_id)!.tableName;
+    await assertSearchIndexRule(db, table, before.columnName, next.indexExceptionReason);
+  }
   rows.properties = rows.properties.map((p) => (p.id === before.id ? { ...p, label, ...next } : p));
   const summary = `Changed ${changed.join(", ")} of ${before.dataSource}.${before.key}`;
   const { statements: releaseStmts, releaseVersion } = await releaseStatements(db, { applicationId, active, rows, summary, now, by });
 
   const statements = [
-    db.prepare("UPDATE cfg_property SET label=?, description=?, required=?, default_json=?, searchable=?, sensitivity=?, config_json=?, updated_at=?, updated_by=? WHERE id=?")
-      .bind(label, next.description, next.required ? 1 : 0, next.defaultValue === null || next.defaultValue === undefined ? null : canonicalJson(next.defaultValue), next.searchable ? 1 : 0, next.sensitivity, canonicalJson(next.config), now, by, before.id),
+    db.prepare("UPDATE cfg_property SET label=?, description=?, required=?, default_json=?, searchable=?, sensitivity=?, config_json=?, hidden=?, index_exception_reason=?, updated_at=?, updated_by=? WHERE id=?")
+      .bind(label, next.description, next.required ? 1 : 0, next.defaultValue === null || next.defaultValue === undefined ? null : canonicalJson(next.defaultValue), next.searchable ? 1 : 0, next.sensitivity, canonicalJson(next.config), next.hidden ? 1 : 0, next.indexExceptionReason, now, by, before.id),
     ...releaseStmts,
     auditStatement(db, actor, { action: "property.update", entityType: "property", entityId: before.id, outcome: "success", summary, details: { dataSource: before.dataSource, property: before.key, changed, releaseVersion } })
   ];

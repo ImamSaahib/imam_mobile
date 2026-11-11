@@ -468,7 +468,7 @@ export function validateValue(ctx: ValueContext, input: unknown): ValueResult {
 
 export const SENSITIVITIES: Sensitivity[] = ["normal", "sensitive"];
 
-export const SETTINGS_DEFAULTS: PropertySettings = { description: null, required: false, defaultValue: null, searchable: false, sensitivity: "normal", config: {} };
+export const SETTINGS_DEFAULTS: PropertySettings = { description: null, required: false, defaultValue: null, searchable: false, sensitivity: "normal", hidden: false, indexExceptionReason: null, config: {} };
 
 export type DefinitionInput = { type: PropertyType; nullable?: boolean } & Partial<PropertySettings>;
 
@@ -502,7 +502,14 @@ export function normalizeSettings(input: DefinitionInput): PropertySettings {
     defaultValue = result.value;
   }
   if (type === "status" && optionsOf(config).length > 0 && defaultValue === null) invalid("A status property needs a default option.", "defaultValue");
-  return { description, required, defaultValue, searchable, sensitivity, config };
+  const hidden = input.hidden ?? false;
+  if (typeof hidden !== "boolean") invalid("hidden must be true or false.", "hidden");
+  const indexExceptionReason = input.indexExceptionReason === undefined || input.indexExceptionReason === "" ? null : input.indexExceptionReason;
+  if (indexExceptionReason !== null) {
+    if (typeof indexExceptionReason !== "string" || indexExceptionReason.trim().length < 1 || indexExceptionReason.length > 200) invalid("The index exception reason must be 1 to 200 characters.", "indexExceptionReason");
+    if (!searchable) invalid("An index exception reason applies only to a searchable property.", "indexExceptionReason");
+  }
+  return { description, required, defaultValue, searchable, sensitivity, hidden, indexExceptionReason: indexExceptionReason === null ? null : indexExceptionReason.trim(), config };
 }
 
 /** True when a settings value equals the default, so it can be left out of seed values and snapshots. */

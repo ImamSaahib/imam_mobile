@@ -9,7 +9,7 @@ export type Stamp = { now: string; by: string | null };
 type Row = { id: string } & Record<string, any>;
 
 /** Property settings as column values. A value that a seed leaves out is the default, so an update resets it. */
-function settingsBindings(x: Row): [string | null, number, string | null, number, string, string] {
+function settingsBindings(x: Row): [string | null, number, string | null, number, string, string, number, string | null] {
   const d = SETTINGS_DEFAULTS;
   return [
     x.description ?? d.description,
@@ -17,7 +17,9 @@ function settingsBindings(x: Row): [string | null, number, string | null, number
     x.defaultValue === undefined || x.defaultValue === null ? null : canonicalJson(x.defaultValue),
     (x.searchable ?? d.searchable) ? 1 : 0,
     x.sensitivity ?? d.sensitivity,
-    canonicalJson(x.config ?? d.config)
+    canonicalJson(x.config ?? d.config),
+    (x.hidden ?? d.hidden) ? 1 : 0,
+    x.indexExceptionReason ?? d.indexExceptionReason
   ];
 }
 
@@ -40,7 +42,7 @@ export function insertStatement(db: D1Database, type: SeedItemType, x: Row, appl
     case "dataSource":
       return db.prepare("INSERT INTO cfg_data_source (id,application_id,key,label,table_name,primary_key,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(x.id, applicationId, x.key, x.label, x.tableName, x.primaryKey, ...st);
     case "property":
-      return db.prepare("INSERT INTO cfg_property (id,data_source_id,key,label,column_name,type,nullable,position,description,required,default_json,searchable,sensitivity,config_json,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(x.id, x.dataSourceId, x.key, x.label, x.columnName, x.type, x.nullable ? 1 : 0, x.position, ...settingsBindings(x), ...st);
+      return db.prepare("INSERT INTO cfg_property (id,data_source_id,key,label,column_name,type,nullable,position,description,required,default_json,searchable,sensitivity,config_json,hidden,index_exception_reason,created_at,updated_at,created_by,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(x.id, x.dataSourceId, x.key, x.label, x.columnName, x.type, x.nullable ? 1 : 0, x.position, ...settingsBindings(x), ...st);
   }
 }
 
@@ -60,6 +62,6 @@ export function updateStatement(db: D1Database, type: SeedItemType, x: Row, s: S
     case "dataSource":
       return db.prepare("UPDATE cfg_data_source SET key=?,label=?,table_name=?,primary_key=?,updated_at=?,updated_by=? WHERE id=?").bind(x.key, x.label, x.tableName, x.primaryKey, ...st);
     case "property":
-      return db.prepare("UPDATE cfg_property SET data_source_id=?,key=?,label=?,column_name=?,type=?,nullable=?,position=?,description=?,required=?,default_json=?,searchable=?,sensitivity=?,config_json=?,updated_at=?,updated_by=? WHERE id=?").bind(x.dataSourceId, x.key, x.label, x.columnName, x.type, x.nullable ? 1 : 0, x.position, ...settingsBindings(x), ...st);
+      return db.prepare("UPDATE cfg_property SET data_source_id=?,key=?,label=?,column_name=?,type=?,nullable=?,position=?,description=?,required=?,default_json=?,searchable=?,sensitivity=?,config_json=?,hidden=?,index_exception_reason=?,updated_at=?,updated_by=? WHERE id=?").bind(x.dataSourceId, x.key, x.label, x.columnName, x.type, x.nullable ? 1 : 0, x.position, ...settingsBindings(x), ...st);
   }
 }

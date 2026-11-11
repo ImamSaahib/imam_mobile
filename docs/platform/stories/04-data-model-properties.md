@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slices 04a, 04b and 04c done 2026-11-11; slices 04d to 04f not started)  
+**Status:** In progress (slices 04a to 04d done 2026-11-11; slices 04e and 04f not started)  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -67,18 +67,18 @@ A person building a module may configure supported metadata and request allowlis
 - [ ] Schema drift is detected before publish and deployment. (04b: `SCHEMA_DRIFT` refuses property updates and adoption. The Story 07 publish and the deployment check are still to do)
 - [x] Metadata cannot expose a column absent from physical schema. (04b: `assertNoDrift` before each change, and adoption reads the table first)
 - [x] An unmapped column can be adopted as a property. (04b: `POST /api/platform/properties/adopt`)
-- [ ] No operation accepts arbitrary DDL or SQL text. (04c: the operation list is closed, `add_property` is the only operation, and unknown fields and SQL are refused. The rest of the operations arrive in 04d)
-- [ ] Add property works in `guided_live` mode with preview, confirmation and a log entry, and produces a reviewable migration in `migration_controlled` mode. (04c: `guided_live` done. `migration_controlled` comes in 04d)
+- [x] No operation accepts arbitrary DDL or SQL text. (04c, 04d: a closed list of five operations. Unknown operations, fields and SQL are refused at the top level and in `params`)
+- [x] Add property works in `guided_live` mode with preview, confirmation and a log entry, and produces a reviewable migration in `migration_controlled` mode. (04c `guided_live`, 04d `migration_controlled`)
 - [x] Repeating an operation with the same operation ID does not repeat the change. (04c)
 - [x] A failed physical change leaves metadata unchanged; a partial failure is recoverable through **Add as property**. (04c: one batch, tested with a competing release. Orphan column recovered through adoption)
 - [x] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown. (04b shows capacity, 04c refuses with `COLUMN_LIMIT` at 100)
 - [x] Select and status options can be added, renamed, recolored, reordered and deactivated without changing stored keys. (04a: `PATCH /api/platform/properties`; removing a key is refused)
-- [ ] Presentation conversions validate existing values and report non-conforming rows before applying.
-- [ ] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery.
-- [ ] Values are bound parameters; identifiers are allowlisted and safely quoted. (04c: done for `add_property`. Checked again when each operation is added in 04d)
+- [x] Presentation conversions validate existing values and report non-conforming rows before applying. (04d: `convert_presentation`; the report lists row IDs and reasons, and values only for option columns)
+- [x] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery. (04d: `CONVERSION_REWRITES_DATA`; only text-like to text-like and select to status are allowed)
+- [x] Values are bound parameters; identifiers are allowlisted and safely quoted. (04c, 04d: all five operations; injection attempts in names, columns and indexes are tested)
 - [ ] Existing Imam Mobile inventory/customer/sales schema remains compatible.
-- [ ] Searchable, filterable and sortable properties have indexes or a recorded exception.
-- [ ] Marking a column searchable without an index on a table over 1,000 rows is refused.
+- [ ] Searchable, filterable and sortable properties have indexes or a recorded exception. (04d: searchable is enforced and reported through `searchWithoutIndex`. Filterable and sortable flags arrive with Story 05)
+- [x] Marking a column searchable without an index on a table over 1,000 rows is refused. (04d: `INDEX_REQUIRED` on property update and on `add_property`; `indexExceptionReason` records an exception)
 - [ ] Creating or updating one record writes at most 10 rows, including index rows, on the reference dataset.
 - [ ] Every approved data table has an indexed `updated_at` column.
 - [ ] Counters stay equal to a full recount after creates, updates and archives, and the rebuild reports drift.
@@ -257,4 +257,49 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 
 **Migration:** 0007 adds one table and one index. No existing table changes.
 
-**Not started:** slices 04d to 04f.
+### Slice 04d: remaining operations and `migration_controlled` mode (2026-11-11)
+
+**Built**
+- Migration `0008_property_hidden_and_pending_changes.sql`: `cfg_property.hidden` and `cfg_property.index_exception_reason`; `schema_change_log.status` (`applied` or `awaiting_migration`) and `migration_file`. All with constant defaults. (Slice 04e moves to migration 0009.)
+- Two new property settings, `hidden` and `indexExceptionReason`, with defaults that are left out of seed values and snapshots like the other settings, so unchanged properties keep their hashes. `hidden` changes only through `hide_property`. `indexExceptionReason` changes through the property update route and is cleared when search is turned off.
+- `config/schema-change.ts` now has five operations: `add_property`, `add_index`, `drop_index`, `hide_property`, `convert_presentation`. Two modes: `guided_live` and `migration_controlled`.
+- `GET /api/platform/schema` adds `searchWithoutIndex`: searchable properties that no index starts with and that have no recorded exception.
+- Apply returns 201 (applied), 202 (`awaiting_migration`) or 200 (a repeat).
+
+**Operations**
+- `add_index`: 1 to 3 properties, name `idx_...` (generated, or given). Refused: unique indexes (`UNIQUE_INDEX_UNAVAILABLE`, they need a duplicate check), an existing name or an existing index on the same columns (`INDEX_EXISTS`). Preview warns that every record write now writes one more index row, warns from 6 indexes, and warns that building the index reads the whole table once on a table over 1,000 rows. No release is published, because the snapshot does not change.
+- `drop_index`: only indexes that were created, not those of the table definition (`INDEX_PROTECTED`), not unique indexes (`INDEX_ENFORCES_CONSTRAINT`), and not the only index of a searchable property that has no exception (`INDEX_IN_USE`).
+- `hide_property`: configuration only. The column and data stay. A required property without a default cannot be hidden (`PROPERTY_REQUIRED`). Publishes a release.
+- `convert_presentation`: configuration only. Allowed: between text, title, email, phone and url, and between select and status. Everything else returns `CONVERSION_REWRITES_DATA` (Phase B). Preview checks stored values against the new type: a value is non-conforming when it is invalid or not in the normalized form (for example upper-case email). The report gives the count and up to 20 examples as row ID and reason, without the value, except for option columns where the stored value is shown (option keys are labels, not personal data). For select and status, every existing option key must be kept, and stored values must be option keys. Apply is refused when any value does not fit (`CHANGE_BLOCKED`) or when more than 1,000 values exist, because they cannot all be checked here.
+- Index rule: marking a property searchable on a table over 1,000 rows with no index starting at its column and no recorded exception is refused (`INDEX_REQUIRED`). It applies to property updates and to `add_property`.
+
+**`migration_controlled` design**
+- The Worker cannot write repository files. Preview returns `migration.fileName` (next number after the highest in `d1_migrations`, then operation, table and name) and `migration.sql` (a header comment and the generated statement).
+- First apply (`202`, `awaiting_migration`): records the change in `schema_change_log` with the migration file name and writes an audit event. It changes no table and no configuration.
+- The maintainer commits the file under `backend/migrations`. Cloudflare applies it on deploy.
+- Second apply with the same operation ID: if the database shows the physical change (column with the same SQLite type, index with the same columns, or index gone), the configuration change, release, log update and audit event are written in one batch (`201`, `applied`). If not, the response is the stored result with a message that the database does not show the change yet (`200`, nothing changed).
+- This deviates from the plan sentence "the release records its required migration level, and publish is refused until the database reports it". Because the configuration is published only after the schema is present, a release never describes a schema the database lacks, and the existing drift check covers the rest. A release table column for a migration level would add nothing the check does not already guarantee. If Story 07 needs it for deployment checks, it can be added then.
+- The check is on the physical change, not on the file name, so renaming the file or merging migrations in another order does not break it.
+- `hide_property` and `convert_presentation` have no physical part and apply at once in either mode.
+
+**Decisions**
+- The log holds one row per operation ID. A change moves from `awaiting_migration` to `applied` in place. Reusing an operation ID with another request or another mode returns `OPERATION_ID_REUSED`.
+- Operations that would drop or rewrite data (drop column, rename column, change a column's type) are not in the list. They need Phase B.
+- `MIGRATION_PENDING` (503) now covers migrations 0007 and 0008: the code can be live a moment before the database has the new table or columns.
+
+**Tests and measurements**
+- Backend: 256 passing in 15 files (29 new in `schema-operations.test.ts`; one assertion in `schema-change.test.ts` changed because `migration_controlled` is now accepted).
+- Covered: each operation in both modes, preview without writes, plan hash, repeat and reuse of operation IDs, refusals for every error code above, injection attempts, hidden in the snapshot only while true, conversion reports that never contain values of text columns, the 1,000-row limit for conversions and for the index rule, the full migration_controlled sequence including a column with the right name but the wrong type, and that nothing changes before the migration exists.
+- Measured: `add_index` apply writes 9 rows. `hide_property` apply writes 13 rows (property, release and indexes, active-release pointer, log row, audit event). These are configuration changes, not record writes. `convert_presentation` preview on a table over 1,000 rows reads about 2,100 rows (a bounded count and a bounded value check, up to 1,001 each).
+
+**Gate for TIMELINE step 7:** met. Add-property works in both modes with preview and log.
+
+**For later slices**
+- Unique indexes need a duplicate check. Relation and multi-select `add_property` need more than one column or a junction table.
+- A conversion check over more than 1,000 values needs batched validation (Phase B).
+- Filterable and sortable flags arrive with Story 05. The index rule then covers them too.
+- `loadRows` still dominates the read count of an apply (see 04c).
+
+**Migration:** 0008 adds four columns. No existing data changes.
+
+**Not started:** slices 04e and 04f.

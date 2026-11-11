@@ -15,6 +15,10 @@ export type PropertySettings = {
   defaultValue: unknown;
   searchable: boolean;
   sensitivity: Sensitivity;
+  /** Kept in the table and the configuration, left out of forms and lists. Changed by the hide_property operation. */
+  hidden: boolean;
+  /** Why a searchable property has no index. Needed to mark a property searchable on a table over 1,000 rows without an index. */
+  indexExceptionReason: string | null;
   /** Type-specific settings: options, number and currency format, relation target, unique ID prefix. */
   config: Record<string, unknown>;
 };

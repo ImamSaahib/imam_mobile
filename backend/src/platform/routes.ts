@@ -79,7 +79,7 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
       const body = (await request.json().catch(() => null)) as ApplyRequest | null;
       if (!body) throw new PlatformError("SCHEMA_CHANGE_INVALID", "Send a JSON body.", 400);
       const result = await applyChange(env.DB, body, actor);
-      return { status: result.repeated ? 200 : 201, body: result, headers: { "Cache-Control": "no-store" } };
+      return { status: result.repeated ? 200 : result.status === "awaiting_migration" ? 202 : 201, body: result, headers: { "Cache-Control": "no-store" } };
     }
     if (path === "/api/platform/schema-changes" && request.method === "GET") {
       const dataSource = new URL(request.url).searchParams.get("dataSource") ?? undefined;

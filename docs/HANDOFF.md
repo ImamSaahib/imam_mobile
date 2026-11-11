@@ -24,25 +24,23 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Story 04 (data model, properties) | In progress. 04a, 04b and 04c done (2026-11-11). Next: 04d |
+| Story 04 (data model, properties) | In progress. 04a to 04d done (2026-11-11), step 7 gate met. Next: 04e |
 | Stories 02, 03, 05–11 | Planned |
-| Worker tests | 227 passing in 14 files (`cd backend && npm run check`) |
+| Worker tests | 256 passing in 15 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | Migrations 0001 to 0006 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, release 1 at first install, now release 2 after the seed upgrade. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. Migration 0006 and the seed version 2 upgrade are applied (confirmed 2026-11-11): `GET /api/platform/properties?dataSource=devices` returns currency (PKR, scale 0, 0 to 100,000,000) on both prices and options on `condition` and `status`, and `GET /api/platform/schema-compatibility` returns `ok: true` |
 
-## 4. Next step: Story 04, slice 04d (remaining operations and `migration_controlled` mode)
+## 4. Next step: Story 04, slice 04e (storage rules, counters and versions)
 
-Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
+Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. The step 7 gate (add-property works in both modes with preview and log) is met. Slices 04e and 04f complete the story.
 
-Done in Story 04: 04a (migration 0006, type registry, property configuration, seed v2), 04b (schema inspection, adoption, drift check, shared release helper) and 04c (migration 0007 `schema_change_log`, `config/schema-change.ts`, `add_property` in `guided_live` mode with preview, confirmation, operation ID and plan hash). Details, decisions and measured rows are in the Story 04 notes. Migration 0007 should be applied automatically by Cloudflare on deploy. Check with: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect 0007_schema_change_log.sql). Until it is there, the schema change routes return 503 `MIGRATION_PENDING`.
+Done in Story 04: 04a (migration 0006, type registry, property configuration, seed v2), 04b (schema inspection, adoption, drift check), 04c (migration 0007, `add_property`, one-batch apply) and 04d (migration 0008, `add_index`, `drop_index`, `hide_property`, `convert_presentation`, `migration_controlled` mode, index rule for searchable properties). Details, decisions and measured rows are in the Story 04 notes. Migration 0008 should be applied automatically by Cloudflare on deploy. Check with: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0008_property_hidden_and_pending_changes.sql`). Until it is there, the schema change routes return 503 `MIGRATION_PENDING`.
 
-Slice 04d scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): `add_index`, `drop_index`, `hide_property`, `convert_presentation` with a report of non-conforming rows, the searchable-without-index rule (table over 1,000 rows), refusal of data-rewriting conversions, and `migration_controlled` mode (returns the migration file name and text plus the metadata change; the Worker cannot write repository files). Reuse `previewChange` and `applyChange` structure, `releaseStatements`, `assertNoDrift` and the log table. After 04d the TIMELINE step 7 gate is met (add-property in both modes with preview and log).
+Slice 04e scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md). Its migration is number 0009 (not 0008, which slice 04d used): `updated_at` (nullable, backfilled, indexed) on `sales` and `customer_entries`, `updated_at` indexes for devices and customers, `archived_at` on devices and customers, `data_source_counters`, counter definitions in code with a rebuild that reports drift, `bumpVersionStatement` and counter updates in the legacy create and update routes in the same `batch()`, seed v3 mapping the new columns. Measure rows written per create and update on the reference dataset (target at most 10; the plan estimates 9). Add no index to a table without that measurement. Because 04e changes existing tables and the legacy routes, apply and test with care and keep the legacy baseline tests passing.
 
 Owner questions: both answered.
 
 Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
-
-Gate: see TIMELINE step 7 (add-property works in both modes with preview and log).
 
 ## 5. After that (from the sequence)
 
@@ -52,7 +50,7 @@ Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse che
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 227 tests
+cd backend && npm ci && npm run check      # type check plus 256 tests
 cd ../frontend && npm ci && npm run build
 ```
 

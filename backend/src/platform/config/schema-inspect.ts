@@ -32,12 +32,24 @@ export function adoptableTypes(sqliteType: string): PropertyType[] {
   return (Object.keys(TYPE_CONTRACTS) as PropertyType[]).filter((t) => TYPE_CONTRACTS[t].physical === "column" && TYPE_CONTRACTS[t].writable && acceptedSqliteTypes(t).includes(sqliteType));
 }
 
+/**
+ * A searchable property on a table over 1,000 rows needs an index that starts with its column, or a recorded
+ * reason why not. Without one, a search reads the whole table (Contracts section 9).
+ */
+export async function assertSearchIndexRule(db: D1Database, table: string, column: string, exceptionReason: string | null): Promise<void> {
+  if (exceptionReason) return;
+  if ((await readIndexes(db, table)).some((i) => i.columns[0] === column)) return;
+  if ((await countRows(db, table)).capped) {
+    throw new PlatformError("INDEX_REQUIRED", `The table ${table} has more than ${ROW_COUNT_CAP} rows and no index starts with "${column}". Add an index first, or record why there is none (indexExceptionReason).`, 409, { table, column, rowLimit: ROW_COUNT_CAP });
+  }
+}
+
 export async function readColumns(db: D1Database, table: string): Promise<TableColumn[]> {
   const info = await db.prepare(`PRAGMA table_info(${quote(table)})`).all<{ name: string; type: string; notnull: number; pk: number }>();
   return info.results.map((c) => ({ name: c.name, sqliteType: (c.type || "").toUpperCase(), notNull: c.notnull === 1, primaryKey: c.pk > 0 }));
 }
 
-async function readIndexes(db: D1Database, table: string): Promise<TableIndex[]> {
+export async function readIndexes(db: D1Database, table: string): Promise<TableIndex[]> {
   const list = await db.prepare(`PRAGMA index_list(${quote(table)})`).all<{ name: string; unique: number; origin: string; partial: number }>();
   const out: TableIndex[] = [];
   for (const ix of list.results) {
@@ -75,6 +87,8 @@ export type SchemaReport = DataSourceReport & {
   indexes: TableIndex[];
   capacity: { columns: number; limit: number; warnAt: number; remaining: number; state: "ok" | "warning" | "full" };
   rowCount: { value: number; capped: boolean } | null;
+  /** Searchable properties that no index starts with and that have no recorded exception. A search on them reads the whole table. */
+  searchWithoutIndex: { property: string; column: string }[];
 };
 
 /** Everything slice 04c needs to decide a change, for one data source. Reads one row per column, per index and per indexed column, plus at most 1,001 table rows. */
@@ -82,7 +96,7 @@ export async function inspectSchema(db: D1Database, dataSourceKey: string): Prom
   const { rows } = await loadApplication(db);
   const ds = findDataSource(rows, dataSourceKey);
   const def = defOf(rows, ds);
-  const empty = { columns: [], adoptable: [], indexes: [], capacity: { columns: 0, limit: COLUMN_LIMIT, warnAt: COLUMN_WARN_AT, remaining: COLUMN_LIMIT, state: "ok" as const }, rowCount: null };
+  const empty = { columns: [], adoptable: [], indexes: [], capacity: { columns: 0, limit: COLUMN_LIMIT, warnAt: COLUMN_WARN_AT, remaining: COLUMN_LIMIT, state: "ok" as const }, rowCount: null, searchWithoutIndex: [] };
   if (isBlockedTable(ds.tableName)) {
     return { ...compareTable(def, new Map()), blockedTable: true, ...empty };
   }
@@ -98,6 +112,7 @@ export async function inspectSchema(db: D1Database, dataSourceKey: string): Prom
     adoptable: columns.filter((c) => report.unmapped.some((u) => u.column === c.name) && !c.primaryKey && isValidName(c.name))
       .map((c) => ({ column: c.name, sqliteType: c.sqliteType, nullable: !c.notNull, types: adoptableTypes(c.sqliteType) })).filter((a) => a.types.length > 0),
     indexes,
+    searchWithoutIndex: def.properties.filter((p) => p.searchable && !p.indexExceptionReason && !indexes.some((i) => i.columns[0] === p.columnName)).map((p) => ({ property: p.key, column: p.columnName })),
     capacity: { columns: n, limit: COLUMN_LIMIT, warnAt: COLUMN_WARN_AT, remaining: Math.max(0, COLUMN_LIMIT - n), state: n >= COLUMN_LIMIT ? "full" : n >= COLUMN_WARN_AT ? "warning" : "ok" },
     rowCount
   };
