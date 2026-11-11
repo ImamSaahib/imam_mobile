@@ -24,23 +24,28 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Story 04 (data model, properties) | In progress. 04a to 04d done (2026-11-11), step 7 gate met. Next: 04e |
+| Story 04 (data model, properties) | In progress. 04a to 04e done (2026-11-12), step 7 gate met. Next: 04f (last slice) |
 | Stories 02, 03, 05–11 | Planned |
-| Worker tests | 256 passing in 15 files (`cd backend && npm run check`) |
+| Worker tests | 278 passing in 17 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | Migrations 0001 to 0006 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, release 1 at first install, now release 2 after the seed upgrade. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. Migration 0006 and the seed version 2 upgrade are applied (confirmed 2026-11-11): `GET /api/platform/properties?dataSource=devices` returns currency (PKR, scale 0, 0 to 100,000,000) on both prices and options on `condition` and `status`, and `GET /api/platform/schema-compatibility` returns `ok: true` |
 
-## 4. Next step: Story 04, slice 04e (storage rules, counters and versions)
+## 4. Next step: Story 04, slice 04f (migration process, review, close)
 
-Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. The step 7 gate (add-property works in both modes with preview and log) is met. Slices 04e and 04f complete the story.
+Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. The step 7 gate is met. Slice 04f closes the story.
 
-Done in Story 04: 04a (migration 0006, type registry, property configuration, seed v2), 04b (schema inspection, adoption, drift check), 04c (migration 0007, `add_property`, one-batch apply) and 04d (migration 0008, `add_index`, `drop_index`, `hide_property`, `convert_presentation`, `migration_controlled` mode, index rule for searchable properties). Details, decisions and measured rows are in the Story 04 notes. Migration 0008 should be applied automatically by Cloudflare on deploy. Check with: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0008_property_hidden_and_pending_changes.sql`). Until it is there, the schema change routes return 503 `MIGRATION_PENDING`.
+Done in Story 04: 04a to 04e. 04e (2026-11-12) added migration 0009 (`updated_at` indexes on all four tables, `archived_at` on devices and customers, `data_source_counters`), `platform/counters.ts`, counters and a version bump in the same batch as every legacy write (the sale is now one batch), counter routes with a drift rebuild, and seed version 3 (65 items). Details, decisions and measured rows are in the Story 04 notes.
 
-Slice 04e scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md). Its migration is number 0009 (not 0008, which slice 04d used): `updated_at` (nullable, backfilled, indexed) on `sales` and `customer_entries`, `updated_at` indexes for devices and customers, `archived_at` on devices and customers, `data_source_counters`, counter definitions in code with a rebuild that reports drift, `bumpVersionStatement` and counter updates in the legacy create and update routes in the same `batch()`, seed v3 mapping the new columns. Measure rows written per create and update on the reference dataset (target at most 10; the plan estimates 9). Add no index to a table without that measurement. Because 04e changes existing tables and the legacy routes, apply and test with care and keep the legacy baseline tests passing.
+**Owner action on dev, in this order (the legacy create, update, delete and sale routes need migration 0009):**
+1. Confirm migration 0009 is applied: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0009_storage_rules_counters.sql`; Cloudflare applies migrations on deploy).
+2. Upgrade the seed to version 3: `POST /api/platform/seed/preview` (expect `toVersion: 3`, `add: 4`), then `POST /api/platform/seed/upgrade` with the `planHash`.
+3. Check counters against the tables: `POST /api/platform/counters/rebuild` with `{}` (expect every report `ok: true`).
 
-Owner questions: both answered.
+Slice 04f scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): document the developer migration process for new tables and constraints with matching metadata, add a test that every approved data source maps to an approved table and every migration number is unique and ordered, update the legacy inventory (`schema_changes`, the add-column routes: what Story 07 removes), and write the story review into the notes (acceptance boxes checked or deferred with a reason, deferred items, risks). Open boxes to review there: counters after archives (needs Story 06), searchable, filterable and sortable indexes (filter and sort flags come with Story 05), publish and deployment drift checks (Story 07), and the type-consumer boxes.
 
-Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
+Owner questions: both answered. The domain-action write budget in Contracts §9 was raised from 15 to 30 after measurement (a sale writes 17 or 24 rows). Tell me if you want it handled differently.
+
+Stories 05 and 06 must use `countersOnCreate`, `countersOnDelete`, `countersOnGroupChange` and `versionBump` in every data-source write batch, and Story 06 replaces the legacy DELETE routes with archive (`archived_at`) and cancellation.
 
 ## 5. After that (from the sequence)
 
@@ -50,7 +55,7 @@ Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse che
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 256 tests
+cd backend && npm ci && npm run check      # type check plus 278 tests
 cd ../frontend && npm ci && npm run build
 ```
 

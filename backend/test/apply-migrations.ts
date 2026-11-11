@@ -20,6 +20,9 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM audit_events"),
     env.DB.prepare("DELETE FROM usage_daily"),
     env.DB.prepare("UPDATE data_source_versions SET version=1"),
+    // Business tables are empty, so counters are zero. This is the state migration 0009 leaves on an empty database.
+    env.DB.prepare("DELETE FROM data_source_counters"),
+    env.DB.prepare("INSERT INTO data_source_counters (data_source_key, counter_key, value, updated_at) VALUES ('devices','total',0,datetime('now')),('customers','total',0,datetime('now')),('ledger','total',0,datetime('now')),('sales','total',0,datetime('now'))"),
     env.DB.prepare("DELETE FROM cfg_active_release"),
     env.DB.prepare("DELETE FROM cfg_release"),
     env.DB.prepare("DELETE FROM cfg_seed_item"),

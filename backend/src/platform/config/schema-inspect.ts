@@ -10,6 +10,7 @@ import { PlatformError } from "../errors";
 import { invalidateBootstrapCache } from "./bootstrap";
 import { compareTable, isBlockedTable, isValidName, quote, SYSTEM_COLUMNS, type DataSourceReport } from "./compat";
 import { newId } from "./ids";
+import { counterTotal } from "../counters";
 import { insertStatement } from "./rows-sql";
 import { readActiveRelease, releaseStatements } from "./release";
 import { loadRows } from "./snapshot";
@@ -86,7 +87,7 @@ export type SchemaReport = DataSourceReport & {
   adoptable: { column: string; sqliteType: string; nullable: boolean; types: PropertyType[] }[];
   indexes: TableIndex[];
   capacity: { columns: number; limit: number; warnAt: number; remaining: number; state: "ok" | "warning" | "full" };
-  rowCount: { value: number; capped: boolean } | null;
+  rowCount: { value: number; capped: boolean; source?: "counter" | "bounded_count" } | null;
   /** Searchable properties that no index starts with and that have no recorded exception. A search on them reads the whole table. */
   searchWithoutIndex: { property: string; column: string }[];
 };
@@ -104,7 +105,10 @@ export async function inspectSchema(db: D1Database, dataSourceKey: string): Prom
   const report = compareTable(def, new Map(columns.map((c) => [c.name, c.sqliteType])));
   if (!report.tableExists) return { ...report, ...empty };
   const byColumn = new Map(def.properties.map((p) => [p.columnName, p.key]));
-  const [indexes, rowCount] = [await readIndexes(db, ds.tableName), await countRows(db, ds.tableName)];
+  const indexes = await readIndexes(db, ds.tableName);
+  // A counter answers with one row read. Without one, the count is bounded at 1,001 rows.
+  const counted = await counterTotal(db, ds.key);
+  const rowCount = counted !== null ? { value: counted, capped: false, source: "counter" as const } : { ...(await countRows(db, ds.tableName)), source: "bounded_count" as const };
   const n = columns.length;
   return {
     ...report,

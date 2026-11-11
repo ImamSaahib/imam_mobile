@@ -14,6 +14,7 @@ import { loadRows } from "./config/snapshot";
 import { describeTypes } from "./config/property-types";
 import { inspectSchema, adoptColumn, type AdoptInput } from "./config/schema-inspect";
 import { previewChange, applyChange, listChanges, type ChangeRequest, type ApplyRequest } from "./config/schema-change";
+import { listCounters, rebuildCounters } from "./counters";
 import { listProperties, updateProperty, type PropertyUpdate } from "./config/property-config";
 
 export type PlatformEnv = { DB: D1Database; DEPLOYMENT_KEY?: string; ENVIRONMENT?: string };
@@ -84,6 +85,18 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
     if (path === "/api/platform/schema-changes" && request.method === "GET") {
       const dataSource = new URL(request.url).searchParams.get("dataSource") ?? undefined;
       return { status: 200, body: { changes: await listChanges(env.DB, dataSource) }, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/counters" && request.method === "GET") {
+      const dataSource = new URL(request.url).searchParams.get("dataSource") ?? undefined;
+      return { status: 200, body: { counters: await listCounters(env.DB, dataSource) }, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/counters/rebuild" && request.method === "POST") {
+      const body = (await request.json().catch(() => ({}))) as { dataSource?: string; apply?: boolean } | null;
+      if (body === null || typeof body !== "object" || Array.isArray(body)) throw new PlatformError("COUNTERS_INVALID", "Send a JSON object.", 400);
+      for (const key of Object.keys(body)) if (!["dataSource", "apply"].includes(key)) throw new PlatformError("COUNTERS_INVALID", `"${key}" is not accepted.`, 400, { field: key });
+      if (body.apply !== undefined && typeof body.apply !== "boolean") throw new PlatformError("COUNTERS_INVALID", "apply must be true or false.", 400, { field: "apply" });
+      if (body.dataSource !== undefined && typeof body.dataSource !== "string") throw new PlatformError("COUNTERS_INVALID", "dataSource must be text.", 400, { field: "dataSource" });
+      return { status: 200, body: await rebuildCounters(env.DB, body, actor), headers: { "Cache-Control": "no-store" } };
     }
     return null;
   } catch (err) {

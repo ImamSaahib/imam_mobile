@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slices 04a to 04d done 2026-11-11; slices 04e and 04f not started)  
+**Status:** In progress (slices 04a to 04e done (04e on 2026-11-12); slice 04f not started)  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -76,13 +76,13 @@ A person building a module may configure supported metadata and request allowlis
 - [x] Presentation conversions validate existing values and report non-conforming rows before applying. (04d: `convert_presentation`; the report lists row IDs and reasons, and values only for option columns)
 - [x] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery. (04d: `CONVERSION_REWRITES_DATA`; only text-like to text-like and select to status are allowed)
 - [x] Values are bound parameters; identifiers are allowlisted and safely quoted. (04c, 04d: all five operations; injection attempts in names, columns and indexes are tested)
-- [ ] Existing Imam Mobile inventory/customer/sales schema remains compatible.
+- [x] Existing Imam Mobile inventory/customer/sales schema remains compatible. (04e: migration 0009 only adds columns, indexes and a table. The legacy baseline tests pass unchanged, and the compatibility report stays `ok: true`)
 - [ ] Searchable, filterable and sortable properties have indexes or a recorded exception. (04d: searchable is enforced and reported through `searchWithoutIndex`. Filterable and sortable flags arrive with Story 05)
 - [x] Marking a column searchable without an index on a table over 1,000 rows is refused. (04d: `INDEX_REQUIRED` on property update and on `add_property`; `indexExceptionReason` records an exception)
-- [ ] Creating or updating one record writes at most 10 rows, including index rows, on the reference dataset.
-- [ ] Every approved data table has an indexed `updated_at` column.
-- [ ] Counters stay equal to a full recount after creates, updates and archives, and the rebuild reports drift.
-- [ ] The version counter increments in the same batch as the write, and a failed batch changes neither.
+- [x] Creating or updating one record writes at most 10 rows, including index rows, on the reference dataset. (04e: device create 9, device update 4 to 8, customer create 7, entry create 7. Measured on the test database. A sale is a domain action: 17 cash, 24 credit)
+- [x] Every approved data table has an indexed `updated_at` column. (04e: migration 0009; tested for all four tables)
+- [ ] Counters stay equal to a full recount after creates, updates and archives, and the rebuild reports drift. (04e: tested after creates, updates, deletes and sales, and the rebuild reports and repairs injected drift. No archive path exists until Story 06, which adds one with `archived_at` and the counter statements)
+- [x] The version counter increments in the same batch as the write, and a failed batch changes neither. (04e: every legacy write route, including custom field values; failed batches tested for create, delete and update)
 
 ## Tests
 
@@ -302,4 +302,34 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 
 **Migration:** 0008 adds four columns. No existing data changes.
 
-**Not started:** slices 04e and 04f.
+### Slice 04e: storage rules, counters and versions (2026-11-12)
+
+**Built**
+- Migration `0009_storage_rules_counters.sql`:
+  - `updated_at` (nullable, filled from `created_at`) on `sales` and `customer_entries`.
+  - `archived_at` (nullable) on `mobile_devices` and `customers`.
+  - Indexes on `updated_at` for all four tables.
+  - Table `data_source_counters` (`WITHOUT ROWID`, so a new counter key writes one row, not two), filled with the actual counts at migration time.
+- `platform/counters.ts`: counter definitions in code (devices: total and one counter per status; customers, ledger and sales: total), statement builders (`countersOnCreate`, `countersOnDelete`, `countersOnGroupChange`), `versionBump`, `listCounters`, `rebuildCounters`, `counterTotal`.
+- Legacy routes in `src/index.js`: every create, update and delete of devices, customers and customer entries, the sale, and custom field values now run as one `db.batch()` with the counter statements and the data source version bump. `updated_at` is set on every write. Counter statements that read the current row (delete, status change) come before the write in the batch.
+- The sale route is now one batch. Before, the sale row was written first and the rest in a second step, so a failure in the second step left a sale without items. The sale ID comes from the first statement's result.
+- Routes: `GET /api/platform/counters?dataSource=` and `POST /api/platform/counters/rebuild` (`{ dataSource?, apply? }`, a report by default, repair only with `apply: true`, one audit event). Policy: `schemaInspect` and `configurationConfigure`.
+- The schema report takes `rowCount` from the counter (`source: "counter"`, one row read) and falls back to the bounded count when there is none.
+- Seed package version 3: four property items for the new columns (`devices.archived_at`, `customers.archived_at`, `ledger.updated_at`, `sales.updated_at`). 61 items become 65. After the upgrade every column of the four tables is mapped.
+
+**Decisions**
+- A counter key is `total` or `<column>=<value>`. Only devices have a group counter (status), because the plan names status as the one KPI counter now. Stories 05 and 06 add definitions as screens need them.
+- Counters have no CHECK for non-negative values. A counter bug must not stop a business write. The rebuild reports it instead.
+- The legacy DELETE routes stay physical deletes (pinned by baseline tests) until Story 06, but they now update counters and versions, so counters stay correct. Archive and cancellation come with Story 06. This is why the archive part of the counter box stays open.
+- Recording the domain-action budget: a sale writes 17 rows (cash) or 24 rows (credit), above the 15 in Contracts §9. The causes are rows the stories require: the `updated_at` index on each table, counters, and the version row. §9 now says 30 for a domain action, and the 100,000 rows a day design limit leaves room for thousands of sales. Record writes (create or update of one record) stay at 10 or fewer. Re-measure with Story 06.
+- Rebuild reads each table once (about one row per record). It is an administrator action, not part of normal requests.
+
+**Tests and measurements**
+- Backend: 278 passing in 17 files (20 new in `counters.test.ts`, 2 in `seed-v3.test.ts`; seed version 2 is frozen in `test/fixtures/seed-v2.ts`; older upgrade tests now expect version 3). Frontend build passes. The legacy baseline tests for the changed routes pass unchanged.
+- Rows written (test database): device create 9, device update 4 to 8 (6 when the IMEI changes, 8 with a status change), customer create 7, entry create 7, cash sale 17, credit sale 24. Counter list: at most 3 rows read. Schema report row count: one counter row.
+- Covered: `updated_at` and its index on all four tables, `archived_at` columns, `updated_at` set on every write, counters after creates, status changes, deletes, sales and a mixed sequence (equal to a full recount), exact version increments for each route, failed batches (duplicate IMEI, delete with a sale, rejected status, missing customer) leaving record, counters and version unchanged, not-found writes changing no counter, drift injected three ways (wrong value, missing key, stale key) reported and repaired with an audit event, permissions.
+
+**Before the Worker with this slice runs on dev**
+- Migration 0009 must be applied first. If the new code is live without it, the create, update, delete and sale routes fail, because the counters table and the `updated_at` columns are missing. Check with: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0009_storage_rules_counters.sql`). Then call the seed upgrade: `POST /api/platform/seed/preview` (expect version 3, add 4) and `POST /api/platform/seed/upgrade` with the `planHash`.
+
+**Not started:** slice 04f.

@@ -168,7 +168,8 @@ describe("schema compatibility inspection", () => {
     expect(r.status).toBe(200);
     expect(r.json.ok).toBe(true);
     const devices = r.json.dataSources.find((d: any) => d.key === "devices");
-    expect(devices.unmapped).toEqual([]);
+    // The frozen version 1 package does not map archived_at (migration 0009). Seed version 3 does.
+    expect(devices.unmapped).toEqual([{ column: "archived_at", sqliteType: "TEXT" }]);
     expect(devices.system.map((u: any) => u.column).sort()).toEqual(["created_by", "updated_by"]);
     expect(devices.mapped).toHaveLength(13);
   });

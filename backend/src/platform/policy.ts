@@ -59,6 +59,8 @@ export const ROUTE_POLICY: RoutePolicy[] = [
   { method: "GET", pattern: "/api/platform/properties", permission: P.schemaInspect },
   { method: "PATCH", pattern: "/api/platform/properties", permission: P.configurationConfigure },
   { method: "GET", pattern: "/api/platform/schema", permission: P.schemaInspect },
+  { method: "GET", pattern: "/api/platform/counters", permission: P.schemaInspect },
+  { method: "POST", pattern: "/api/platform/counters/rebuild", permission: P.configurationConfigure },
   { method: "GET", pattern: "/api/platform/schema-changes", permission: P.schemaInspect },
   { method: "POST", pattern: "/api/platform/schema-changes/preview", permission: P.schemaChange },
   { method: "POST", pattern: "/api/platform/schema-changes", permission: P.schemaChange },

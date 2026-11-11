@@ -263,7 +263,7 @@ Rows read and written are taken from the D1 result metadata (verify the exact fi
 | Search request | ≤ 500 on the reference dataset | 0 |
 | Record open | ≤ 10 | 0 |
 | Create or update one record | ≤ 10 | ≤ 10, including index and audit rows |
-| Domain action such as a sale | ≤ 30 | ≤ 15 |
+| Domain action such as a sale | ≤ 30 | ≤ 30 (was 15; measured in Story 04 slice 04e: cash sale 17, credit sale 24, with one index on `updated_at`, counters and version rows. Re-measure with Story 06) |
 
 A query on a table of more than 1,000 rows that scans the table must be listed as an exception with a reason.
 

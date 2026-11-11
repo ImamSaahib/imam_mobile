@@ -54,7 +54,7 @@ describe("measurement", () => {
   it("a bootstrap after a seed upgrade shows the new release, not the cached one", async () => {
     await installSeed(env.DB, imamMobileSeed, actor);
     const before = await call("GET", "/api/bootstrap");
-    const next = JSON.parse(JSON.stringify(imamMobileSeed)); next.version = 2; next.menus[0].modules[0].label = "Home";
+    const next = JSON.parse(JSON.stringify(imamMobileSeed)); next.version = imamMobileSeed.version + 1; next.menus[0].modules[0].label = "Home";
     const { previewUpgrade, applyUpgrade } = await import("../src/platform/config/seed-upgrade");
     const plan = await previewUpgrade(env.DB, next);
     await applyUpgrade(env.DB, next, { planHash: plan.planHash }, actor);

@@ -182,17 +182,17 @@ describe("seed upgrade apply", () => {
 
 describe("seed upgrade routes", () => {
   it("previews and applies through the API", async () => {
-    // The registered package is version 2 and the installed one is the frozen version 1, so this is the real upgrade.
+    // The registered package is version 3 and the installed one is the frozen version 1, so this is the real upgrade.
     const preview = await call("POST", "/api/platform/seed/preview", {});
     expect(preview.status).toBe(200);
     expect(preview.json.fromVersion).toBe(1);
-    expect(preview.json.toVersion).toBe(2);
-    expect(preview.json.counts).toMatchObject({ add: 0, conflict: 0, deprecate: 0, update: 14, unchanged: 47 });
+    expect(preview.json.toVersion).toBe(3);
+    expect(preview.json.counts).toMatchObject({ add: 4, conflict: 0, deprecate: 0, update: 14, unchanged: 47 });
     const applied = await call("POST", "/api/platform/seed/upgrade", { planHash: preview.json.planHash });
     expect(applied.status).toBe(200);
-    expect(applied.json).toMatchObject({ status: "applied", version: 2, releaseVersion: 2 });
+    expect(applied.json).toMatchObject({ status: "applied", version: 3, releaseVersion: 2 });
     const again = await call("POST", "/api/platform/seed/preview", {});
-    expect(again.json.counts).toMatchObject({ update: 0, unchanged: 61 });
+    expect(again.json.counts).toMatchObject({ update: 0, add: 0, unchanged: 65 });
   });
   it("requires the plan from the preview", async () => {
     const r = await call("POST", "/api/platform/seed/upgrade", {});

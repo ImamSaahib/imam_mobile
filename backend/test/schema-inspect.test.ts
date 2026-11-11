@@ -37,13 +37,13 @@ describe("schema inspection", () => {
     expect(r.status).toBe(200);
     const j = r.json;
     expect(j.tableName).toBe("mobile_devices");
-    expect(j.columns).toHaveLength(15);
+    expect(j.columns).toHaveLength(16);
     expect(j.columns.filter((c: any) => c.system).map((c: any) => c.name).sort()).toEqual(["created_by", "updated_by"]);
     expect(j.columns.find((c: any) => c.name === "imei").property).toBe("imei");
     expect(j.unmapped).toEqual([]);
     expect(j.adoptable).toEqual([]);
-    expect(j.capacity).toEqual({ columns: 15, limit: 100, warnAt: 80, remaining: 85, state: "ok" });
-    expect(j.rowCount).toEqual({ value: 0, capped: false });
+    expect(j.capacity).toEqual({ columns: 16, limit: 100, warnAt: 80, remaining: 84, state: "ok" });
+    expect(j.rowCount).toEqual({ value: 0, capped: false, source: "counter" });
     const imei = j.indexes.find((i: any) => i.columns.join() === "imei");
     expect(imei?.unique).toBe(true);
     // Measured cost, recorded in the Story 04 notes.
@@ -63,7 +63,7 @@ describe("schema inspection", () => {
       await env.DB.batch(Array.from({ length: 100 }, (_, k) => env.DB.prepare(`INSERT INTO ${TABLE} (title) VALUES (?)`).bind(`t${i + k}`)));
     }
     const r = await call("GET", "/api/platform/schema?dataSource=synthetic");
-    expect(r.json.rowCount).toEqual({ value: 1000, capped: true });
+    expect(r.json.rowCount).toEqual({ value: 1000, capped: true, source: "bounded_count" });
     expect(Number(r.headers.get("x-rows-read"))).toBeLessThan(1100);
   });
 

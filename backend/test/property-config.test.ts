@@ -4,7 +4,8 @@ import { call, callWithEnv } from "./helpers";
 import { deriveSeedId } from "../src/platform/config/ids";
 import { expandSeed, installSeed } from "../src/platform/config/seed";
 import { previewUpgrade, applyUpgrade } from "../src/platform/config/seed-upgrade";
-import { imamMobileSeed } from "../../applications/imam-mobile/seed/package";
+// Version 2 is the package these tests were written for. Version 3 is covered in seed-v3.test.ts.
+import { imamMobileSeedV2 as imamMobileSeed } from "./fixtures/seed-v2";
 import { imamMobileSeedV1 } from "./fixtures/seed-v1";
 
 const actor = { id: "dev-placeholder", kind: "placeholder" as const, permissions: ["*"] };
