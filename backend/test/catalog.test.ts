@@ -157,7 +157,7 @@ describe("schema compatibility inspection", () => {
     expect(c.mapped.map((m) => m.property)).toEqual(["name"]);
     expect(c.missing).toEqual([{ property: "gone", column: "gone" }]);
     expect(c.incompatible).toEqual([{ property: "typo", column: "id", type: "text", sqliteType: "INTEGER" }]);
-    expect(c.unmapped.map((u) => u.column)).toEqual(expect.arrayContaining(["mobile_number", "type", "created_by"]));
+    expect(c.unmapped.map((u) => u.column)).toEqual(expect.arrayContaining(["mobile_number", "type"]));
     expect([b1, b2, b3].map((r) => r.blockedTable)).toEqual([true, true, true]);
     expect(n.tableExists).toBe(false);
     expect(await count("customers")).toBe(0);
@@ -168,7 +168,8 @@ describe("schema compatibility inspection", () => {
     expect(r.status).toBe(200);
     expect(r.json.ok).toBe(true);
     const devices = r.json.dataSources.find((d: any) => d.key === "devices");
-    expect(devices.unmapped.map((u: any) => u.column).sort()).toEqual(["created_by", "updated_by"]);
+    expect(devices.unmapped).toEqual([]);
+    expect(devices.system.map((u: any) => u.column).sort()).toEqual(["created_by", "updated_by"]);
     expect(devices.mapped).toHaveLength(13);
   });
   it("reports a problem when a physical column disappears from view of a mapped property", async () => {

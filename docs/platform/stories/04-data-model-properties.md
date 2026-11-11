@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slice 04a done 2026-11-11; slices 04b to 04f not started)  
+**Status:** In progress (slices 04a and 04b done 2026-11-11; slices 04c to 04f not started)  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -61,17 +61,17 @@ A person building a module may configure supported metadata and request allowlis
 
 ## Acceptance criteria
 
-- [ ] Every data source maps to an approved physical table.
-- [ ] Every non-virtual property maps to a real column.
+- [ ] Every data source maps to an approved physical table. (04b: inspection reports blocked and missing tables, and changes are refused for them. The check on publish and deployment arrives with Story 07)
+- [ ] Every non-virtual property maps to a real column. (04b: checked before every configuration change through these services. Publish and deployment checks arrive with Story 07)
 - [x] Type/storage contracts are explicit and tested. (04a: `TYPE_CONTRACTS` for 19 types, 33 unit tests)
-- [ ] Schema drift is detected before publish and deployment.
-- [ ] Metadata cannot expose a column absent from physical schema.
-- [ ] An unmapped column can be adopted as a property.
+- [ ] Schema drift is detected before publish and deployment. (04b: `SCHEMA_DRIFT` refuses property updates and adoption. The Story 07 publish and the deployment check are still to do)
+- [x] Metadata cannot expose a column absent from physical schema. (04b: `assertNoDrift` before each change, and adoption reads the table first)
+- [x] An unmapped column can be adopted as a property. (04b: `POST /api/platform/properties/adopt`)
 - [ ] No operation accepts arbitrary DDL or SQL text.
 - [ ] Add property works in `guided_live` mode with preview, confirmation and a log entry, and produces a reviewable migration in `migration_controlled` mode.
 - [ ] Repeating an operation with the same operation ID does not repeat the change.
 - [ ] A failed physical change leaves metadata unchanged; a partial failure is recoverable through **Add as property**.
-- [ ] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown.
+- [ ] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown. (04b: capacity is shown. The refusal comes with `add_property` in 04c)
 - [x] Select and status options can be added, renamed, recolored, reordered and deactivated without changing stored keys. (04a: `PATCH /api/platform/properties`; removing a key is refused)
 - [ ] Presentation conversions validate existing values and report non-conforming rows before applying.
 - [ ] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery.
@@ -192,4 +192,33 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 
 **Required on the dev environment before the new Worker is deployed:** apply migration 0006 (`npx wrangler d1 migrations apply imam-mobile-dev-db --remote`), deploy, then call `POST /api/platform/seed/preview` and `POST /api/platform/seed/upgrade`. Expect 14 property updates and release 2.
 
-**Not started:** slices 04b to 04f.
+### Slice 04b: schema inspection and adoption (2026-11-11)
+
+**Built**
+- `config/schema-inspect.ts`: `inspectSchema`, `assertNoDrift`, `adoptColumn`, `adoptableTypes`.
+- `config/release.ts`: `readActiveRelease` and `releaseStatements`, the shared release publishing that slice 04a noted as duplicated. `updateProperty` and `adoptColumn` use it. Seed install and seed upgrade keep their own code because they also write seed items.
+- `config/compat.ts`: `compareTable` (one comparison used by the compatibility report and by inspection), `SYSTEM_COLUMNS`, exported `quote` and `isValidName`.
+- Routes: `GET /api/platform/schema?dataSource=<key>` and `POST /api/platform/properties/adopt`. Policy: `schemaInspect` and `configurationConfigure`. The plan named `/api/platform/data-sources/:key/schema`; a query parameter is used instead so the route policy scan keeps matching literal paths.
+- The schema report holds columns (type, not-null, primary key, mapped property, system flag), indexes (unique, origin, partial, columns), capacity (100 hard, warning from 80), a row count capped at 1,000 and the adoptable columns with the types each can become.
+
+**Decisions**
+- `created_by` and `updated_by` are system columns. They are reported in a new `system` list, are not in `unmapped`, and cannot be adopted (400 `COLUMN_RESERVED`). The schema-compatibility report changed accordingly: devices now shows `unmapped: []` and `system: [created_by, updated_by]`.
+- A primary key column cannot be adopted. A column is adoptable only if its name matches the allowlist pattern and at least one writable, column-stored type accepts its SQLite type. BLOB columns and typeless columns have none.
+- Adoption is metadata only. It writes the property row, a release, the active-release pointer and an audit event in one batch. It reads no stored values and does not change the table. The key equals the column name and the label is derived from it unless one is given. `nullable` comes from the column's NOT NULL flag.
+- Server-assigned types (unique ID, created and edited time and actor) cannot be adopted.
+- `SCHEMA_DRIFT` (409): property updates and adoption are refused while a mapped column is missing, a mapped column has an incompatible type, the table is missing or the table is blocked. Nothing is written.
+- Row counts use `SELECT COUNT(*) FROM (SELECT 1 FROM t LIMIT 1001)`, so at most 1,001 rows are read, and the report states when the count is capped.
+- Existing report decision for owner question 2 still applies: adoption publishes a release immediately.
+
+**Tests and measurements**
+- Backend: 207 passing in 13 files (16 new in `schema-inspect.test.ts`).
+- Schema report for devices: 80 rows read, 0 written (15 columns, 4 indexes). The report reads one row per column, per index and per indexed column.
+- Adoption: 89 rows read and 13 written. The 10-row limit applies to record writes. This is a configuration change: property row and its unique index, release row and its unique index, active-release pointer, audit event.
+- Covered: column and system-column lists, bounded row count over 1,000 rows, capacity at 79, 80 and 100 columns, adoption with a label, a currency configuration and a NOT NULL column, refusal of missing, system, primary-key, mapped and incompatible columns, SQL and odd identifiers, unknown fields, stale release, permissions, drift (missing column, incompatible column, missing table), and unchanged behavior for the installed properties.
+
+**For later slices**
+- `inspectSchema` reads properties through `loadRows` (about 40 rows). Reading the active snapshot instead is still an option if the budget gets tight.
+- Junction tables (multi-select) are still reported as incompatible. They are inspected when multi-select storage is built.
+- The Contracts text calls for a recovery path after a failed physical change (unmapped column, then Add as property). That path now exists.
+
+**Not started:** slices 04c to 04f.

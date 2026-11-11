@@ -24,23 +24,23 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Story 04 (data model, properties) | In progress. 04a done (2026-11-11): type registry, property configuration routes, seed package version 2. Next: 04b |
+| Story 04 (data model, properties) | In progress. 04a and 04b done (2026-11-11). Next: 04c |
 | Stories 02, 03, 05–11 | Planned |
-| Worker tests | 191 passing in 12 files (`cd backend && npm run check`) |
+| Worker tests | 207 passing in 13 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | Migrations 0001 to 0006 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, release 1 at first install, now release 2 after the seed upgrade. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. Migration 0006 and the seed version 2 upgrade are applied (confirmed 2026-11-11): `GET /api/platform/properties?dataSource=devices` returns currency (PKR, scale 0, 0 to 100,000,000) on both prices and options on `condition` and `status`, and `GET /api/platform/schema-compatibility` returns `ok: true` |
 
-## 4. Next step: Story 04, slice 04b (schema inspection and adoption)
+## 4. Next step: Story 04, slice 04c (schema change service and `add_property`)
 
 Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04.
 
-Slice 04a is done. It added migration 0006, `config/property-types.ts` (type registry), `config/property-config.ts`, three routes (`GET /api/platform/property-types`, `GET /api/platform/properties`, `PATCH /api/platform/properties`) and seed package version 2. A frozen copy of seed version 1 is in `backend/test/fixtures/seed-v1.ts` and is the baseline for upgrade tests. Details, decisions and findings are in the Story 04 notes, "Slice 04a".
+Done in Story 04: 04a (migration 0006, type registry, property configuration routes, seed v2, applied on dev) and 04b (no migration; `GET /api/platform/schema?dataSource=`, `POST /api/platform/properties/adopt`, `config/schema-inspect.ts`, `config/release.ts`, `SCHEMA_DRIFT` check, system columns). Details, decisions and measured rows are in the Story 04 notes. The 04b Worker code is not deployed to dev yet; it needs `npx wrangler deploy` only (no migration).
 
-Slice 04b scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): index and capacity inspection, bounded row count, system columns (decide how `created_by` and `updated_by` are treated), `GET /api/platform/data-sources/:key/schema`, and adopting an unmapped column as a property. Measure the rows read by the new report. Consider reading properties from the active snapshot instead of `cfg_property`.
+Slice 04c scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): migration 0007 (`schema_change_log`), the closed operation list, preview with generated SQL, apply with operation ID and confirmation, idempotent repeat, the 100-column refusal, and `add_property` in `guided_live` mode. First confirm on the D1 runtime whether an `ALTER TABLE` and metadata inserts in one `batch()` roll back together (plan finding 7). Reuse `releaseStatements`, `assertNoDrift`, `inspectSchema` and `adoptColumn` (the recovery path after a partial failure).
 
-Owner question 1 (currency scale) is answered: 0 to 100,000,000 PKR, scale 0. Owner question 2 (immediate release on schema change) is answered: acceptable while development stays on track.
+Owner questions: both answered (currency 0 to 100,000,000 PKR at scale 0; a schema change publishes a release immediately while data is development-only).
 
-Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch. Slice 01d added request metering (`usage.ts`), governor and rate limit (`governor.ts`), `data_source_versions` helpers (`versions.ts`), the bootstrap memory cache, `DAILY_LIMIT_REACHED` mapping and configuration revalidation.
+Stories 05 and 06 must add `bumpVersionStatement` to every data-source write batch.
 
 Gate: see TIMELINE step 7 (add-property works in both modes with preview and log).
 
@@ -52,7 +52,7 @@ Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse che
 
 ```
 git checkout development && git pull
-cd backend && npm ci && npm run check      # type check plus 191 tests
+cd backend && npm ci && npm run check      # type check plus 207 tests
 cd ../frontend && npm ci && npm run build
 ```
 

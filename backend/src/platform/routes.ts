@@ -12,6 +12,7 @@ import { SEED_PACKAGES } from "./config/registry";
 import { inspectCompatibility } from "./config/compat";
 import { loadRows } from "./config/snapshot";
 import { describeTypes } from "./config/property-types";
+import { inspectSchema, adoptColumn, type AdoptInput } from "./config/schema-inspect";
 import { listProperties, updateProperty, type PropertyUpdate } from "./config/property-config";
 
 export type PlatformEnv = { DB: D1Database; DEPLOYMENT_KEY?: string; ENVIRONMENT?: string };
@@ -57,6 +58,16 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
       const body = (await request.json().catch(() => null)) as PropertyUpdate | null;
       if (!body) throw new PlatformError("PROPERTY_INVALID", "Send a JSON body.", 400);
       return { status: 200, body: await updateProperty(env.DB, body, actor), headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/schema" && request.method === "GET") {
+      const dataSource = new URL(request.url).searchParams.get("dataSource");
+      if (!dataSource) throw new PlatformError("SCHEMA_INVALID", "Send ?dataSource=<key>.", 400);
+      return { status: 200, body: await inspectSchema(env.DB, dataSource), headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/properties/adopt" && request.method === "POST") {
+      const body = (await request.json().catch(() => null)) as AdoptInput | null;
+      if (!body) throw new PlatformError("PROPERTY_INVALID", "Send a JSON body.", 400);
+      return { status: 201, body: await adoptColumn(env.DB, body, actor), headers: { "Cache-Control": "no-store" } };
     }
     return null;
   } catch (err) {

@@ -8,11 +8,11 @@
 import type { Actor } from "../policy";
 import { auditStatement } from "../audit";
 import { PlatformError } from "../errors";
-import { CONFIG_SCHEMA_VERSION } from "../version";
 import { canonicalJson } from "./canonical";
-import { newId, sha256Hex } from "./ids";
 import { invalidateBootstrapCache } from "./bootstrap";
-import { buildSnapshot, loadRows, propertyFromRow } from "./snapshot";
+import { loadRows, propertyFromRow } from "./snapshot";
+import { readActiveRelease, releaseStatements } from "./release";
+import { assertNoDrift } from "./schema-inspect";
 import { checkOptionChanges, normalizeSettings, optionsOf, SETTINGS_DEFAULTS, TYPE_CONTRACTS } from "./property-types";
 import type { PropertySettings } from "./types";
 
@@ -82,7 +82,7 @@ export async function updateProperty(db: D1Database, input: PropertyUpdate, acto
   const before = toView(rawRow);
   const applicationId: string = rawRow.application_id;
 
-  const active = await db.prepare("SELECT release_id, version FROM cfg_active_release WHERE application_id = ?").bind(applicationId).first<{ release_id: string; version: number }>();
+  const active = await readActiveRelease(db, applicationId);
   if (!active) throw new PlatformError("NOT_INSTALLED", "The application has not been installed yet.", 404);
   if (input.releaseVersion !== undefined && input.releaseVersion !== active.version) {
     throw new PlatformError("STALE_RELEASE", `The configuration changed: release ${active.version} is active, not ${input.releaseVersion}. Reload and try again.`, 409, { activeVersion: active.version });
@@ -121,22 +121,15 @@ export async function updateProperty(db: D1Database, input: PropertyUpdate, acto
   // Build the new snapshot from the stored rows with this one change applied.
   const rows = await loadRows(db, applicationId);
   if (!rows) throw new PlatformError("NOT_INSTALLED", "The application has not been installed yet.", 404);
+  await assertNoDrift(db, rows, rawRow.data_source_id);
   rows.properties = rows.properties.map((p) => (p.id === before.id ? { ...p, label, ...next } : p));
-  const releaseMeta = await db.prepare("SELECT min_platform_version FROM cfg_release WHERE id = ?").bind(active.release_id).first<{ min_platform_version: string }>();
-  const minPlatformVersion = releaseMeta?.min_platform_version ?? "0.1.0";
-  const snapshotJson = canonicalJson(buildSnapshot(rows, minPlatformVersion));
-  const snapshotHash = await sha256Hex(snapshotJson);
-  const releaseVersion = active.version + 1;
-  const releaseId = newId("release");
   const summary = `Changed ${changed.join(", ")} of ${before.dataSource}.${before.key}`;
+  const { statements: releaseStmts, releaseVersion } = await releaseStatements(db, { applicationId, active, rows, summary, now, by });
 
   const statements = [
     db.prepare("UPDATE cfg_property SET label=?, description=?, required=?, default_json=?, searchable=?, sensitivity=?, config_json=?, updated_at=?, updated_by=? WHERE id=?")
       .bind(label, next.description, next.required ? 1 : 0, next.defaultValue === null || next.defaultValue === undefined ? null : canonicalJson(next.defaultValue), next.searchable ? 1 : 0, next.sensitivity, canonicalJson(next.config), now, by, before.id),
-    db.prepare("INSERT INTO cfg_release (id,application_id,version,snapshot_json,snapshot_hash,config_schema_version,min_platform_version,summary,created_at,created_by) VALUES (?,?,?,?,?,?,?,?,?,?)")
-      .bind(releaseId, applicationId, releaseVersion, snapshotJson, snapshotHash, CONFIG_SCHEMA_VERSION, minPlatformVersion, summary, now, by),
-    db.prepare("UPDATE cfg_active_release SET release_id=?, version=?, etag=? WHERE application_id=?")
-      .bind(releaseId, releaseVersion, `${releaseVersion}-${snapshotHash.slice(0, 12)}`, applicationId),
+    ...releaseStmts,
     auditStatement(db, actor, { action: "property.update", entityType: "property", entityId: before.id, outcome: "success", summary, details: { dataSource: before.dataSource, property: before.key, changed, releaseVersion } })
   ];
   try {
