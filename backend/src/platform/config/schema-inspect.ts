@@ -32,7 +32,7 @@ export function adoptableTypes(sqliteType: string): PropertyType[] {
   return (Object.keys(TYPE_CONTRACTS) as PropertyType[]).filter((t) => TYPE_CONTRACTS[t].physical === "column" && TYPE_CONTRACTS[t].writable && acceptedSqliteTypes(t).includes(sqliteType));
 }
 
-async function readColumns(db: D1Database, table: string): Promise<TableColumn[]> {
+export async function readColumns(db: D1Database, table: string): Promise<TableColumn[]> {
   const info = await db.prepare(`PRAGMA table_info(${quote(table)})`).all<{ name: string; type: string; notnull: number; pk: number }>();
   return info.results.map((c) => ({ name: c.name, sqliteType: (c.type || "").toUpperCase(), notNull: c.notnull === 1, primaryKey: c.pk > 0 }));
 }
@@ -47,13 +47,13 @@ async function readIndexes(db: D1Database, table: string): Promise<TableIndex[]>
   return out;
 }
 
-async function countRows(db: D1Database, table: string): Promise<{ value: number; capped: boolean }> {
+export async function countRows(db: D1Database, table: string): Promise<{ value: number; capped: boolean }> {
   const r = await db.prepare(`SELECT COUNT(*) AS n FROM (SELECT 1 FROM ${quote(table)} LIMIT ${ROW_COUNT_CAP + 1})`).first<{ n: number }>();
   const n = r?.n ?? 0;
   return n > ROW_COUNT_CAP ? { value: ROW_COUNT_CAP, capped: true } : { value: n, capped: false };
 }
 
-async function loadApplication(db: D1Database): Promise<{ id: string; rows: ConfigRows }> {
+export async function loadApplication(db: D1Database): Promise<{ id: string; rows: ConfigRows }> {
   const app = await db.prepare("SELECT id FROM cfg_application ORDER BY id LIMIT 1").first<{ id: string }>();
   if (!app) throw new PlatformError("NOT_INSTALLED", "The application has not been installed yet.", 404);
   const rows = await loadRows(db, app.id);
@@ -61,7 +61,7 @@ async function loadApplication(db: D1Database): Promise<{ id: string; rows: Conf
   return { id: app.id, rows };
 }
 
-function findDataSource(rows: ConfigRows, key: string) {
+export function findDataSource(rows: ConfigRows, key: string) {
   const ds = rows.dataSources.find((d) => d.key === key);
   if (!ds) throw new PlatformError("DATA_SOURCE_NOT_FOUND", `There is no data source "${key}".`, 404);
   return ds;

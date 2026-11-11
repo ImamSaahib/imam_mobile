@@ -16,6 +16,7 @@ beforeEach(async () => {
     env.DB.prepare("DELETE FROM mobile_devices"),
     env.DB.prepare("DELETE FROM customers"),
     env.DB.prepare("DELETE FROM custom_field_values"),
+    env.DB.prepare("DELETE FROM schema_change_log"),
     env.DB.prepare("DELETE FROM audit_events"),
     env.DB.prepare("DELETE FROM usage_daily"),
     env.DB.prepare("UPDATE data_source_versions SET version=1"),

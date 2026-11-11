@@ -13,6 +13,7 @@ import { inspectCompatibility } from "./config/compat";
 import { loadRows } from "./config/snapshot";
 import { describeTypes } from "./config/property-types";
 import { inspectSchema, adoptColumn, type AdoptInput } from "./config/schema-inspect";
+import { previewChange, applyChange, listChanges, type ChangeRequest, type ApplyRequest } from "./config/schema-change";
 import { listProperties, updateProperty, type PropertyUpdate } from "./config/property-config";
 
 export type PlatformEnv = { DB: D1Database; DEPLOYMENT_KEY?: string; ENVIRONMENT?: string };
@@ -68,6 +69,21 @@ export async function handlePlatformRoute(request: Request, env: PlatformEnv, pa
       const body = (await request.json().catch(() => null)) as AdoptInput | null;
       if (!body) throw new PlatformError("PROPERTY_INVALID", "Send a JSON body.", 400);
       return { status: 201, body: await adoptColumn(env.DB, body, actor), headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/schema-changes/preview" && request.method === "POST") {
+      const body = (await request.json().catch(() => null)) as ChangeRequest | null;
+      if (!body) throw new PlatformError("SCHEMA_CHANGE_INVALID", "Send a JSON body.", 400);
+      return { status: 200, body: await previewChange(env.DB, body), headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/schema-changes" && request.method === "POST") {
+      const body = (await request.json().catch(() => null)) as ApplyRequest | null;
+      if (!body) throw new PlatformError("SCHEMA_CHANGE_INVALID", "Send a JSON body.", 400);
+      const result = await applyChange(env.DB, body, actor);
+      return { status: result.repeated ? 200 : 201, body: result, headers: { "Cache-Control": "no-store" } };
+    }
+    if (path === "/api/platform/schema-changes" && request.method === "GET") {
+      const dataSource = new URL(request.url).searchParams.get("dataSource") ?? undefined;
+      return { status: 200, body: { changes: await listChanges(env.DB, dataSource) }, headers: { "Cache-Control": "no-store" } };
     }
     return null;
   } catch (err) {

@@ -27,7 +27,7 @@ export type DataSourceReport = {
 export type CompatibilityReport = { ok: boolean; dataSources: DataSourceReport[] };
 
 const NAME = /^[a-z][a-z0-9_]{0,63}$/;
-const PLATFORM_TABLES = new Set(["audit_events", "app_configuration", "configuration_versions", "schema_changes", "custom_field_values"]);
+const PLATFORM_TABLES = new Set(["audit_events", "app_configuration", "configuration_versions", "schema_changes", "schema_change_log", "custom_field_values"]);
 
 export function isBlockedTable(name: string): boolean {
   return !NAME.test(name) || name.startsWith("cfg_") || name.startsWith("sqlite_") || name.startsWith("_cf_") || name.startsWith("d1_") || PLATFORM_TABLES.has(name);

@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slices 04a and 04b done 2026-11-11; slices 04c to 04f not started)  
+**Status:** In progress (slices 04a, 04b and 04c done 2026-11-11; slices 04d to 04f not started)  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -67,15 +67,15 @@ A person building a module may configure supported metadata and request allowlis
 - [ ] Schema drift is detected before publish and deployment. (04b: `SCHEMA_DRIFT` refuses property updates and adoption. The Story 07 publish and the deployment check are still to do)
 - [x] Metadata cannot expose a column absent from physical schema. (04b: `assertNoDrift` before each change, and adoption reads the table first)
 - [x] An unmapped column can be adopted as a property. (04b: `POST /api/platform/properties/adopt`)
-- [ ] No operation accepts arbitrary DDL or SQL text.
-- [ ] Add property works in `guided_live` mode with preview, confirmation and a log entry, and produces a reviewable migration in `migration_controlled` mode.
-- [ ] Repeating an operation with the same operation ID does not repeat the change.
-- [ ] A failed physical change leaves metadata unchanged; a partial failure is recoverable through **Add as property**.
-- [ ] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown. (04b: capacity is shown. The refusal comes with `add_property` in 04c)
+- [ ] No operation accepts arbitrary DDL or SQL text. (04c: the operation list is closed, `add_property` is the only operation, and unknown fields and SQL are refused. The rest of the operations arrive in 04d)
+- [ ] Add property works in `guided_live` mode with preview, confirmation and a log entry, and produces a reviewable migration in `migration_controlled` mode. (04c: `guided_live` done. `migration_controlled` comes in 04d)
+- [x] Repeating an operation with the same operation ID does not repeat the change. (04c)
+- [x] A failed physical change leaves metadata unchanged; a partial failure is recoverable through **Add as property**. (04c: one batch, tested with a competing release. Orphan column recovered through adoption)
+- [x] Adding a property is refused when the table reaches 100 columns, and remaining capacity is shown. (04b shows capacity, 04c refuses with `COLUMN_LIMIT` at 100)
 - [x] Select and status options can be added, renamed, recolored, reordered and deactivated without changing stored keys. (04a: `PATCH /api/platform/properties`; removing a key is refused)
 - [ ] Presentation conversions validate existing values and report non-conforming rows before applying.
 - [ ] Data-rewriting conversions are rejected until Phase B provides preview, backup and recovery.
-- [ ] Values are bound parameters; identifiers are allowlisted and safely quoted.
+- [ ] Values are bound parameters; identifiers are allowlisted and safely quoted. (04c: done for `add_property`. Checked again when each operation is added in 04d)
 - [ ] Existing Imam Mobile inventory/customer/sales schema remains compatible.
 - [ ] Searchable, filterable and sortable properties have indexes or a recorded exception.
 - [ ] Marking a column searchable without an index on a table over 1,000 rows is refused.
@@ -221,4 +221,40 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 - Junction tables (multi-select) are still reported as incompatible. They are inspected when multi-select storage is built.
 - The Contracts text calls for a recovery path after a failed physical change (unmapped column, then Add as property). That path now exists.
 
-**Not started:** slices 04c to 04f.
+### Slice 04c: schema change service and `add_property` (2026-11-11)
+
+**Built**
+- Migration `0007_schema_change_log.sql`: table `schema_change_log` (operation ID as primary key, operation, data source, mode, request hash, parameters, SQL, result, release version, time, actor). Separate from the legacy `schema_changes` table, which stays until Story 07.
+- `config/schema-change.ts`: `previewChange`, `applyChange`, `listChanges`. Routes: `POST /api/platform/schema-changes/preview`, `POST /api/platform/schema-changes`, `GET /api/platform/schema-changes?dataSource=`. Policy: `schemaChange` for the two POST routes, `schemaInspect` for the list.
+- One operation: `add_property` in `guided_live` mode. Types: text, title, number, currency, select, status, date, timestamp, checkbox, email, phone, url. Relation, multi-select and server-assigned types are refused (`TYPE_UNAVAILABLE`) until later slices.
+
+**Runtime check (plan finding 7, now confirmed on the test runtime)**
+`schema-change.test.ts` runs a batch with an `ALTER TABLE`, one valid insert and one failing insert. The failure undoes both: the column is absent and the insert is not kept. Apply therefore uses one batch, so the column, the property, the release, the log row and the audit event exist together or not at all. The recovery path through **Add as property** stays for any case outside this guarantee (tested with an orphan column).
+
+**How it works**
+- Preview is read-only. It returns the generated SQL, existing row count (capped at 1,000), the fact that no row is rewritten, capacity before and after (warning from 80), `backupRequired: false`, the next release version and a `planHash`.
+- Apply needs `operationId` (8 to 64 letters, digits, underscores, hyphens) and `confirm: true`. An optional `planHash` from the preview is checked, and a mismatch returns 409 `PLAN_CHANGED`.
+- Repeating an operation ID with the same request returns the stored result (200, `repeated: true`) and changes nothing. The same ID with a different request returns 409 `OPERATION_ID_REUSED`.
+- SQL comes only from validated parameters: identifiers match `^[a-z][a-z0-9_]{0,63}$` and are quoted, the column type comes from a fixed map (TEXT, INTEGER, REAL), and the new column is always nullable with no default or constraint, so existing rows are not rewritten. `required` and `default` are enforced by the property configuration when records are written (Story 06). Unknown fields, including `sql`, are refused at the top level and in `params`.
+- Refused with a clear code: reserved column names (`id`, `rowid`, `created_at`, `updated_at`, actor columns), an existing column (`COLUMN_EXISTS`, use Add as property), an existing key (`PROPERTY_EXISTS`), 100 columns (`COLUMN_LIMIT`), drift between configuration and table (`SCHEMA_DRIFT`), and `migration_controlled` (`MODE_UNAVAILABLE`, comes in 04d).
+- A failed apply writes an audit event with outcome `failed` and returns 409 `SCHEMA_CHANGE_FAILED`. It writes nothing else.
+- If the code is live before migration 0007 reaches the database, apply and list return 503 `MIGRATION_PENDING` and change nothing.
+
+**Decisions**
+- Failures are logged in `audit_events`, not in `schema_change_log`, because the log row is part of the transaction that failed.
+- New columns are always nullable. Adding a NOT NULL column to an existing table needs a constant default in SQLite, and that default would be a stored value. Making a column required later is a configuration setting now and a data-checking conversion in 04d.
+- A schema change publishes a release immediately (owner accepted, 2026-11-11).
+
+**Tests and measurements**
+- Backend: 227 passing in 14 files (20 new, all in `schema-change.test.ts`). Frontend build passes.
+- Apply: 162 rows read and 17 written. The reads come from loading the whole configuration (`loadRows`) and the table information. Writes: the property row and its index, the release row and its index, the active-release pointer, the log row, the audit event. This is a configuration change, not a record write.
+- A repeat with the same operation ID writes at most 2 rows.
+- Preview writes 0 rows.
+
+**For later slices**
+- `loadRows` dominates the read count. Reading the active snapshot instead would cut it to a few rows, but the snapshot lacks row IDs that the insert needs. Decide in 04d if reads matter.
+- `add_property` for relation and multi-select, and the other operations, come in 04d or later.
+
+**Migration:** 0007 adds one table and one index. No existing table changes.
+
+**Not started:** slices 04d to 04f.
