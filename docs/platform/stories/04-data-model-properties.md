@@ -1,6 +1,6 @@
 # Story 04 — Data Model, Properties and Schema Compatibility
 
-**Status:** In progress (slices 04a to 04e done (04e on 2026-11-12); slice 04f not started)  
+**Status:** Complete with deferred items (slices 04a to 04f done; 04f on 2026-11-12). Deferred boxes are listed in the Story review  
 **Priority:** P0 · **Depends on:** Story 01. Authorization enforcement is deferred to the security phase.  
 **Goal:** Make approved relational data sources and typed properties reusable, let a person configure properties from a table column in edit mode, and keep physical schema changes under the schema change service and migrations.
 
@@ -332,4 +332,41 @@ Findings, decisions and evidence are recorded here as the work happens. Each sli
 **Before the Worker with this slice runs on dev**
 - Migration 0009 must be applied first. If the new code is live without it, the create, update, delete and sale routes fail, because the counters table and the `updated_at` columns are missing. Check with: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0009_storage_rules_counters.sql`). Then call the seed upgrade: `POST /api/platform/seed/preview` (expect version 3, add 4) and `POST /api/platform/seed/upgrade` with the `planHash`.
 
-**Not started:** slice 04f.
+### Slice 04f: migration process, tests, legacy inventory and story review (2026-11-12)
+
+**Built**
+- `docs/platform/MIGRATIONS.md`: when a change is a platform schema change and when it is a developer migration, file naming and ordering rules, a checklist for a new table or column (seed version, counter definition, version row, `updated_at` index), the order of events on deploy, and rollback by forward fix. Linked from the platform README.
+- `backend/test/migrations-process.test.ts` (5 tests): migration names match `NNNN_snake_case.sql`, numbers are unique, ordered and without gaps, every seed data source maps to an existing, non-blocked table with no table mapped twice, and every such table has `updated_at` with an index.
+- `docs/platform/legacy-inventory.md`: the schema routes, the custom field routes, `schema_changes` and `custom_field_values` are now removed in Story 07, not Story 04. Reason: the Admin Studio screen calls them and Story 07 replaces that screen. The schema service is complete, so nothing in Story 04 depends on removing them.
+
+**Decision:** keep the legacy admin schema routes until Story 07. The risk is that live DDL can still be run through `/api/admin/schema/*` with the shared token, without preview or the 100-column limit. It was already the case before Story 04, requires `ADMIN_CONFIG_TOKEN`, and dev holds test data only. A column added that way shows as unmapped in the compatibility report and can be adopted.
+
+**Dev database check (2026-11-12, from the owner):** `d1_migrations` lists 0001 to 0009, and `POST /api/platform/counters/rebuild` reports every data source `ok: true` with no drift (1 device, 1 customer, 3 ledger entries, 0 sales). The seed upgrade to version 3 was not confirmed yet.
+
+#### Story review
+
+Backend: 283 tests passing in 18 files. Frontend build passes.
+
+Acceptance boxes checked: type contracts, metadata cannot expose absent columns, adoption, no arbitrary DDL, add property in both modes, operation ID idempotency, failed change recovery, 100-column limit, option editing, presentation conversions and the refusal of data-rewriting conversions, bound parameters, legacy schema compatibility, the `INDEX_REQUIRED` rule, record write budget, `updated_at` indexes, version counter in the write batch.
+
+Deferred boxes, each with the story that closes it:
+
+| Box | Reason | Closed by |
+|---|---|---|
+| Every data source maps to an approved table; every non-virtual property maps to a real column; drift detected before publish and deployment | The checks run on every change through the platform services. Publish and deployment checks need the publish flow | Story 07 |
+| Searchable, filterable and sortable properties have indexes or an exception | Searchable is enforced. Filter and sort flags do not exist yet | Story 05 |
+| Counters equal a recount after creates, updates and archives | Tested for creates, updates, deletes and sales. No archive path exists | Story 06 |
+| Currency calculations in integer units | Calculations do not exist yet | Story 06 |
+| Multi-select normalized and referentially validated | Validation done, junction storage not built | Story 06 |
+| Date and timestamp semantics including timezone boundaries | Value validation tested, filter semantics not built | Story 05 |
+| Relation deletion behavior enforced | Configured and validated, enforcement not built | Story 06 |
+| Type and operator support consistent across forms, lists, filters, sorting, import and export | One registry and a consistency test exist, consumers do not | Stories 05, 06, 09 |
+| Scope item 13: archive and cancellation instead of physical delete | Legacy DELETE routes are pinned by baseline tests | Story 06 |
+
+Risks:
+1. A Worker deploy that lands before its migration breaks writes. Mitigation: migrations are additive and the process doc states the order. Dev holds test data only.
+2. Schema changes publish a release immediately until Story 07 adds drafts (owner accepted this on 2026-11-11).
+3. The legacy admin schema routes remain (decision above).
+4. Counters have no non-negative check. Drift is reported by the rebuild, which reads the whole table. It is an administrator action.
+5. Domain-action write budget is 30 (was 15). Re-measure in Story 06, which changes the sale route.
+6. Measurements were taken on the test database, not on a reference dataset of realistic size. Repeat with Story 05 and Story 10.

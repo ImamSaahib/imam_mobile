@@ -24,32 +24,27 @@ An environment for building, customizing and extending business modules (Service
 |---|---|
 | Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
-| Story 04 (data model, properties) | In progress. 04a to 04e done (2026-11-12), step 7 gate met. Next: 04f (last slice) |
+| Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
-| Worker tests | 278 passing in 17 files (`cd backend && npm run check`) |
+| Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
 | Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
 | Dev database | Migrations 0001 to 0006 are applied to the dev D1 database `imam-mobile-dev-db`, and the seed has been installed (confirmed 2026-11-10): 1 application, 61 seed items, release 1 at first install, now release 2 after the seed upgrade. On the deployed dev Worker, `GET /api/bootstrap` returns 200 (2 rows read, 0 written, release 1) and `GET /api/platform/schema-compatibility` returns `ok: true` (79 rows read). The report lists `created_by` and `updated_by` as unmapped columns on all four tables. Migration 0006 and the seed version 2 upgrade are applied (confirmed 2026-11-11): `GET /api/platform/properties?dataSource=devices` returns currency (PKR, scale 0, 0 to 100,000,000) on both prices and options on `condition` and `status`, and `GET /api/platform/schema-compatibility` returns `ok: true` |
 
-## 4. Next step: Story 04, slice 04f (migration process, review, close)
+## 4. Next step
 
-Story 00b (shell and tokens) is still blocked until the real Cloudflare reference screenshot is attached. The next unblocked step in [TIMELINE.md](TIMELINE.md) is step 7, Story 04. The step 7 gate is met. Slice 04f closes the story.
+Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 
-Done in Story 04: 04a to 04e. 04e (2026-11-12) added migration 0009 (`updated_at` indexes on all four tables, `archived_at` on devices and customers, `data_source_counters`), `platform/counters.ts`, counters and a version bump in the same batch as every legacy write (the sale is now one batch), counter routes with a drift rebuild, and seed version 3 (65 items). Details, decisions and measured rows are in the Story 04 notes.
+**Blocked on the owner:** the next steps in [TIMELINE.md](TIMELINE.md) (00b, then Story 02 Navigator, Story 03, the reuse checkpoint, Stories 05 and 06) all depend on the UI shell. Story 00b needs the real Cloudflare reference screenshot attached. No other owner decision is open.
 
-**Owner action on dev, in this order (the legacy create, update, delete and sale routes need migration 0009):**
-1. Confirm migration 0009 is applied: `npx wrangler d1 execute imam-mobile-dev-db --remote --command "SELECT name FROM d1_migrations ORDER BY id"` (expect `0009_storage_rules_counters.sql`; Cloudflare applies migrations on deploy).
-2. Upgrade the seed to version 3: `POST /api/platform/seed/preview` (expect `toVersion: 3`, `add: 4`), then `POST /api/platform/seed/upgrade` with the `planHash`.
-3. Check counters against the tables: `POST /api/platform/counters/rebuild` with `{}` (expect every report `ok: true`).
+**Owner actions still open on dev (not blocking):**
+1. Seed upgrade to version 3: `POST /api/platform/seed/preview` (expect `toVersion: 3`, `add: 4`), then `POST /api/platform/seed/upgrade` with the `planHash`.
+2. Already confirmed 2026-11-12: migrations 0001 to 0009 applied, and `POST /api/platform/counters/rebuild` with `{}` reports every data source `ok: true`.
 
-Slice 04f scope is in the slice table of [stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md): document the developer migration process for new tables and constraints with matching metadata, add a test that every approved data source maps to an approved table and every migration number is unique and ordered, update the legacy inventory (`schema_changes`, the add-column routes: what Story 07 removes), and write the story review into the notes (acceptance boxes checked or deferred with a reason, deferred items, risks). Open boxes to review there: counters after archives (needs Story 06), searchable, filterable and sortable indexes (filter and sort flags come with Story 05), publish and deployment drift checks (Story 07), and the type-consumer boxes.
-
-Owner questions: both answered. The domain-action write budget in Contracts §9 was raised from 15 to 30 after measurement (a sale writes 17 or 24 rows). Tell me if you want it handled differently.
-
-Stories 05 and 06 must use `countersOnCreate`, `countersOnDelete`, `countersOnGroupChange` and `versionBump` in every data-source write batch, and Story 06 replaces the legacy DELETE routes with archive (`archived_at`) and cancellation.
+Rules for the stories that follow: Stories 05 and 06 must use `countersOnCreate`, `countersOnDelete`, `countersOnGroupChange` and `versionBump` in every data-source write batch. Story 06 replaces the legacy DELETE routes with archive (`archived_at`) and cancellation, and re-measures the sale (budget 30 rows). Story 07 removes the legacy admin schema routes, `schema_changes`, the custom field routes and `custom_field_values` (see [legacy-inventory.md](platform/legacy-inventory.md)).
 
 ## 5. After that (from the sequence)
 
-Then 00b (needs the reference screenshot), Story 04, 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
+Then 00b (needs the reference screenshot), 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
 
 ## 6. How to verify the starting state
 

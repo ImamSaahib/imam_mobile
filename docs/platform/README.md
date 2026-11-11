@@ -76,7 +76,7 @@ A story is not complete because its UI renders. Persistence, validation, failure
 - All platform development starts on `development`.
 - Do not change production branch `main` or production Cloudflare resources without explicit approval.
 - Never run development migrations against production.
-- Never edit an applied migration; add a new migration.
+- Never edit an applied migration; add a new migration. The developer process is in [MIGRATIONS.md](MIGRATIONS.md).
 - Never commit credentials, API tokens, passwords, private keys or client secrets.
 - Never embed secrets in Vite variables or browser bundles.
 - Never store executable JavaScript, arbitrary SQL or expressions in configuration.
