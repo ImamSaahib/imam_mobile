@@ -8,6 +8,12 @@
 
 An environment for building, customizing and extending business modules (ServiceNow-style navigator, lists and forms; Notion-style typed properties; Cloudflare look), with Imam Mobile (a mobile-shop app) as the reference application. Stack: React + Vite on Cloudflare Pages, a modular Cloudflare Worker, D1 (SQLite). Very lightweight: about 10 devices added per day, roughly 5 users, about 100 sessions per day, free-tier D1 budgets ([Contracts §9–10](platform/IMPLEMENTATION-CONTRACTS.md)). Read [platform/README.md](platform/README.md) and [ARCHITECTURE.md](platform/ARCHITECTURE.md) for the full picture.
 
+## Delivery focus (owner direction, 2026-11-12)
+
+Product Phase 1 covers all twelve existing stories, 00–11, as the application's primary functionality. Continue in the documented dependency order and complete one bounded slice at a time, as quickly as practical with quality. Prioritize implementation, required validation and blocker resolution. Defer optional improvements and unrelated side work; update story progress, acceptance evidence, TIMELINE and this handoff as development proceeds.
+
+The owner will test the integrated application after Phase 1 development is complete and then create new stories for Product Phase 2. Continue developer tests and regression/deployment verification throughout; do not wait for owner testing to validate a slice. No story or phase is complete until its required acceptance criteria are verified. Make routine reversible decisions independently; ask only for a required missing resource, a consequential difficult-to-reverse decision or explicit authorization. See [Decision C8](platform/DECISIONS.md).
+
 ## 2. Rules from the owner (do not break)
 
 1. All development happens on the `development` branch. `main` must not change until testing passes in the dev environment. The GitHub ruleset "Protect main" locks `main` completely.

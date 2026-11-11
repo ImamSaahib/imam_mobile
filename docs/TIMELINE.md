@@ -5,6 +5,16 @@
 **Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
 
+## Product delivery phases (owner direction, 2026-11-12)
+
+**Phase 1:** complete the agreed scope of all twelve existing stories (00–11) in the dependency order below. These stories establish the primary application functionality; they do not exhaust the product vision. Deliver quickly with quality, one bounded slice at a time. Do not expand scope with optional improvements or unrelated side work. Necessary tests, fixes, deployment diagnostics and acceptance verification remain part of delivery.
+
+The owner plans integrated application testing after Phase 1 development is complete. Developers continue automated tests, regression checks and development verification during every slice. Do not mark Phase 1 complete while required acceptance criteria or deferred criteria assigned to its stories remain unverified. Record blockers and any explicit scope changes rather than silently treating them as complete.
+
+**Phase 2:** after testing Phase 1, the owner will create new stories for additional functionality. Do not invent or begin that backlog now.
+
+Keep story status, acceptance evidence, this timeline and HANDOFF synchronized with each implementation slice. Minimize routine owner involvement. See [Decision C8](platform/DECISIONS.md). The UI/UX, security and operations stages below are stages within Product Phase 1; the existing security and production-approval gates remain in force.
+
 ## Status values
 
 | Status | Meaning |
@@ -116,3 +126,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 | 2026-11-09 | Slice 01b done: policy layer with route inventory, actor columns, audit event shape, legacy inventory, folder layout. 71 Worker tests. |
 | 2026-11-09 | Slice 00a done: Kumo evaluated and adopted for primitives (D20), Phosphor icons, bundle cost measured. Design tokens wait for the reference screenshot. |
 | 2026-11-08 | Slice 01a done: Vitest with the Cloudflare plugin, 35 baseline tests, type checking, lockfiles and CI. Story 01 In progress. |
+
+### Owner direction update — 2026-11-12
+
+Recorded Product Phase 1 as Stories 00–11, followed by owner testing and owner-defined Phase 2 stories. Delivery prioritizes existing functionality and required quality gates; optional side work is deferred. This documentation change does not change story status or acceptance criteria.

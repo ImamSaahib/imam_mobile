@@ -20,6 +20,8 @@ Each decision names the stories that rely on it. If one changes, update those st
 
 **C7. Data growth.** About 10 devices are added per day. Customer and sales counts are not yet known (see Open questions).
 
+**C8. Delivery direction (owner-confirmed, 2026-11-12).** Product Phase 1 includes all twelve existing stories, 00–11. They are the application's primary functionality, not its complete future scope. Deliver them as quickly as practical with quality, following the existing dependency order and acceptance criteria. The owner will test the integrated application after Phase 1 development is complete, then define new stories for Product Phase 2. Developer tests, regression checks and development deployment verification continue throughout; owner testing is not a substitute for these checks. Keep story progress, acceptance evidence, TIMELINE and HANDOFF current in each implementation slice. Defer optional improvements, unrelated refactoring and side work that do not deliver an existing requirement, remove a blocker or satisfy a required quality/safety gate. Make routine reversible decisions autonomously and request owner input only for missing required resources, consequential difficult-to-reverse decisions or explicit authorization. Production promotion still requires explicit owner approval. *Applies to: Stories 00–11 and future planning.*
+
 ## Recommended decisions
 
 **D1. Configuration storage.** Normalized records are the authoritative editable configuration. Each published release stores an immutable JSON snapshot. The snapshot is derived from the records and is never a second source of truth. Seed ownership and three-way merge work on item-level records. *Relied on by: Stories 01, 07, 10.*
