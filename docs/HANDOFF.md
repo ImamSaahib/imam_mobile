@@ -2,7 +2,7 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-12 (after slice 04f; Story 04 complete with deferred items; latest commit on `development` is the one that contains this edit)
+**Last updated:** 2026-11-12 (Story 00b preflight in review, Story 04 still complete with deferred items)
 
 ## 1. What the project is
 
@@ -27,12 +27,12 @@ An environment for building, customizing and extending business modules (Service
 
 | Item | State |
 |---|---|
-| Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Tokens and shell (00b) wait for the real reference screenshot |
+| Story 00 (UI shell, design system) | In progress. 00a done (Kumo, D20); 00b preflight adds interaction helpers, 12 Node tests and frontend quality gate. Tokens and shell await screenshot |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
-| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. No frontend test tooling yet |
+| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. 12 dependency-free frontend tests and bundle gate included in 00b preflight; Vitest/Testing Library and screenshots still pending |
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
@@ -56,7 +56,7 @@ Then 00b (needs the reference screenshot), 02, 03, the early reuse checkpoint, 0
 ```
 git checkout development && git pull
 cd backend && npm ci && npm run check      # type check plus 283 tests
-cd ../frontend && npm ci && npm run build
+cd ../frontend && npm ci && npm run check
 ```
 
 CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks. If these do not pass on a fresh checkout, fix that before new work.

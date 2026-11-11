@@ -107,3 +107,9 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 - **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. Measuring colors, row heights, sidebar width and spacing needs the image again. Until then the token file is not written, so no values are guessed. Needed by slice 00b.
 - Frontend test tooling (Vitest with Testing Library) for component and screenshot tests, shared with Story 01.
 - Slice 00b: shell, remaining primitives, our context-menu service, gallery and screenshot tests.
+
+### Slice 00b-preflight — interaction tests and CI (2026-11-12)
+
+**Built:** Reusable keyboard shortcuts, context-menu positioning and long-press input helpers; working ⌘K/Ctrl+K focus on existing search; 12 dependency-free Node tests; and CI test/build/300 KiB gzip JS gate. Updated outdated frontend README. No backend, D1 or production changes. Resource cost: zero D1 reads/writes.
+
+**Verification:** `cd frontend && npm run check` (run by Development CI). This is a prerequisite, not completed Story 00b. Full Kumo wrappers, visual tokens and shell, central context menu, gallery, Vitest/Testing Library, screenshot and browser request tests remain pending. The screenshot is not in GitHub, so exact visual values were not guessed.

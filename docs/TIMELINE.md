@@ -1,6 +1,6 @@
 # Development Timeline
 
-**Last updated:** 2026-11-10  
+**Last updated:** 2026-11-12  
 **Branch rule:** all development happens on `development`. `main` is locked by the "Protect main" ruleset and changes only after testing passes in the dev environment.  
 **Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
@@ -19,7 +19,7 @@
 
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| 00 | UI shell and design system | P0 | none | In progress (00a done) | Slice 00a: Kumo evaluation and decision D20. See Story 00 notes |
+| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b preflight underway) | 00a Kumo evaluation (D20); 00b preflight tests, keyboard focus, bundle CI gate. Visual shell awaits screenshot |
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
@@ -102,6 +102,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 
 | Date | Change |
 |---|---|
+| 2026-11-12 | Story 00b preflight: UI input helpers, 12 frontend tests, quick-search focus and bundle-size gate. Full shell remains screenshot-dependent. |
 | 2026-11-08 | Timeline created. Stories 00 and 01 marked Ready. |
 | 2026-11-10 | Story 04 planned: six slices (04a property contracts and configuration, 04b schema inspection and adoption, 04c schema change service and add property, 04d remaining operations and migration-controlled mode, 04e counters, versions and `updated_at`, 04f migration process and review). Plan and two owner questions are in the Story 04 notes. Story 00b stays blocked: the screenshots attached this session were the 00a Kumo demo renders, not the Cloudflare reference. |
 | 2026-11-11 | Story 04 slice 04a done: migration 0006, type registry for 19 types, property configuration routes, seed package version 2 (options, currency scale 0 with a 0 to 100,000,000 PKR limit, relation targets), Contracts §3 currency scale rule. 191 backend tests pass. Migration 0006 and the seed upgrade are not yet applied to the dev database. |
