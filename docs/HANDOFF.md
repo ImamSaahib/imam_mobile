@@ -2,7 +2,32 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-12 (after slice 04f; Story 04 complete with deferred items; latest commit on `development` is the one that contains this edit)
+**Last updated:** 2026-11-12 (Codex transition; status verified from GitHub; no story status changed)
+
+## 0. Codex transition — verified state and immediate task (2026-11-12)
+
+This section is a current handoff note. For the detailed platform design and sequence, continue reading the rest of this file and `docs/TIMELINE.md`. Do not assume work on an open pull request is already present in `development`.
+
+**Branches and work in review (verified on 2026-11-12):**
+- Repository: `ImamSaahib/imam_mobile` (private). `development` HEAD `11be4f9b332f1d4db14f0d94a034bd02b988b402`. `main` HEAD `f0d6ddfca00b7258b3268df81bbc7298aac6d996` (older production line). Never merge to or modify `main` as part of a development story.
+- [PR #3](https://github.com/ImamSaahib/imam_mobile/pull/3) from `feature/story-00b-frontend-preflight` to `development` is **open, unmerged**. Head: `f15a43d8076aa29fce8afaa523fc5933a6df0b3e`. It proposes 12 dependency-free frontend UI interaction tests, ⌘K/Ctrl+K search focus, a conservative 300 KiB gzip JS build gate, CI workflow changes and story documentation. These changes are **not** part of the `development` baseline.
+- [PR #3 GitHub Actions run](https://github.com/ImamSaahib/imam_mobile/actions/runs/43098394510) reports **failure**. The [check runs](https://github.com/ImamSaahib/imam_mobile/commit/f15a43d8076aa29fce8afaa523fc5933a6df0b3e/checks) show **Cloudflare Workers Builds: imam-mobile-api-dev failed**; Cloudflare Pages previews succeeded. The separate GitHub `frontend-build` and `worker-checks` jobs were still reported as queued on the last API read. A successful Pages preview is not evidence that all tests passed. The Cloudflare Worker failure cause is not yet established; check its build logs and settings before attributing it to the code.
+- [PR #1](https://github.com/ImamSaahib/imam_mobile/pull/1) is an older Admin Configuration Studio PR targeting `main`. Do not merge it into production accidentally.
+- GitHub REST returned `protected:false` for both `main` and `development`. The handoff previously asserted a "Protect main" ruleset; enforcement could not be confirmed. **Treat `main` as strictly read-only even if the UI permits a push.** Do not attempt to reconfigure protections without the owner's approval.
+
+**First task for Codex:**
+1. Open the repository on `development`. Read `docs/HANDOFF.md`, `docs/TIMELINE.md`, `docs/platform/README.md`, `docs/platform/ARCHITECTURE.md`, `docs/platform/DECISIONS.md`, `docs/platform/IMPLEMENTATION-CONTRACTS.md`, `docs/platform/UI-REFERENCE.md` and `docs/platform/stories/00-ui-shell-design-system.md`.
+2. Review PR #3's diff, then reproduce its frontend checks in a suitable local checkout. Determine why the GitHub Actions workflow and Cloudflare development Worker build are not green. Do not assume that a Worker build failure is due to frontend code; inspect build logs and Cloudflare's branch/build configuration. Fix only verifiable issues, on a feature branch targeting `development`, and rerun checks. Do not merge PR #3 until validation is conclusive.
+3. Once the preflight is healthy, continue **Story 00b**, one small reviewed slice at a time: test infrastructure, Kumo wrappers, accessible shell/navigation regions, the shell-owned context menu, component gallery, screenshots and measured bundle/network budgets. Respect D20 (Kumo and Phosphor) and the UI reference. The original private Cloudflare reference screenshot is **not in GitHub**; request it only when exact design measurements are needed. Never invent pixel values or mark Story 00 done without visual/functional evidence.
+4. Update the story's implementation notes and acceptance boxes, `docs/TIMELINE.md`, and this handoff at the end of each slice. Document tests run, failures, resource measurements, PR links and deferred work. Use PRs into `development`, no direct changes to `main`, no force pushes, no manual Cloudflare deploy or remote D1 migration, and no real business records in `AUTH_MODE=dev-open`.
+
+**Verification baseline (on a fresh `development` checkout):**
+```bash
+git switch development && git pull --ff-only
+(cd backend && npm ci && npm run check)
+(cd frontend && npm ci && npm run build)
+```
+The previously recorded backend baseline was 283 passing tests in 18 files; that count is historical, not freshly verified in this handoff. The `frontend npm run check` script exists only in unmerged PR #3. Do not describe it as a `development` script until merged.
 
 ## 1. What the project is
 
@@ -10,7 +35,7 @@ An environment for building, customizing and extending business modules (Service
 
 ## 2. Rules from the owner (do not break)
 
-1. All development happens on the `development` branch. `main` must not change until testing passes in the dev environment. The GitHub ruleset "Protect main" locks `main` completely.
+1. All implementation targets `development` through reviewed PRs. `main` must not change until testing passes and the owner explicitly approves production promotion. Do not rely on a protection ruleset being active: GitHub currently reports `protected:false` for `main`.
 2. Stories are tracked as files in GitHub, not GitHub issues. Update the story's `Status` line, its acceptance boxes, its **Implementation notes**, and `docs/TIMELINE.md` in the same commit as the work.
 3. Tracking, reviews and evaluations are written into the story notes, never kept only in a model's memory.
 4. Authentication and authorization come after the UI/UX phase (Story 11). Until then a placeholder policy applies (Decisions D7) and environments hold test data only.
@@ -36,6 +61,8 @@ An environment for building, customizing and extending business modules (Service
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
+
+**Immediate Codex priority:** Verify the failed / pending CI checks on PR #3 before a merge, then resume Story 00b on development. See §0 for the exact links and safety rules. The screenshot-dependent visual implementation remains blocked, but reproducible preflight tests can be investigated now.
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 
@@ -90,6 +117,8 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 9. Open items
 
+- PR #3 is unmerged; the Cloudflare development Worker build check failed, and the cause needs investigation. Other GitHub test jobs were still queued in the last check read.
+- GitHub branch protection appears disabled in REST output; manually enforce no changes to `main` and ask the owner before modifying repository protection settings.
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
@@ -99,4 +128,4 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 10. Updating this file
 
-Update sections 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE.
+Update sections 0, 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE. Keep the PR/CI statements current; do not treat planned or unmerged work as complete.
