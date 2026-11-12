@@ -2,15 +2,15 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-12 (Codex transition; status verified from GitHub; no story status changed)
+**Last updated:** 2026-11-13 (development-only workflow and branch consolidation)
 
 ## 0. Current development entry point (2026-11-12)
 
-PR #11 merged into development at b20036cf838e86762d312bb1014e78989219d96f. Shell, navigator and table remain fixture-only at /__ui; legacy screens and production are unchanged.
+All completed feature work is consolidated into development, including PR #12 at b00b6dc96c2350c3d7dc04b73e988219ad01cae5. Redundant feature/docs/fix branches were ancestry-checked before deletion. The old Admin Studio PR #1 was closed because its branch is already included in development; main was not changed.
 
-PR #12 adds the shell-owned context menu and lifecycle/focus handling. Baseline: 32 unit/component tests, seven browser scenarios, TypeScript and 69.1 KiB gzip gate. Canonical acceptance evidence is in Story 00.
+Work directly on development from now on. Use cohesive commits, targeted checks for changed behavior, and one essential regression/build/browser checkpoint when a slice is stable. Do not rerun unchanged passing suites for documentation or branch cleanup. Keep existing automated gates; never skip a failing required check.
 
-Next: remaining shared overlay/state primitives, then visual calibration and runtime integration. Story 00 remains open. Batch related implementation/tests; avoid duplicate successful checks and duplicated documentation.
+Story 00: shell/navigation/table/context menu are implemented and tested in the development-only gallery. Remaining overlays/states, exact visual calibration, complete screenshot coverage and runtime integration are open. Story 01: foundation backend slices are implemented; published-metadata shell integration and final deployed acceptance remain open. See story files for evidence.
 
 ## 1. What the project is
 
@@ -28,7 +28,7 @@ Use cohesive, reviewable slices that complete a usable behavior, rather than spl
 
 ## 2. Rules from the owner (do not break)
 
-1. All implementation targets `development` through reviewed PRs. `main` must not change until testing passes and the owner explicitly approves production promotion. Do not rely on a protection ruleset being active: GitHub currently reports `protected:false` for `main`.
+1. Owner direction (2026-11-13): work and commit directly on `development`; do not create routine feature branches or PRs. `main` must not change until testing passes and the owner explicitly approves production promotion. Do not rely on a protection ruleset being active: GitHub currently reports `protected:false` for `main`.
 2. Stories are tracked as files in GitHub, not GitHub issues. Update the story's `Status` line, its acceptance boxes, its **Implementation notes**, and `docs/TIMELINE.md` in the same commit as the work.
 3. Tracking, reviews and evaluations are written into the story notes, never kept only in a model's memory.
 4. Authentication and authorization come after the UI/UX phase (Story 11). Until then a placeholder policy applies (Decisions D7) and environments hold test data only.
@@ -55,7 +55,7 @@ Use cohesive, reviewable slices that complete a usable behavior, rather than spl
 
 ## 4. Next step
 
-**Immediate priority:** Complete PR #12 review, then remaining shared overlay/state primitives. The preflight build blocker is resolved.
+**Immediate priority:** Continue remaining shared overlay/state primitives directly on development. The preflight build blocker is resolved.
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 

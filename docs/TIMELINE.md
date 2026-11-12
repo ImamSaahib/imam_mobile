@@ -167,3 +167,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Started shell-owned context-menu prototype after PR #11 merged. See Story 00 evidence; interaction/lifecycle review remains open.
 
 2026-11-13: Finished context-menu focus/lifecycle guards and input parity coverage in PR #12. Validation is batched per cohesive slice; detailed evidence lives in Story 00. Next: remaining shared overlays/states.
+
+2026-11-13: Merged PR #12; consolidated all feature work into development, verified branch ancestry, removed redundant branches and closed already-incorporated Admin Studio PR #1 without changing main. Owner directs future work straight on development with essential batched validation (Decision C10).

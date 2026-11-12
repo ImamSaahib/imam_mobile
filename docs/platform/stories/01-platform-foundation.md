@@ -67,7 +67,7 @@ Every metadata record must have an explicit application/global scope. Include ve
 - [x] Every API route declares its required permission and calls the placeholder `authorize` function. Enforcement is deferred to Story 11. *(Slice 01b: 29 routes in `backend/src/platform/policy.ts` after 01c-2, with a test that fails when a route has no entry.)*
 - [x] `dev-open` is refused outside development, and the health check fails if it is active elsewhere. *(Slice 01b.)*
 - [x] Baseline tests for current Imam Mobile workflows exist and pass before any workflow moves onto metadata. *(Worker routes: 35 tests, slice 01a.)*
-- [x] The test runner and TypeScript build are in place. *(Worker side done in slice 01a. Frontend test tooling is still open, see notes.)*
+- [x] The test runner and TypeScript build are in place. *(Worker side done in slice 01a. Frontend Vitest/Testing Library and Playwright tooling is now implemented through Story 00.)*
 - [x] The legacy admin code and `custom_field_values` inventory and plan are recorded. *(Slice 01b: [legacy-inventory.md](../legacy-inventory.md).)*
 - [x] Actor columns and the audit event shape exist with a placeholder actor. *(Slice 01b: migration 0003.)*
 - [x] The owner's confirmation that production holds no real data is recorded. *(Decisions C4, and the legacy inventory.)*
@@ -96,11 +96,11 @@ Every seeded configuration item must carry a stable seed key, package owner, own
 
 ## Additional acceptance criteria
 
-- [ ] Seed items have stable keys and explicit seed/client ownership.
-- [ ] Upgrade preview and three-way conflict detection are defined before upgrade automation is considered complete.
+- [x] Seed items have stable keys and explicit seed/client ownership. *(01c-1/01c-2 implementation and test evidence; reconciled 2026-11-13.)*
+- [x] Upgrade preview and three-way conflict detection are defined before upgrade automation is considered complete. *(01c-1/01c-2 implementation and test evidence; reconciled 2026-11-13.)*
 - [ ] Repeated install and interrupted/retried application are safe.
-- [ ] Client-owned items and business records are never overwritten by upstream seed updates.
-- [ ] Seed reset-to-upstream-default is an explicit, auditable operation.
+- [x] Client-owned items and business records are never overwritten by upstream seed updates. *(01c-1/01c-2 implementation and test evidence; reconciled 2026-11-13.)*
+- [x] Seed reset-to-upstream-default is an explicit, auditable operation. *(01c-1/01c-2 implementation and test evidence; reconciled 2026-11-13.)*
 
 ## Implementation notes
 
@@ -265,3 +265,7 @@ Findings, evaluations and evidence are recorded here as the work happens, so the
 - Banner and calm message in the interface: the Worker side is done; the visible banner arrives with the shell in Story 00b.
 
 **Before deploying to the dev Worker.** Apply migration `0005` as well (`usage_daily`, `data_source_versions`), after `0003` and `0004`. Without `usage_daily` the governor cannot store its estimate and logs nothing, but requests still work.
+
+### Consolidated status — 2026-11-13
+
+Backend slices 01a–01d are implemented: metadata/identity/bootstrap, versioned seed install and three-way upgrade/reset, schema compatibility, placeholder authorization/audit, resource metering/governor/rate limits and static-only service-worker safeguards. Slice 01c-2 evidence above covers the additional seed acceptance requirements; the corresponding historical checklist entries are now reconciled. Interrupted/retried operation acceptance remains open until failure/recovery evidence is explicitly verified. Final closure still requires published-metadata shell integration (Story 02), integrated legacy-workflow preservation evidence and final development migration/deployment acceptance, including resolving the recorded seed-version confirmation. Do not mark the story complete from backend tests alone. Production remains outside this work.
