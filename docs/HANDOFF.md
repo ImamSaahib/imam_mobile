@@ -2,7 +2,15 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-12 (Story 00b preflight in review, Story 04 still complete with deferred items)
+**Last updated:** 2026-11-12 (Codex transition; status verified from GitHub; no story status changed)
+
+## 0. Current development entry point (2026-11-12)
+
+PR #7 merged into development at 6806ad26968fa03788fcb56a61f5a4e5671d45d1, including PR #3/#5 preflight commits, rendered component tests and the Worker preview configuration fix. All five remote checks passed on ef546c6 before merge. Backend: 283 tests; frontend: 12 helper + 4 rendered tests, 69.0 KiB gzip. The missing previews configuration caused the old Worker failures; explicit test-only dev bindings fixed it. No manual deploy or remote migration ran.
+
+PR #4 transition guidance and PR #6 owner direction are incorporated into the current UI feature branch. Main remains read-only and production approval is still required; do not assume GitHub branch protection is enabled. The original Cloudflare reference is available privately; measure it without committing account details.
+
+Next: shared Kumo wrappers under platform/ui with Phosphor icons and component tests, then measured shell regions and the shell-owned context menu. Story 00 is not complete. Use npm ci and npm run check in both backend and frontend. Historical investigation notes below describe prior states, not current blockers.
 
 ## 1. What the project is
 
@@ -16,7 +24,7 @@ The owner will test the integrated application after Phase 1 development is comp
 
 ## 2. Rules from the owner (do not break)
 
-1. All development happens on the `development` branch. `main` must not change until testing passes in the dev environment. The GitHub ruleset "Protect main" locks `main` completely.
+1. All implementation targets `development` through reviewed PRs. `main` must not change until testing passes and the owner explicitly approves production promotion. Do not rely on a protection ruleset being active: GitHub currently reports `protected:false` for `main`.
 2. Stories are tracked as files in GitHub, not GitHub issues. Update the story's `Status` line, its acceptance boxes, its **Implementation notes**, and `docs/TIMELINE.md` in the same commit as the work.
 3. Tracking, reviews and evaluations are written into the story notes, never kept only in a model's memory.
 4. Authentication and authorization come after the UI/UX phase (Story 11). Until then a placeholder policy applies (Decisions D7) and environments hold test data only.
@@ -42,6 +50,8 @@ The owner will test the integrated application after Phase 1 development is comp
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
+
+**Immediate priority:** Continue Story 00b shared components and measured shell; the preflight build blocker is resolved.
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 
@@ -96,6 +106,8 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 9. Open items
 
+- Complete shared shell, visual/browser evidence and remaining Story 00 acceptance criteria.
+- GitHub branch protection appears disabled in REST output; manually enforce no changes to `main` and ask the owner before modifying repository protection settings.
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
@@ -104,6 +116,8 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 - 15 older commits on `development` show as Unverified on GitHub because they are authored under the owner's noreply address. Fixing that needs a history rewrite and force-push. The owner has not asked for it.
 
 ## 10. Updating this file
+
+Update sections 0, 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE. Keep the PR/CI statements current; do not treat planned or unmerged work as complete.
 
 Update sections 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE.
 
