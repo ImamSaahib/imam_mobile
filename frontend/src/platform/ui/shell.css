@@ -42,3 +42,6 @@
 .im-context-action { padding: calc(var(--spacing) * 3); min-block-size: 44px; cursor: pointer; }
 .im-context-action[data-highlighted] { background: var(--color-kumo-tint); outline: 2px solid var(--color-kumo-focus); }
 .im-context-action[data-disabled] { color: var(--im-muted); cursor: default; }
+
+.im-confirmation-dialog { padding: var(--im-gap); }
+.im-confirmation-dialog p { margin-block: var(--im-gap); }

@@ -193,3 +193,7 @@ PR #12 targets development. Story 00 remains open: exact visual calibration, ful
 ### Consolidated status — 2026-11-13
 
 All completed slices through context-menu lifecycle handling are merged into development. Implemented: Kumo/Phosphor evaluation, typed primitives, responsive fixture shell/navigation, application/theme menus, table/search/sort/columns/cursor controls and states, shell-owned context menu. Validation baseline: 32 unit/component tests, seven browser scenarios, TypeScript/build and 69.1 KiB gzip gate; last feature commit passed all five remote checks. Still open: remaining shared overlay/state primitives, exact measured visual tokens, full primitive states/screenshot baselines, physical touch validation, runtime integration and first-load request budget. Story is not complete; continue directly on development under C10.
+
+### 2026-11-13 — Shared confirmation dialog
+
+Added a typed Kumo confirmation dialog with caller-supplied action, pending-state duplicate/dismissal prevention, plain failure feedback and retry. Gallery reset action exercises it without business writes. Validation: 33 unit/component tests, TypeScript, build and unchanged 69.1 KiB budget pass; targeted Chromium scenario verifies cancel/focus restoration and confirmation in dark mode. Existing unrelated browser cases are left to the final CI gate rather than rerun locally. No backend/schema changes. Recovery: revert this slice. Story 00 remains open; next shared pieces are toast/side-panel/state coverage, followed by visual calibration and runtime integration.

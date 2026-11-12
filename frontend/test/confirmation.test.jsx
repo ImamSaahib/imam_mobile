@@ -1,0 +1,21 @@
+import React from 'react';
+import { it, expect, vi } from 'vitest';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ConfirmationDialog } from '../src/platform/ui/ConfirmationDialog';
+it('blocks repeated submission and dismissal while pending; errors allow retry', async () => {
+ const user = userEvent.setup(); let reject;
+ const action = vi.fn().mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; })).mockResolvedValueOnce(undefined);
+ render(<ConfirmationDialog trigger="Open" title="Confirm reset" description="Fixture only" confirmLabel="Confirm" onConfirm={action} />);
+ await user.click(screen.getByRole('button', { name: 'Open' }));
+ await user.click(screen.getByRole('button', { name: 'Confirm', exact: true }));
+ await user.click(screen.getByRole('button', { name: /Confirm/ }));
+ await user.keyboard('{Escape}');
+ expect(action).toHaveBeenCalledTimes(1);
+ expect(screen.getByRole('alertdialog')).toBeTruthy();
+ await act(async () => reject(new Error('private server detail')));
+ expect(screen.getByRole('alert').textContent).not.toContain('private');
+ await user.click(screen.getByRole('button', { name: 'Confirm', exact: true }));
+ await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+ expect(action).toHaveBeenCalledTimes(2);
+});

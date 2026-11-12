@@ -5,6 +5,7 @@ import { Button, IconButton } from './Button';
 import { TextInput } from './TextInput';
 import { ContextTarget } from './ContextMenu';
 import { Shell } from './Shell';
+import { ConfirmationDialog } from './ConfirmationDialog';
 import { TableFixture } from './TableFixture';
 
 /** Development-only fixture, not a metadata runtime or measured shell. */
@@ -29,7 +30,7 @@ export default function Gallery() {
     <section className="im-gallery-controls" aria-label="Buttons">
       <Button disabled>Disabled action</Button>
       <Button loading>Loading action</Button>
-      <Button variant="destructive">Destructive action</Button>
+      <ConfirmationDialog trigger="Destructive action" title="Reset fixture?" description="This clears the fixture action count only." confirmLabel="Reset fixture" onConfirm={() => setRefreshes(0)} />
       <IconButton aria-label="Refresh" icon={ArrowClockwiseIcon} onClick={() => setRefreshes(n => n + 1)} />
       <p role="status" aria-label="Action count">Actions: {refreshes}</p>
     </section>

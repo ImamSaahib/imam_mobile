@@ -168,3 +168,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Merged PR #12; consolidated all feature work into development, verified branch ancestry, removed redundant branches and closed already-incorporated Admin Studio PR #1 without changing main. Owner directs future work straight on development with essential batched validation (Decision C10).
 
 2026-11-13: Documentation navigation consolidated; stale PR/screenshot/tooling guidance corrected. Architecture/contracts and historical acceptance evidence preserved.
+
+2026-11-13: Added reusable confirmation dialog with asynchronous action/error handling; 33 component/unit tests and targeted browser validation pass. Story 00 evidence records scope and limitations.
