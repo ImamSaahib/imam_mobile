@@ -17,14 +17,23 @@ export function ShellContextMenu({ children, enabled = false }: { children: Reac
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const origin = useRef<HTMLElement | null>(null);
   useEffect(() => { if (!enabled) setOpen(false); }, [enabled]);
+  useEffect(() => {
+    if (!open || !container) return;
+    const observer = new MutationObserver(() => {
+      if (!origin.current?.isConnected) setOpen(false);
+    });
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [open, container]);
   function prepare(event: SyntheticEvent) {
+    if (event.target instanceof Element && event.target.closest('input, textarea, [contenteditable="true"]')) return false;
     const target = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-context-target]') : null;
     const items = target ? registry.get(target.dataset.contextTarget!) : undefined;
     if (!enabled || !target || !items?.length) { return false; }
     origin.current = target; setActions(items); return true;
   }
-  return <Registry.Provider value={registry}><div ref={setContainer}>
-    <ContextMenu.Root open={open} onOpenChange={setOpen} disabled={!enabled}>
+  return <Registry.Provider value={registry}><div ref={setContainer} tabIndex={-1}>
+    <ContextMenu.Root open={open} onOpenChange={value => setOpen(value && enabled && Boolean(origin.current?.isConnected))} disabled={!enabled}>
       <ContextMenu.Trigger onContextMenu={event => { if (!prepare(event)) event.preventBaseUIHandler(); }} onTouchStart={event => { if (!prepare(event)) event.preventBaseUIHandler(); }} onKeyDown={event => {
         if (!contextMenuKey(event) || !prepare(event)) return;
         event.preventDefault();
@@ -32,8 +41,8 @@ export function ShellContextMenu({ children, enabled = false }: { children: Reac
         target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: rect.x, clientY: rect.y + Math.min(rect.height, 44) }));
       }}>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal container={container}><ContextMenu.Positioner className="im-context-positioner" sideOffset={4}>
-        <ContextMenu.Popup className="im-context-menu" aria-label="Element actions">
-          {actions.map(action => <ContextMenu.Item key={action.id} disabled={action.disabled} className="im-context-action" onClick={() => { if (!action.disabled) action.run(); }}>{action.label}</ContextMenu.Item>)}
+        <ContextMenu.Popup className="im-context-menu" aria-label="Element actions" finalFocus={() => origin.current?.isConnected ? origin.current : container}>
+          {actions.map(action => <ContextMenu.Item key={action.id} disabled={action.disabled} className="im-context-action" onClick={() => { const current = origin.current?.isConnected ? registry.get(origin.current.dataset.contextTarget!)?.find(item => item.id === action.id) : undefined; if (enabled && current && !current.disabled) current.run(); }}>{action.label}</ContextMenu.Item>)}
         </ContextMenu.Popup>
       </ContextMenu.Positioner></ContextMenu.Portal>
     </ContextMenu.Root>
