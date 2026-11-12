@@ -169,3 +169,13 @@ Validation: 26 helper/component tests, strict TypeScript, production build and 6
 Tokens: semantic aliases reference Kumo background, border, text, spacing, typography. Navigator width 256px and breakpoint 768px use documented Kumo defaults; 44px minimum navigation/control targets come from UI-REFERENCE accessibility requirements. Exact screenshot scale and token calibration remain open. Dark states use Kumo semantics. No Cloudflare assets used.
 
 Acceptance remains partial: drawer, shortcut and shell regions are verified in the fixture; production runtime integration, all-primitive states/screenshots, table controls, context-menu parity, request budget and exact visual matching remain open. Next cohesive slice: table/search/column controls with fixture behavior. Recovery: revert this shell slice; no database rollback.
+
+### Slice 00b — controlled table and fixture interactions (2026-11-12)
+
+Added typed DataTable with Kumo table/popover/menu primitives: search/refresh, tri-state sorting with aria-sort, column visibility/reordering (at least one stays visible), link-style names, identifier truncation, row open action, summary and first/previous/next/last controls. Page labels and opaque cursor tokens come from the caller; no arbitrary page jumping. Added distinct loading, error/retry, empty and no-match states. Shared useTableResource debounces and aborts requests and ignores late responses even if a loader ignores cancellation. Callers provide stable loader/request identities.
+
+The gallery loader is an in-memory three-record fixture, with cursor-style callbacks only; it does not implement a runtime database adapter. Runtime loaders must implement Contract 10.3 keyset/reverse queries and derive approximate page labels from the cursor trail. No metadata/API dependency, persisted view settings, filtering language or business writes are introduced.
+
+Evidence: 32 helper/component tests, four Chromium scenarios, strict TypeScript, production build and 69.1 KiB gzip gate. New tests cover sort cycles, search resetting pagination, last/previous navigation, column reorder/hiding, row actions, loading/error/retry/empty states and out-of-order responses. Browser checks cover mobile horizontal containment and dark-mode table interactions; screenshots inspected. Production bundle unchanged because the gallery is development-only. No backend changes, D1 calls, migrations or manual deploys.
+
+Story 00 stays open: exact measured tokens, all-primitive screenshot baselines and states, shell context-menu parity, remaining primitives and runtime integration are pending. Next cohesive slice: central context-menu service and remaining overlay/state primitives. Recovery: revert the table slice; no database rollback.

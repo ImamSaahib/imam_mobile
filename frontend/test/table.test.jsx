@@ -1,0 +1,87 @@
+import React from 'react';
+import { expect, it, vi } from 'vitest';
+import { act, render, renderHook, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TableFixture } from '../src/platform/ui/TableFixture';
+import { DataTable } from '../src/platform/ui/DataTable';
+import { useTableResource } from '../src/platform/ui/useTableResource';
+
+it('cycles sorting with semantic headers and searches from the first page', async () => {
+  const user = userEvent.setup(); render(<TableFixture />);
+  await screen.findByText('Showing 1–2 of 3');
+  const sort = screen.getByRole('button', { name: 'Price', exact: true });
+  await user.click(sort);
+  await waitFor(() => expect(sort.closest('th').getAttribute('aria-sort')).toBe('ascending'));
+  await screen.findByText('Showing 1–2 of 3');
+  await user.click(sort);
+  expect(sort.closest('th').getAttribute('aria-sort')).toBe('descending');
+  await screen.findByText('Pixel 8');
+  await user.click(sort);
+  expect(sort.closest('th').getAttribute('aria-sort')).toBe('none');
+  await screen.findByText('Galaxy A15');
+  await user.click(screen.getByRole('button', { name: 'Next', exact: true }));
+  await screen.findByText('Showing 3–3 of 3');
+  expect(screen.getByLabelText('Current page').textContent).toBe('Page 2');
+  await user.type(screen.getByRole('textbox', { name: 'Search Devices' }), 'Samsung');
+  await screen.findByText('Showing 1–1 of 1');
+  expect(screen.getByRole('button', { name: 'Previous', exact: true }).disabled).toBe(true);
+});
+it('supports last/previous cursor navigation and opens a row action', async () => {
+  const user = userEvent.setup(); render(<TableFixture />);
+  await screen.findByText('Showing 1–2 of 3');
+  await user.click(screen.getByRole('button', { name: 'Last', exact: true }));
+  await screen.findByText('Showing 3–3 of 3');
+  expect(screen.getByRole('button', { name: 'Next', exact: true }).disabled).toBe(true);
+  await user.click(screen.getByRole('button', { name: 'Previous', exact: true }));
+  await screen.findByText('Showing 1–2 of 3');
+  await user.click(screen.getByRole('button', { name: 'Actions for Galaxy A15' }));
+  await user.click(screen.getByRole('menuitem', { name: 'Open record' }));
+  expect(screen.getByText('Opened fixture: Galaxy A15')).toBeTruthy();
+});
+it('shows no results without retaining stale rows', async () => {
+  const user = userEvent.setup(); render(<TableFixture />);
+  await screen.findByText('Galaxy A15');
+  await user.type(screen.getByRole('textbox', { name: 'Search Devices' }), 'missing');
+  expect(screen.queryByText('Galaxy A15')).toBeNull();
+  await screen.findByText('No records match your search.');
+});
+it('distinguishes empty, loading and error states and retries through the caller', async () => {
+  const retry = vi.fn();
+  const props = { label: 'Records', columns: [{ key: 'name', label: 'Name', render: row => row.name }], hidden: [], onHiddenChange() {}, onColumnsChange() {}, rowKey: row => row.id, rowLabel: row => row.name, search: '', onSearch() {}, sort: null, onSort() {}, onRefresh: retry, onPage() {}, onOpen() {} };
+  const { rerender } = render(<DataTable {...props} state={{ status: 'ready', page: { rows: [], summary: 'Showing 0 of 0', previous: null, next: null } }} />);
+  expect(screen.getByText('No records yet.')).toBeTruthy();
+  rerender(<DataTable {...props} state={{ status: 'loading' }} />);
+  expect(screen.getByRole('table').getAttribute('aria-busy')).toBe('true');
+  expect(screen.getByRole('button', { name: 'Refresh records' }).disabled).toBe(true);
+  rerender(<DataTable {...props} state={{ status: 'error' }} />);
+  expect(screen.getByRole('alert').textContent).toBe('Could not load records.');
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  expect(retry).toHaveBeenCalledTimes(1);
+});
+it('hides and reorders columns and retains at least one visible column', async () => {
+  const user = userEvent.setup(); render(<TableFixture />);
+  await user.click(screen.getByRole('button', { name: 'Column settings' }));
+  await user.click(screen.getByRole('checkbox', { name: 'IMEI' }));
+  expect(screen.queryByRole('columnheader', { name: 'IMEI' })).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'Move Price earlier' }));
+  const headers = within(screen.getByRole('table')).getAllByRole('columnheader');
+  expect(headers[2].textContent).toBe('Price');
+  for (const name of ['Company', 'Price', 'Status']) await user.click(screen.getByRole('checkbox', { name }));
+  expect(screen.getByRole('checkbox', { name: 'Model' }).disabled).toBe(true);
+});
+it('debounces requests, aborts old work and rejects late responses even when the loader ignores abort', async () => {
+  const pending = [];
+  const load = vi.fn((request, signal) => new Promise(resolve => pending.push({ request, signal, resolve })));
+  const first = { search: 'a', sort: null, cursor: null, revision: 0 };
+  const { result, rerender, unmount } = renderHook(({ request }) => useTableResource(load, request, 10), { initialProps: { request: first } });
+  rerender({ request: { ...first, search: 'ab' } });
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+  expect(pending[0].request.search).toBe('ab');
+  rerender({ request: { ...first, search: 'abc' } });
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+  expect(pending[0].signal.aborted).toBe(true);
+  await act(async () => pending[1].resolve({ rows: ['new'], summary: 'new', previous: null, next: null }));
+  await act(async () => pending[0].resolve({ rows: ['old'], summary: 'old', previous: null, next: null }));
+  expect(result.current.page.rows).toEqual(['new']);
+  unmount(); expect(pending[1].signal.aborted).toBe(true);
+});
