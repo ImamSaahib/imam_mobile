@@ -51,14 +51,16 @@ Overdue status is currently an MVP estimate: a customer must have a positive bal
 
 ## Verification
 
-Run `npm run check` for interaction unit tests, Vite build, and a conservative 300 KiB gzip JavaScript limit. Browser and screenshot tests remain pending.
+Run `npm run check` for interaction unit tests, Vite build, and a conservative 300 KiB gzip JavaScript limit. Run `npm run test:browser` for shell browser interactions and screenshot artifacts; first install Chromium with `npx playwright install chromium`. CI runs both checks and retains artifacts for seven days.
 
 ## Planned next phase
 
 Finish Story 00b (shell, Kumo wrappers and measured design tokens), then build metadata-driven navigation, lists, forms and configuration. Authentication follows the UI phase.
 
-New platform helpers use TypeScript (D3). `npm test` compiles `src/platform` with strict checking into ignored `.test-build/` and runs the interaction tests against that output. `npm run typecheck` checks without emitting files. Component and browser tests remain pending.
+New platform helpers use TypeScript (D3). `npm test` compiles `src/platform` with strict checking into ignored `.test-build/` and runs the interaction tests against that output. `npm run typecheck` checks without emitting files. Rendered components and browser behavior have separate test suites.
 
 Component tests: `npm run test:components` runs Vitest with Testing Library and jsdom against fixture-only requests. `npm test` runs helper and component suites. Use Node 22.22.2+, 24.15.0+ or 26+ (jsdom requirement). These DOM tests do not replace browser screenshots or responsive/accessibility verification.
 
 Shared UI wrappers live in `src/platform/ui`; screens must use wrappers rather than importing Kumo. During `npm run dev`, open `/__ui` for the functional primitive gallery and theme switch. It is removed from production builds. The gallery is not yet a measured visual reference or complete component catalog.
+
+Browser tests use only the `/__ui` fixture, block API calls and service workers, and save screenshots/traces under ignored `test-results/`. To use an installed browser locally, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable; CI uses pinned Playwright Chromium. Screenshots are review artifacts, not approved pixel baselines.

@@ -155,3 +155,7 @@ PR #7 merged; #4/#6 documentation consolidated on the primitives branch. Typed B
 ### 2026-11-12 — Story 00b fixture navigator
 
 PR #8 merged into development with all five checks passing, including #4/#6 docs and first Kumo primitives. Next bounded slice adds fixture navigation, filtering, callbacks and keyboard interactions. Frontend check passes: 26 tests, TypeScript, build and 69.0 KiB gzip budget. No backend/database changes. Story 00 remains open; responsive fixture shell and browser/reference validation follow.
+
+### 2026-11-12 — Responsive fixture shell and faster delivery workflow
+
+PR #9 merged. Added application/theme menus, responsive modal navigation, page regions and three browser scenarios; 26 existing frontend tests and build/69.1 KiB gate pass. Detailed evidence and open acceptance remain in Story 00. Simplified HANDOFF and recorded cohesive slices, targeted iteration tests and concise linked docs per owner direction. Next: table/search/column controls.

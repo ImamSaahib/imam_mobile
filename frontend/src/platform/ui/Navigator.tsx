@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
+import React, { useEffect, useId, useRef, useState, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { Sidebar } from '@cloudflare/kumo/components/sidebar';
 import { CaretDownIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { TextInput } from './TextInput';
@@ -6,10 +6,10 @@ import { focusQuickSearch } from '../ui-interactions';
 
 type Module = { id: string; label: string; icon?: ComponentType<{ className?: string }>; badge?: string };
 export type NavigationGroup = { id: string; label: string; expandable?: boolean; modules: readonly Module[] };
-type Props = { applicationName: string; groups: readonly NavigationGroup[]; selectedId: string; onSelect: (id: string) => void };
+type Props = { applicationSwitcher?: ReactNode; applicationName: string; groups: readonly NavigationGroup[]; selectedId: string; onSelect: (id: string) => void };
 
 /** Fixture/data-driven presentation only. The owning shell supplies routing and permissions. */
-export function Navigator({ applicationName, groups, selectedId, onSelect }: Props) {
+export function Navigator({ applicationName, applicationSwitcher, groups, selectedId, onSelect }: Props) {
   const [query, setQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const search = useRef<HTMLDivElement>(null);
@@ -33,11 +33,11 @@ export function Navigator({ applicationName, groups, selectedId, onSelect }: Pro
       : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
     buttons[next]?.focus();
   }
-  return <nav aria-label={`${applicationName} navigation`} onKeyDown={moveFocus}>
+  return <nav className="im-navigator group/sidebar" data-state="expanded" aria-label={`${applicationName} navigation`} onKeyDown={moveFocus}>
     <Sidebar.Header>
-      <strong>{applicationName}</strong>
+      {applicationSwitcher ?? <strong>{applicationName}</strong>}
       <div ref={search}><TextInput aria-label="Quick search" placeholder="Search menus and modules" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => {
-        if (event.key === 'Escape') { event.preventDefault(); setQuery(''); }
+        if (event.key === 'Escape') { if (query) { event.preventDefault(); event.stopPropagation(); setQuery(''); } }
       }} /></div>
       <small>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K'}</small>
     </Sidebar.Header>
