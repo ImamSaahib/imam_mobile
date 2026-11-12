@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (slice 00a: evaluation done; 00b preflight under review; tokens and shell remaining)
+**Status:** In progress (slice 00a: evaluation done; 00b preflight/primitives/navigator merged; responsive fixture shell under development)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -159,3 +159,13 @@ Added typed shared Navigator with caller-provided application name, groups/modul
 Verification: frontend npm run check passes: strict TypeScript, 12 helper + 14 rendered tests (26 total), production build and 69.0 KiB gzip gate. Tests cover callbacks, selected state, group/module filtering, collapse restoration, empty results, keyboard movement, shortcuts and listener cleanup. jsdom explicitly stubs desktop matchMedia; no responsive/browser evidence is claimed. Legacy App tests pass. No backend/schema changes or D1 operations.
 
 Story 00 remains open. Kumo sizing is provisional, not measured reference fidelity. Next: responsive fixture shell with application switcher/top bar, browser/reference validation, remaining primitives and context-menu service. Navigator remains development-only. Recovery: revert this slice.
+
+### Slice 00b — responsive fixture shell (2026-11-12)
+
+Built a typed Shell with caller-supplied application/module selection, page header/action slot, application switcher, Super Menu theme/release controls, desktop navigator, modal mobile drawer and hidden reserved panel. Configuration is explicitly unavailable until its story. Kumo Dialog provides modal focus containment/restoration; menu portals inherit the shell theme. Button now forwards refs for composed triggers. Gallery styles and service-worker registration are isolated from legacy screens.
+
+Validation: 26 helper/component tests, strict TypeScript, production build and 69.1 KiB gzip JS gate; 3 Playwright Chromium scenarios cover light/dark desktop menus and selection, shortcuts, mobile focus cycling, Escape/search clearing, close/selection focus restoration, reduced-motion mode and viewport resize. Screenshots inspected for light/dark and mobile layout; browser testing caught and fixed centered-dialog translation, clipped header content and missing menu group context. CI now runs the browser suite and retains screenshots/traces for seven days. Artifacts are review evidence, not approved pixel-diff baselines. No backend changes or D1 operations.
+
+Tokens: semantic aliases reference Kumo background, border, text, spacing, typography. Navigator width 256px and breakpoint 768px use documented Kumo defaults; 44px minimum navigation/control targets come from UI-REFERENCE accessibility requirements. Exact screenshot scale and token calibration remain open. Dark states use Kumo semantics. No Cloudflare assets used.
+
+Acceptance remains partial: drawer, shortcut and shell regions are verified in the fixture; production runtime integration, all-primitive states/screenshots, table controls, context-menu parity, request budget and exact visual matching remain open. Next cohesive slice: table/search/column controls with fixture behavior. Recovery: revert this shell slice; no database rollback.
