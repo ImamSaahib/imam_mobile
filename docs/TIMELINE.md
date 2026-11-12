@@ -123,3 +123,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 ### 2026-11-12 — Story 00b component-test baseline
 
 Added Vitest/Testing Library rendered-App regressions to the frontend check command: 12 helper tests + 4 component tests pass, build passes, JS remains 69.0 KiB gzip. PR #5 GitHub checks now pass; Cloudflare Worker build still fails and build-log access returns 403 with Wrangler OAuth. Owner is configuring Workers CI Read. Original visual reference received privately; measurements remain pending. Story 00 remains in progress.
+
+### 2026-11-12 — Confirmed preview build fix
+
+Worker build failed on missing previews configuration, not frontend compilation. Added explicit preview vars and shared test-only dev D1 binding, plus CI target guard. Build-log access resolved. Await normal Cloudflare PR build verification; no manual deployment or migration.

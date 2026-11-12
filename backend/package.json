@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run check:preview && npm run typecheck && npm test",
+    "check:preview": "node scripts/check-preview-config.mjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.6.0",

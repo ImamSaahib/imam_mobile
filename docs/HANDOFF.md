@@ -118,3 +118,11 @@ Validation: 12 helper tests and 4 rendered tests passed; production build and 69
 Deployment investigation: PR #5 GitHub frontend-build and worker-checks passed on commit 753a449; both Pages previews passed. Worker build still failed. Wrangler deployment-history reads succeed, but the documented Cloudflare Builds detail/log API returns HTTP 403/code 12004 with Wrangler OAuth. Owner is arranging Workers CI Read access. No build cause is asserted and PR #3 remains unmerged. The original visual reference was received privately; the screenshot blocker is resolved, measurements remain pending (direction recorded in PR #6).
 
 Acceptance: Story 00 remains in progress. These component tests do not verify screenshot appearance, responsive layout, all legacy workflows or mouse/keyboard/touch context-menu parity. Next bounded slice: shared Kumo wrappers and their interaction tests, followed by measured shell regions; complete deployment diagnostics when access is ready.
+
+### Worker preview build fix — 2026-11-12
+
+Confirmed from Cloudflare build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c: dependency installation succeeded, then npx wrangler preview failed because wrangler.toml lacked previews vars and a D1 binding. Build-log access is now working through a private API credential; no credential is stored in Git.
+
+Added explicit preview development vars and the existing test-only imam-mobile-dev-db binding. Previews share development data; they are isolated from production, not from each other. No new database, remote migration or manual deploy. Schema-changing branches require a separate migration plan. A Wrangler-parsed configuration guard runs in backend check and GitHub CI and pins the approved dev target. Cloudflare’s normal PR build must verify deployment before merge. See https://developers.cloudflare.com/workers/previews/resources/#d1-migrations.
+
+Story 00 acceptance remains open. Recovery is a normal revert of the preview configuration; no database rollback is needed for this configuration-only change.
