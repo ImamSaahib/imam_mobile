@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (slice 00a: evaluation done; 00b preflight/primitives/navigator merged; responsive fixture shell under development)
+**Status:** In progress (00b fixture shell, navigation, table and context menu implemented; remaining primitives, calibration and runtime integration open)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -62,6 +62,8 @@ Screenshot comparison per primitive and theme; keyboard navigation; focus order;
 Right-panel content, charts, grid virtualization, translations, metadata-driven rendering.
 
 ## Implementation notes
+
+Dated evidence below is historical. Start with the consolidated status and latest context-menu section; earlier screenshot/build blockers are resolved. Acceptance criteria above remain the completion gate.
 
 ### Slice 00a — Kumo and icon-set evaluation (2026-11-09)
 

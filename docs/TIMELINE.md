@@ -1,9 +1,9 @@
 # Development Timeline
 
-**Last updated:** 2026-11-12  
-**Branch rule:** all development happens on `development`. `main` is locked by the "Protect main" ruleset and changes only after testing passes in the dev environment.  
+**Last updated:** 2026-11-13
+**Branch rule:** work directly on development (C10); main changes require explicit owner approval. Do not assume branch protection is enabled.
 **Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
-**Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
+**Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same commit that changes a story's status.
 
 ## Product delivery phases (owner direction, 2026-11-12)
 
@@ -22,14 +22,14 @@ Keep story status, acceptance evidence, this timeline and HANDOFF synchronized w
 | Planned | Waiting on dependencies |
 | Ready | Dependencies met, no open decision blocks it |
 | In progress | Work has started on `development` |
-| In review | Pull request open |
+| In review | Implementation awaiting required acceptance review |
 | Done | Merged to `development`, acceptance criteria met, evidence recorded |
 
 ## Current status
 
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b preflight underway) | 00a Kumo evaluation (D20); 00b preflight tests, keyboard focus, bundle CI gate. Visual shell awaits screenshot |
+| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: seven browser scenarios; reference received; calibration and runtime integration pending |
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | Planned | |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
@@ -59,7 +59,7 @@ Story 04 needs only Story 01, so it can run beside Stories 02 and 03. Stories 05
 
 ## Development sequence
 
-Work is done one slice at a time, each in a pull request into `development`.
+Work is done in cohesive slices directly on development (C10). Validation follows [agent workflow](AGENT-WORKFLOW.md).
 
 | Step | Work | Why this order | Gate before moving on |
 |---|---|---|---|
@@ -88,9 +88,9 @@ The policy layer denies every route except health unless `AUTH_MODE=dev-open` an
 
 ## Rules for every step
 
-- Work only on `development`, through pull requests. No changes to `main` until dev testing is done.
-- Each pull request updates this file and the story's `Status` line.
-- Each pull request reports measured rows read and written for its main operations.
+- Work directly on development. No changes to `main` until dev testing is done.
+- Each implementation slice updates this file and the story's `Status` line.
+- Each implementation slice reports measured rows read and written for its main operations.
 - No real business data in any deployment that runs `AUTH_MODE=dev-open`. No deployment of the placeholder policy to production. Production holds no real data today.
 - Tests exist and pass before a story moves to Done.
 
@@ -102,13 +102,10 @@ The policy layer denies every route except health unless `AUTH_MODE=dev-open` an
 | Whether Admin, Manager and User are enough as roles | Step 15 |
 | Password hashing spike result | Step 15 |
 | Measure tokens from the original reference received 2026-11-12 | Step 4 (00b) |
-| Frontend test tooling (Vitest with Testing Library) | Before Story 00b screenshot and component tests |
-
-## Recommended model per step
-
-Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the rest, and Haiku 5.5 for mechanical work.
 
 ## Change log
+
+Historical entries describe state at their recorded date; current story status takes precedence.
 
 | Date | Change |
 |---|---|
@@ -169,3 +166,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Finished context-menu focus/lifecycle guards and input parity coverage in PR #12. Validation is batched per cohesive slice; detailed evidence lives in Story 00. Next: remaining shared overlays/states.
 
 2026-11-13: Merged PR #12; consolidated all feature work into development, verified branch ancestry, removed redundant branches and closed already-incorporated Admin Studio PR #1 without changing main. Owner directs future work straight on development with essential batched validation (Decision C10).
+
+2026-11-13: Documentation navigation consolidated; stale PR/screenshot/tooling guidance corrected. Architecture/contracts and historical acceptance evidence preserved.

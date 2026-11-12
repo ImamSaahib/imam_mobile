@@ -37,45 +37,11 @@ Focus on implementation and required quality checks. Defer optional improvements
 2. **Security (Story 11).** Authentication and authorization replace the placeholder. Real data is allowed only after this phase passes.
 3. **Operations (Stories 08–10).** Reports, governance and release readiness. Practices from Story 10 apply from Story 01.
 
-## Read in this order
+## Agent entry point
 
-0. [Handoff](../HANDOFF.md): current state and next step (start here when continuing the work)
-1. [Architecture](ARCHITECTURE.md)
-2. [UI Reference](UI-REFERENCE.md)
-3. [Decisions Record](DECISIONS.md)
-4. [Implementation Contracts](IMPLEMENTATION-CONTRACTS.md)
-5. Story 00 — UI shell and design system (P0, **In progress**)
-6. Story 01 — Platform foundation and application identity (P0, **In progress**)
-7. Story 02 — Application navigator (P0)
-8. Story 03 — Page builder and component registry (P0)
-9. Story 04 — Data model, properties and schema compatibility (P0)
-10. Story 05 — Lists, views and safe query engine (P0)
-11. Story 06 — Forms, records and domain service extensions (P0)
-12. Story 07 — Edit mode, configuration drafts and publishing (P0)
-13. Story 08 — Reports, metrics and registered actions (P2, post-MVP)
-14. Story 09 — Audit, operational governance and release compatibility (P1)
-15. Story 10 — Client deployment, upgrades and release readiness (P1; its practices apply from Story 01)
-16. Story 11 — Authentication and authorization (P1; scheduled after Stories 00–07)
+Start at [HANDOFF](../HANDOFF.md). [Agent workflow](../AGENT-WORKFLOW.md) defines task-specific reading, document ownership and validation checkpoints. Read architecture/decisions/contracts on initial onboarding, then relevant sections and the active story during continuation. [TIMELINE](../TIMELINE.md) owns dependency order; story files own acceptance and progress evidence.
 
-**Status values:** *Ready for development* means dependencies are met and no open decision blocks the story. *Planned* means it waits on earlier stories. Move a story to Ready only when its dependencies are done.
-
-Legacy Admin Studio inventory and removal plan: [legacy-inventory.md](legacy-inventory.md). Development status and the full sequence are tracked in [the development timeline](../TIMELINE.md).
-
-Suggested order: 00 and 01 together, then 02, 03, 04, the early reuse slice ([Decisions D12](DECISIONS.md)), 05, 06, 07. Stories 08–11 follow.
-
-## Developer workflow
-
-For each story:
-1. Inspect the actual development branch and current implementation.
-2. Read this architecture and the complete story.
-3. Verify dependencies and existing business behavior.
-4. Propose the smallest implementation plan.
-5. Implement only the selected story on `development`.
-6. Run build, migration, API, authorization and regression checks.
-7. Deploy and verify only in development.
-8. Record commit, evidence, migrations, limitations and recovery notes.
-
-A story is not complete because its UI renders. Persistence, validation, failure handling, tests and deployment evidence must pass. Authorization criteria are marked *deferred to Story 11* where the phasing above applies, and are not counted as met until that story completes.
+Development runs directly on development under C10. No routine feature branches or PRs. Follow the automatic deployment process; do not manually deploy Workers or apply remote migrations.
 
 ## Non-negotiable delivery rules
 
