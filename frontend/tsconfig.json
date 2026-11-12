@@ -10,9 +10,11 @@
     "strict": true,
     "skipLibCheck": true,
     "rootDir": "src/platform",
-    "outDir": ".test-build"
+    "outDir": ".test-build",
+    "jsx": "react-jsx"
   },
   "include": [
-    "src/platform/**/*.ts"
+    "src/platform/**/*.ts",
+    "src/platform/**/*.tsx"
   ]
 }

@@ -11,4 +11,11 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
-ReactDOM.createRoot(document.getElementById("root")).render(<React.StrictMode><App /></React.StrictMode>);
+const root = ReactDOM.createRoot(document.getElementById("root"));
+if (import.meta.env.DEV && window.location.pathname === "/__ui") {
+  import("./platform/ui/Gallery").then(({ default: Gallery }) => {
+    root.render(<React.StrictMode><Gallery /></React.StrictMode>);
+  });
+} else {
+  root.render(<React.StrictMode><App /></React.StrictMode>);
+}

@@ -147,3 +147,7 @@ Recorded Product Phase 1 as Stories 00–11, followed by owner testing and owner
 The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
 
 Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.
+
+### 2026-11-12 — First shared Kumo primitives
+
+PR #7 merged; #4/#6 documentation consolidated on the primitives branch. Typed Button/IconButton/TextInput and development-only gallery implemented. Strict typecheck, 22 frontend tests, production build and 69.0 KiB gzip gate pass. Screenshots and measured shell remain open; no Story 00 acceptance box closed.

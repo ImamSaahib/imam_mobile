@@ -46,7 +46,7 @@ The owner will test the integrated application after Phase 1 development is comp
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
-| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. 12 dependency-free frontend tests and bundle gate included in 00b preflight; Vitest/Testing Library and screenshots still pending |
+| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; this branch adds first Kumo wrappers and 22 total frontend tests. Screenshots and measured shell remain pending |
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
@@ -152,3 +152,11 @@ Story 00 acceptance remains open. Recovery is a normal revert of the preview con
 The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
 
 Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.
+
+### Slice 00b — first shared Kumo primitives (2026-11-12)
+
+Added typed Button, IconButton and TextInput wrappers under frontend/src/platform/ui using the evaluated Kumo 2.17.0 and Phosphor 2.1.10 versions. Button defaults to type=button to avoid accidental form submits; IconButton requires an accessible label. Added a development-only /__ui gallery with light/dark switching, disabled/loading/destructive examples, controlled input and fixture callbacks. Gallery uses Kumo defaults; no measured shell/token fidelity is claimed. Existing screens retain their components until the shell slice.
+
+Verification: strict TypeScript, 12 input-helper tests plus 10 rendered tests, production build and 69.0 KiB gzip JS gate passed. New tests cover keyboard activation, non-submitting defaults, disabled/loading suppression, icon naming, controlled text and theme/action fixtures. Gallery is removed by the production DEV guard, so this size is not the future Kumo runtime cost; remeasure on integration. Screenshots, responsive behavior, tooltip coverage, reduced motion and full shell acceptance remain pending. No D1 reads/writes or migrations. Recovery: revert this primitive slice.
+
+PR #7 is merged into development, containing the earlier #3/#5 work and verified preview fix. Pending #4/#6 documentation branches were merged into this feature branch with conflicts resolved, preserving owner direction and refreshing the handoff baseline. This slice does not mark Story 00 complete. Next: measured shell regions, navigator fixture and search, then remaining Kumo wrappers and shell-owned context-menu service.
