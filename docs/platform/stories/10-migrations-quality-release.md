@@ -74,6 +74,24 @@ Forks do not automatically receive upstream commits. Conflicts require review; d
 - Resource budget checks ([Contracts §9](../IMPLEMENTATION-CONTRACTS.md)): reference workflows on the reference dataset must stay within their rows-read and rows-written budgets, a simulated day of 100 sessions must stay at or below 500,000 reads and 20,000 writes, and the frontend bundle must stay within its cap.
 - Documented recovery/forward-fix notes.
 
+## Coordinated release requirement (C9, 2026-11-12)
+
+Treat development-to-main promotion and clean client installation as required Phase 1 functionality. Main is the client distribution baseline. After initial account setup, secrets and manifest inputs, provide one documented workflow that validates targets and compatibility, safeguards the target, applies pending migrations, installs/upgrades approved versioned configuration, deploys compatible Worker and Pages artifacts, and verifies health/bootstrap/schema and core flows. Do not require the owner to troubleshoot and deploy each layer separately.
+
+Git contains code and migration files; published configuration lives in D1. Explicitly export/package the intended configuration and promote it through validated import/upgrade logic. Preserve target customizations using the seed ownership/conflict contract; fail with actionable diagnostics on conflicts rather than overwrite them. Never copy development business records, secrets or dev-open settings. Because provider operations are not one transaction, document ordering, checkpoints, safe retries and forward recovery; do not promise atomic cross-service deployment.
+
+The development validation CI remains non-production. The approved production release workflow is separate and must validate explicit production bindings before any mutation. Rehearse on isolated fixtures matching the legacy production schema and on a fresh client database before owner approval.
+
+- [ ] One coordinated workflow upgrades a legacy installation and verifies schema, configuration, metadata and both application artifacts without separate manual deploy commands.
+- [ ] Approved development configuration reaches the target through a versioned package; existing records/customizations survive and development test data is excluded.
+- [ ] Interrupted migration/configuration/deployment stages can be diagnosed and safely resumed or recovered; rehearsal evidence is recorded.
+- [ ] A clean fork of the release on main installs through the manifest-driven workflow into client-owned pages.dev, workers.dev and D1 resources.
+- [ ] Production promotion uses explicit approval and production bindings, never the development Wrangler target or dev-open policy.
+
+### Read-only baseline inspection (2026-11-12)
+
+Main at f0d6ddfca00b7258b3268df81bbc7298aac6d996 contains the legacy app, only migration 0001, and production-specific Wrangler bindings. Development at 11be4f9b332f1d4db14f0d94a034bd02b988b402 has migrations through 0009 and development-specific bindings. Wrangler remote sqlite_master SELECTs confirmed that production lacks cfg_* platform tables, counters/version tables and the platform schema_change_log present in development. Production does contain legacy app_configuration, configuration_versions, schema_changes and custom_field_values. No business records were inspected or changed. A blind merge is not a verified release process; the coordinated workflow and legacy upgrade proof remain unimplemented.
+
 ## Acceptance criteria
 
 - [ ] A clean client fork can be prepared without editing scattered source files.
@@ -119,3 +137,5 @@ CI targets pull requests into development and pushes to development. It must not
 - [ ] CI never targets production resources.
 - [ ] Lockfiles are committed before switching CI to npm ci.
 - [ ] Baseline/extension versions and migration evidence are recorded for client upgrades.
+
+Migration history verified through Wrangler SELECTs on 2026-11-12: development has 0001–0009, production has 0001–0002. Production is therefore ahead of the migration files currently in main; reconcile this before release rather than replaying or overwriting applied migrations. Queries reported 9 and 2 rows read respectively, zero rows written.

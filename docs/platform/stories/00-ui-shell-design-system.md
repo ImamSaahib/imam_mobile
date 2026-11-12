@@ -104,7 +104,7 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 5. Re-check the budget when the shell is built (slice 00b) and again at the Story 07 phase review.
 
 **Open**
-- **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. Measuring colors, row heights, sidebar width and spacing needs the image again. Until then the token file is not written, so no values are guessed. Needed by slice 00b.
+- **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. The original image was received privately on 2026-11-12. Measure colors, row heights, sidebar width and spacing in slice 00b, accounting for screenshot scale; the token file is still pending.
 - Frontend test tooling (Vitest with Testing Library) for component and screenshot tests, shared with Story 01.
 - Slice 00b: shell, remaining primitives, our context-menu service, gallery and screenshot tests.
 
@@ -139,3 +139,15 @@ Confirmed from Cloudflare build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c: dependency
 Added explicit preview development vars and the existing test-only imam-mobile-dev-db binding. Previews share development data; they are isolated from production, not from each other. No new database, remote migration or manual deploy. Schema-changing branches require a separate migration plan. A Wrangler-parsed configuration guard runs in backend check and GitHub CI and pins the approved dev target. Cloudflare’s normal PR build must verify deployment before merge. See https://developers.cloudflare.com/workers/previews/resources/#d1-migrations.
 
 Story 00 acceptance remains open. Recovery is a normal revert of the preview configuration; no database rollback is needed for this configuration-only change.
+
+### Original reference received — 2026-11-12
+
+The owner supplied the original Cloudflare D1 dashboard screenshot privately. The missing-image dependency is resolved; measurement and acceptance verification remain open. Follow UI-REFERENCE, prioritize application navigation and table/search controls, exclude the right panel, and keep the original out of Git. No visual acceptance box is marked complete by receipt alone.
+
+### Slice 00b — first shared Kumo primitives (2026-11-12)
+
+Added typed Button, IconButton and TextInput wrappers under frontend/src/platform/ui using the evaluated Kumo 2.17.0 and Phosphor 2.1.10 versions. Button defaults to type=button to avoid accidental form submits; IconButton requires an accessible label. Added a development-only /__ui gallery with light/dark switching, disabled/loading/destructive examples, controlled input and fixture callbacks. Gallery uses Kumo defaults; no measured shell/token fidelity is claimed. Existing screens retain their components until the shell slice.
+
+Verification: strict TypeScript, 12 input-helper tests plus 10 rendered tests, production build and 69.0 KiB gzip JS gate passed. New tests cover keyboard activation, non-submitting defaults, disabled/loading suppression, icon naming, controlled text and theme/action fixtures. Gallery is removed by the production DEV guard, so this size is not the future Kumo runtime cost; remeasure on integration. Screenshots, responsive behavior, tooltip coverage, reduced motion and full shell acceptance remain pending. No D1 reads/writes or migrations. Recovery: revert this primitive slice.
+
+PR #7 is merged into development, containing the earlier #3/#5 work and verified preview fix. Pending #4/#6 documentation branches were merged into this feature branch with conflicts resolved, preserving owner direction and refreshing the handoff baseline. This slice does not mark Story 00 complete. Next: measured shell regions, navigator fixture and search, then remaining Kumo wrappers and shell-owned context-menu service.

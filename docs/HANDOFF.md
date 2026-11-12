@@ -2,15 +2,29 @@
 
 **Read this first when starting a session with any model or person.** It says what to do next, how to verify the starting state, and which rules apply. [TIMELINE.md](TIMELINE.md) holds the status table and 18-step sequence. The story files hold requirements, acceptance criteria and per-slice implementation notes. This file points to them and does not replace them.
 
-**Last updated:** 2026-11-12 (Story 00b preflight in review, Story 04 still complete with deferred items)
+**Last updated:** 2026-11-12 (Codex transition; status verified from GitHub; no story status changed)
+
+## 0. Current development entry point (2026-11-12)
+
+PR #7 merged into development at 6806ad26968fa03788fcb56a61f5a4e5671d45d1, including PR #3/#5 preflight commits, rendered component tests and the Worker preview configuration fix. All five remote checks passed on ef546c6 before merge. Backend: 283 tests; frontend: 12 helper + 4 rendered tests, 69.0 KiB gzip. The missing previews configuration caused the old Worker failures; explicit test-only dev bindings fixed it. No manual deploy or remote migration ran.
+
+PR #4 transition guidance and PR #6 owner direction are incorporated into the current UI feature branch. Main remains read-only and production approval is still required; do not assume GitHub branch protection is enabled. The original Cloudflare reference is available privately; measure it without committing account details.
+
+Next: shared Kumo wrappers under platform/ui with Phosphor icons and component tests, then measured shell regions and the shell-owned context menu. Story 00 is not complete. Use npm ci and npm run check in both backend and frontend. Historical investigation notes below describe prior states, not current blockers.
 
 ## 1. What the project is
 
 An environment for building, customizing and extending business modules (ServiceNow-style navigator, lists and forms; Notion-style typed properties; Cloudflare look), with Imam Mobile (a mobile-shop app) as the reference application. Stack: React + Vite on Cloudflare Pages, a modular Cloudflare Worker, D1 (SQLite). Very lightweight: about 10 devices added per day, roughly 5 users, about 100 sessions per day, free-tier D1 budgets ([Contracts §9–10](platform/IMPLEMENTATION-CONTRACTS.md)). Read [platform/README.md](platform/README.md) and [ARCHITECTURE.md](platform/ARCHITECTURE.md) for the full picture.
 
+## Delivery focus (owner direction, 2026-11-12)
+
+Product Phase 1 covers all twelve existing stories, 00–11, as the application's primary functionality. Continue in the documented dependency order and complete one bounded slice at a time, as quickly as practical with quality. Prioritize implementation, required validation and blocker resolution. Defer optional improvements and unrelated side work; update story progress, acceptance evidence, TIMELINE and this handoff as development proceeds.
+
+The owner will test the integrated application after Phase 1 development is complete and then create new stories for Product Phase 2. Continue developer tests and regression/deployment verification throughout; do not wait for owner testing to validate a slice. No story or phase is complete until its required acceptance criteria are verified. Make routine reversible decisions independently; ask only for a required missing resource, a consequential difficult-to-reverse decision or explicit authorization. See [Decision C8](platform/DECISIONS.md).
+
 ## 2. Rules from the owner (do not break)
 
-1. All development happens on the `development` branch. `main` must not change until testing passes in the dev environment. The GitHub ruleset "Protect main" locks `main` completely.
+1. All implementation targets `development` through reviewed PRs. `main` must not change until testing passes and the owner explicitly approves production promotion. Do not rely on a protection ruleset being active: GitHub currently reports `protected:false` for `main`.
 2. Stories are tracked as files in GitHub, not GitHub issues. Update the story's `Status` line, its acceptance boxes, its **Implementation notes**, and `docs/TIMELINE.md` in the same commit as the work.
 3. Tracking, reviews and evaluations are written into the story notes, never kept only in a model's memory.
 4. Authentication and authorization come after the UI/UX phase (Story 11). Until then a placeholder policy applies (Decisions D7) and environments hold test data only.
@@ -27,19 +41,21 @@ An environment for building, customizing and extending business modules (Service
 
 | Item | State |
 |---|---|
-| Story 00 (UI shell, design system) | In progress. 00a done (Kumo, D20); 00b preflight adds interaction helpers, 12 Node tests and frontend quality gate. Tokens and shell await screenshot |
+| Story 00 (UI shell, design system) | In progress. 00a done (Kumo evaluated, decision D20). Original reference received privately on 2026-11-12; tokens and shell (00b) remain to implement |
 | Story 01 (platform foundation) | Code complete: slices 01a, 01b, 01c, 01d done. Three acceptance boxes stay open until the React shell reads bootstrap (Story 02) and the dev deployment is verified |
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
-| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. 12 dependency-free frontend tests and bundle gate included in 00b preflight; Vitest/Testing Library and screenshots still pending |
+| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; this branch adds first Kumo wrappers and 22 total frontend tests. Screenshots and measured shell remain pending |
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
 
+**Immediate priority:** Continue Story 00b shared components and measured shell; the preflight build blocker is resolved.
+
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 
-**Blocked on the owner:** the next steps in [TIMELINE.md](TIMELINE.md) (00b, then Story 02 Navigator, Story 03, the reuse checkpoint, Stories 05 and 06) all depend on the UI shell. Story 00b needs the real Cloudflare reference screenshot attached. No other owner decision is open.
+**UI dependency:** the original reference is now available. Continue 00b, then the dependent navigator/page/list/form stories in TIMELINE order. Resolve existing preflight CI/deployment blockers before merging their changes.
 
 **Owner actions still open on dev (not blocking):**
 1. Seed upgrade to version 3: `POST /api/platform/seed/preview` (expect `toVersion: 3`, `add: 4`), then `POST /api/platform/seed/upgrade` with the `planHash`.
@@ -49,7 +65,7 @@ Rules for the stories that follow: Stories 05 and 06 must use `countersOnCreate`
 
 ## 5. After that (from the sequence)
 
-Then 00b (needs the reference screenshot), 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
+Then 00b (reference received; measurements pending), 02, 03, the early reuse checkpoint, 05, 06, 07, phase review, 11, 08, 09, 10. Details and gates are in [TIMELINE.md](TIMELINE.md).
 
 ## 6. How to verify the starting state
 
@@ -90,14 +106,18 @@ CI (`.github/workflows/admin-configuration-validation.yml`) runs the same checks
 
 ## 9. Open items
 
+- Complete shared shell, visual/browser evidence and remaining Story 00 acceptance criteria.
+- GitHub branch protection appears disabled in REST output; manually enforce no changes to `main` and ask the owner before modifying repository protection settings.
 - Real customer and sales counts (needed by 01d's reference dataset).
 - Whether Admin, Manager and User are enough as roles (Story 11).
 - Password hashing spike (Story 11).
-- Real Cloudflare reference screenshot to measure design tokens (Story 00b).
+- Measure design tokens from the received private reference (Story 00b).
 - Frontend test tooling (Vitest and Testing Library) before 00b.
 - 15 older commits on `development` show as Unverified on GitHub because they are authored under the owner's noreply address. Fixing that needs a history rewrite and force-push. The owner has not asked for it.
 
 ## 10. Updating this file
+
+Update sections 0, 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE. Keep the PR/CI statements current; do not treat planned or unmerged work as complete.
 
 Update sections 3, 4 and 9 at the end of every slice, in the same commit as the story notes and TIMELINE.
 
@@ -126,3 +146,17 @@ Confirmed from Cloudflare build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c: dependency
 Added explicit preview development vars and the existing test-only imam-mobile-dev-db binding. Previews share development data; they are isolated from production, not from each other. No new database, remote migration or manual deploy. Schema-changing branches require a separate migration plan. A Wrangler-parsed configuration guard runs in backend check and GitHub CI and pins the approved dev target. Cloudflare’s normal PR build must verify deployment before merge. See https://developers.cloudflare.com/workers/previews/resources/#d1-migrations.
 
 Story 00 acceptance remains open. Recovery is a normal revert of the preview configuration; no database rollback is needed for this configuration-only change.
+
+## Visual reference and release direction — 2026-11-12
+
+The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
+
+Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.
+
+### Slice 00b — first shared Kumo primitives (2026-11-12)
+
+Added typed Button, IconButton and TextInput wrappers under frontend/src/platform/ui using the evaluated Kumo 2.17.0 and Phosphor 2.1.10 versions. Button defaults to type=button to avoid accidental form submits; IconButton requires an accessible label. Added a development-only /__ui gallery with light/dark switching, disabled/loading/destructive examples, controlled input and fixture callbacks. Gallery uses Kumo defaults; no measured shell/token fidelity is claimed. Existing screens retain their components until the shell slice.
+
+Verification: strict TypeScript, 12 input-helper tests plus 10 rendered tests, production build and 69.0 KiB gzip JS gate passed. New tests cover keyboard activation, non-submitting defaults, disabled/loading suppression, icon naming, controlled text and theme/action fixtures. Gallery is removed by the production DEV guard, so this size is not the future Kumo runtime cost; remeasure on integration. Screenshots, responsive behavior, tooltip coverage, reduced motion and full shell acceptance remain pending. No D1 reads/writes or migrations. Recovery: revert this primitive slice.
+
+PR #7 is merged into development, containing the earlier #3/#5 work and verified preview fix. Pending #4/#6 documentation branches were merged into this feature branch with conflicts resolved, preserving owner direction and refreshing the handoff baseline. This slice does not mark Story 00 complete. Next: measured shell regions, navigator fixture and search, then remaining Kumo wrappers and shell-owned context-menu service.

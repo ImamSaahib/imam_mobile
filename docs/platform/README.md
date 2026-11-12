@@ -25,7 +25,13 @@ These are interaction references, not instructions to copy proprietary assets or
 
 The product is an environment for building, customizing and extending modules inside the running application, not one business application. Edit mode (the lock/edit toggle in the Super Menu) is the only place configuration is changed; see [Architecture §5.2](ARCHITECTURE.md) and [Decisions C1](DECISIONS.md).
 
-## Phases
+## Product delivery phases
+
+**Product Phase 1** delivers all twelve existing stories (00–11), the application’s primary functionality. Complete them quickly with quality in the documented dependency order. The owner will test the integrated application after Phase 1 development is complete, then create new stories for **Product Phase 2**. The current stories do not define the full future product scope.
+
+Focus on implementation and required quality checks. Defer optional improvements and unrelated side work unless needed for an existing requirement or blocker. Update story progress, acceptance evidence, TIMELINE and HANDOFF in each implementation slice. Developer testing and development verification continue throughout; owner testing at the phase boundary does not replace them. See [Decision C8](DECISIONS.md).
+
+### Implementation stages within Product Phase 1
 
 1. **UI/UX and platform (Stories 00–07).** The runtime, the interface, edit mode and publishing. Authorization is designed but not enforced: routes declare their required permission and call one placeholder policy function ([Decisions D7](DECISIONS.md)). These environments hold test data only.
 2. **Security (Story 11).** Authentication and authorization replace the placeholder. Real data is allowed only after this phase passes.

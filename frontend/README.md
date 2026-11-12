@@ -60,3 +60,5 @@ Finish Story 00b (shell, Kumo wrappers and measured design tokens), then build m
 New platform helpers use TypeScript (D3). `npm test` compiles `src/platform` with strict checking into ignored `.test-build/` and runs the interaction tests against that output. `npm run typecheck` checks without emitting files. Component and browser tests remain pending.
 
 Component tests: `npm run test:components` runs Vitest with Testing Library and jsdom against fixture-only requests. `npm test` runs helper and component suites. Use Node 22.22.2+, 24.15.0+ or 26+ (jsdom requirement). These DOM tests do not replace browser screenshots or responsive/accessibility verification.
+
+Shared UI wrappers live in `src/platform/ui`; screens must use wrappers rather than importing Kumo. During `npm run dev`, open `/__ui` for the functional primitive gallery and theme switch. It is removed from production builds. The gallery is not yet a measured visual reference or complete component catalog.

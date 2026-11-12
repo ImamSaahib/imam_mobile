@@ -5,6 +5,12 @@
 
 This document defines the layout, components and behavior the runtime interface must reproduce. Colors, sizes and spacing are not guessed here. Story 00 measures them from the reference and records them as design tokens.
 
+## Reference received (2026-11-12)
+
+The owner supplied the original Cloudflare D1 dashboard screenshot in chat ("Screenshot 2026-11-07 at 5.04.38 PM.png"). The missing-reference blocker is cleared for this development session. The source stays private because it contains account details; do not commit it. The Kumo light/dark demos remain evaluation evidence.
+
+Prioritize the application navigator: top application switcher, quick search, grouped/expandable navigation, indented children and selected-item state. Reproduce the visual language of the page heading, primary button, bordered search with refresh, rounded table, sortable headings, column settings, row actions, summary and pagination. Exclude the right usage/changelog section; the main content uses the available width. Filters must fit this visual language and the view contracts, although their open states are not visible in this reference. Measure tokens during Story 00b; image pixels alone do not establish CSS pixels or browser scale. Dark theme and unseen interaction states require Kumo semantic tokens and explicit validation.
+
 ## 1. Rules of use
 
 - Reproduce the layout, proportions, spacing, component structure and interaction behavior of the reference.

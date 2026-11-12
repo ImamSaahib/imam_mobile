@@ -5,6 +5,16 @@
 **Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same pull request that changes a story's status.
 
+## Product delivery phases (owner direction, 2026-11-12)
+
+**Phase 1:** complete the agreed scope of all twelve existing stories (00–11) in the dependency order below. These stories establish the primary application functionality; they do not exhaust the product vision. Deliver quickly with quality, one bounded slice at a time. Do not expand scope with optional improvements or unrelated side work. Necessary tests, fixes, deployment diagnostics and acceptance verification remain part of delivery.
+
+The owner plans integrated application testing after Phase 1 development is complete. Developers continue automated tests, regression checks and development verification during every slice. Do not mark Phase 1 complete while required acceptance criteria or deferred criteria assigned to its stories remain unverified. Record blockers and any explicit scope changes rather than silently treating them as complete.
+
+**Phase 2:** after testing Phase 1, the owner will create new stories for additional functionality. Do not invent or begin that backlog now.
+
+Keep story status, acceptance evidence, this timeline and HANDOFF synchronized with each implementation slice. Minimize routine owner involvement. See [Decision C8](platform/DECISIONS.md). The UI/UX, security and operations stages below are stages within Product Phase 1; the existing security and production-approval gates remain in force.
+
 ## Status values
 
 | Status | Meaning |
@@ -54,7 +64,7 @@ Work is done one slice at a time, each in a pull request into `development`.
 | Step | Work | Why this order | Gate before moving on |
 |---|---|---|---|
 | 1 ✔ | **01a** Test runner, TypeScript build, baseline tests of current workflows | Nothing moves onto metadata until the current behavior is pinned by tests | Baseline tests pass on `development` |
-| 2 ✔ | **00a** Kumo evaluation, icon set (done). Design tokens wait for the reference screenshot | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
+| 2 ✔ | **00a** Kumo evaluation, icon set (done). Reference received; design token measurement pending | Frontend-only, can run beside step 1 | Evaluation and licence recorded |
 | 3 ✔ | **01b** Policy placeholder, actor columns, audit shape, legacy inventory | Every later route declares its permission | Route-policy inventory exists |
 | 4 | **00b** Shell, primitives, context menu, gallery | Needs the tokens | Gallery and screenshot tests pass, bundle under 300 KB gzip |
 | 5 ✔ | **01c** Metadata catalog, release snapshots, bootstrap, seed | Core of the platform | Seed twice without duplicates, bootstrap reads at most 5 rows |
@@ -91,7 +101,7 @@ The policy layer denies every route except health unless `AUTH_MODE=dev-open` an
 | Rough customer and sales counts (for the reference dataset) | Step 6 |
 | Whether Admin, Manager and User are enough as roles | Step 15 |
 | Password hashing spike result | Step 15 |
-| Reference screenshot (re-attach) to measure design tokens | Step 4 (00b) |
+| Measure tokens from the original reference received 2026-11-12 | Step 4 (00b) |
 | Frontend test tooling (Vitest with Testing Library) | Before Story 00b screenshot and component tests |
 
 ## Recommended model per step
@@ -127,3 +137,17 @@ Added Vitest/Testing Library rendered-App regressions to the frontend check comm
 ### 2026-11-12 — Confirmed preview build fix
 
 Worker build failed on missing previews configuration, not frontend compilation. Added explicit preview vars and shared test-only dev D1 binding, plus CI target guard. Build-log access resolved. Await normal Cloudflare PR build verification; no manual deployment or migration.
+
+### Owner direction update — 2026-11-12
+
+Recorded Product Phase 1 as Stories 00–11, followed by owner testing and owner-defined Phase 2 stories. Delivery prioritizes existing functionality and required quality gates; optional side work is deferred. This documentation change does not change story status or acceptance criteria.
+
+## Visual reference and release direction — 2026-11-12
+
+The original Cloudflare D1 screenshot is now available privately in the chat. The missing-image blocker is cleared; token measurement and visual verification remain pending. Prioritize application navigation and the table/search/control styling; exclude the right usage/changelog panel. See UI-REFERENCE and Decision C9.
+
+Phase 1 must include a coordinated, tested development-to-main release and client installation workflow (Story 10). Main is the stable fork baseline. Preserve target schema, metadata, configuration and business records through migrations and versioned configuration promotion; never copy dev test data. The owner should not need separate manual deployments for these layers. Read-only Wrangler inspection confirms production still has the legacy schema and lacks the development platform tables. This capability is required, not implemented or approved for production execution yet. Existing CI/build blockers remain separate from the resolved screenshot blocker.
+
+### 2026-11-12 — First shared Kumo primitives
+
+PR #7 merged; #4/#6 documentation consolidated on the primitives branch. Typed Button/IconButton/TextInput and development-only gallery implemented. Strict typecheck, 22 frontend tests, production build and 69.0 KiB gzip gate pass. Screenshots and measured shell remain open; no Story 00 acceptance box closed.
