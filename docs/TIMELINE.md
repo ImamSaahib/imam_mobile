@@ -151,3 +151,7 @@ Phase 1 must include a coordinated, tested development-to-main release and clien
 ### 2026-11-12 — First shared Kumo primitives
 
 PR #7 merged; #4/#6 documentation consolidated on the primitives branch. Typed Button/IconButton/TextInput and development-only gallery implemented. Strict typecheck, 22 frontend tests, production build and 69.0 KiB gzip gate pass. Screenshots and measured shell remain open; no Story 00 acceptance box closed.
+
+### 2026-11-12 — Story 00b fixture navigator
+
+PR #8 merged into development with all five checks passing, including #4/#6 docs and first Kumo primitives. Next bounded slice adds fixture navigation, filtering, callbacks and keyboard interactions. Frontend check passes: 26 tests, TypeScript, build and 69.0 KiB gzip budget. No backend/database changes. Story 00 remains open; responsive fixture shell and browser/reference validation follow.

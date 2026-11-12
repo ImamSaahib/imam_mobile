@@ -6,11 +6,11 @@
 
 ## 0. Current development entry point (2026-11-12)
 
-PR #7 merged into development at 6806ad26968fa03788fcb56a61f5a4e5671d45d1, including PR #3/#5 preflight commits, rendered component tests and the Worker preview configuration fix. All five remote checks passed on ef546c6 before merge. Backend: 283 tests; frontend: 12 helper + 4 rendered tests, 69.0 KiB gzip. The missing previews configuration caused the old Worker failures; explicit test-only dev bindings fixed it. No manual deploy or remote migration ran.
+PR #8 merged into development at 7fe08b8b74a91fcfe108ebe656761e82e048a897 after all five checks passed. This incorporates PR #4/#6 documentation, typed Kumo primitives and the development gallery. PR #7 previously incorporated #3/#5 and the verified Worker preview fix. Build-log access works. No manual deployment or remote migration ran.
 
-PR #4 transition guidance and PR #6 owner direction are incorporated into the current UI feature branch. Main remains read-only and production approval is still required; do not assume GitHub branch protection is enabled. The original Cloudflare reference is available privately; measure it without committing account details.
+Current navigator feature slice adds fixture groups/search/keyboard interactions. Frontend: 26 tests and 69.0 KiB gzip JS; backend baseline: 283 tests. Main remains read-only. The original reference stays private; measured tokens and browser visual verification remain pending.
 
-Next: shared Kumo wrappers under platform/ui with Phosphor icons and component tests, then measured shell regions and the shell-owned context menu. Story 00 is not complete. Use npm ci and npm run check in both backend and frontend. Historical investigation notes below describe prior states, not current blockers.
+Next: responsive fixture shell, browser verification, remaining primitives and shell-owned context menu. Story 00 is not complete. Historical investigation notes below describe prior states, not current blockers.
 
 ## 1. What the project is
 
@@ -46,7 +46,7 @@ The owner will test the integrated application after Phase 1 development is comp
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
-| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; this branch adds first Kumo wrappers and 22 total frontend tests. Screenshots and measured shell remain pending |
+| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; Kumo primitives merged; this branch adds fixture navigator interactions and 26 total frontend tests. Screenshots and measured shell remain pending |
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
@@ -160,3 +160,11 @@ Added typed Button, IconButton and TextInput wrappers under frontend/src/platfor
 Verification: strict TypeScript, 12 input-helper tests plus 10 rendered tests, production build and 69.0 KiB gzip JS gate passed. New tests cover keyboard activation, non-submitting defaults, disabled/loading suppression, icon naming, controlled text and theme/action fixtures. Gallery is removed by the production DEV guard, so this size is not the future Kumo runtime cost; remeasure on integration. Screenshots, responsive behavior, tooltip coverage, reduced motion and full shell acceptance remain pending. No D1 reads/writes or migrations. Recovery: revert this primitive slice.
 
 PR #7 is merged into development, containing the earlier #3/#5 work and verified preview fix. Pending #4/#6 documentation branches were merged into this feature branch with conflicts resolved, preserving owner direction and refreshing the handoff baseline. This slice does not mark Story 00 complete. Next: measured shell regions, navigator fixture and search, then remaining Kumo wrappers and shell-owned context-menu service.
+
+### Slice 00b — fixture navigator interactions (2026-11-12)
+
+Added typed shared Navigator with caller-provided application name, groups/modules, selected module and selection callback. Kumo Sidebar supplies presentation; Phosphor supplies chevrons. Supports expandable groups, section labels, badges, selected-page semantics, case-insensitive menu/module filtering, no results, Escape clearing, Ctrl/Command+K and arrow/Home/End movement. Search reveals collapsed matches and preserves collapse state when cleared. The development gallery exercises fixtures without metadata or API calls.
+
+Verification: frontend npm run check passes: strict TypeScript, 12 helper + 14 rendered tests (26 total), production build and 69.0 KiB gzip gate. Tests cover callbacks, selected state, group/module filtering, collapse restoration, empty results, keyboard movement, shortcuts and listener cleanup. jsdom explicitly stubs desktop matchMedia; no responsive/browser evidence is claimed. Legacy App tests pass. No backend/schema changes or D1 operations.
+
+Story 00 remains open. Kumo sizing is provisional, not measured reference fidelity. Next: responsive fixture shell with application switcher/top bar, browser/reference validation, remaining primitives and context-menu service. Navigator remains development-only. Recovery: revert this slice.
