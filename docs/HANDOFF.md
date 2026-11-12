@@ -6,11 +6,11 @@
 
 ## 0. Current development entry point (2026-11-12)
 
-PR #10 merged into development at 97f0486d1961a517cdfb87146776a8bde9e53f46 after all five checks passed. Shell and navigator remain fixture-only at /__ui; legacy screens are unchanged. No production changes or manual remote migrations.
+PR #11 merged into development at b20036cf838e86762d312bb1014e78989219d96f. Shell, navigator and table remain fixture-only at /__ui; legacy screens and production are unchanged.
 
-Current table slice adds controlled table/search/sort/column controls, cursor navigation, row actions and loading/error/empty states. Frontend baseline: 32 helper/component tests, four browser scenarios, strict TypeScript and 69.1 KiB gzip build. Canonical evidence is in Story 00.
+PR #12 adds the shell-owned context menu and lifecycle/focus handling. Baseline: 32 unit/component tests, seven browser scenarios, TypeScript and 69.1 KiB gzip gate. Canonical acceptance evidence is in Story 00.
 
-Next: shell-owned context menu with mouse/keyboard/touch parity and remaining primitive states. Story 00 remains open; exact reference calibration, complete screenshot coverage and runtime integration are pending.
+Next: remaining shared overlay/state primitives, then visual calibration and runtime integration. Story 00 remains open. Batch related implementation/tests; avoid duplicate successful checks and duplicated documentation.
 
 ## 1. What the project is
 
@@ -24,7 +24,7 @@ The owner will test the integrated application after Phase 1 development is comp
 
 ### Delivery efficiency (owner direction)
 
-Use cohesive, reviewable slices that complete a usable behavior, rather than splitting each wrapper into a PR. Read changed/relevant documentation after the initial architecture review. Batch independent inspections, use targeted tests while iterating, and run the required full checks once the slice stabilizes. Repeat checks only for changed code, failures or unresolved risks; CI remains the final gate. Keep updates concise and do not lower acceptance standards to save tokens.
+Use cohesive, reviewable slices that complete a usable behavior, rather than splitting each wrapper into a PR. Read changed/relevant documentation after the initial architecture review. Batch independent inspections, use targeted tests while iterating, and run the required full checks once the slice stabilizes. Repeat checks only for changed code, failures or unresolved risks; CI remains the final gate. Keep updates concise and do not lower acceptance standards to save tokens. Batch related fixes and tests within a slice: use targeted checks during implementation, then one full validation pass after stabilization. Do not repeat unchanged successful suites or add tests that merely mirror trivial implementation. CI verifies the final commit; investigate failures rather than rerunning blindly.
 
 ## 2. Rules from the owner (do not break)
 
@@ -55,7 +55,7 @@ Use cohesive, reviewable slices that complete a usable behavior, rather than spl
 
 ## 4. Next step
 
-**Immediate priority:** Complete the table slice PR, then the shell-owned context-menu service and remaining primitive states. The preflight build blocker is resolved.
+**Immediate priority:** Complete PR #12 review, then remaining shared overlay/state primitives. The preflight build blocker is resolved.
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 

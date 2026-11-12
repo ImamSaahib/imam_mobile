@@ -7,6 +7,7 @@ import { Navigator, type NavigationGroup } from './Navigator';
 import { Button } from './Button';
 import { quickSearchKey } from '../ui-interactions';
 import './shell.css';
+import { ShellContextMenu } from './ContextMenu';
 
 // Kumo's documented mobile breakpoint; provisional until reference calibration.
 const MOBILE_QUERY = '(max-width: 767px)';
@@ -17,6 +18,7 @@ const subscribe = (notify: () => void) => {
 };
 type Application = { id: string; label: string };
 type Props = {
+  contextMenuEnabled?: boolean;
   applications: readonly Application[]; applicationId: string; onApplicationChange: (id: string) => void;
   groups: readonly NavigationGroup[]; selectedId: string; onSelect: (id: string) => void;
   title: string; description?: string; primaryAction?: ReactNode; children: ReactNode;
@@ -59,7 +61,7 @@ export function Shell(props: Props) {
     props.onSelect(id); setDrawerOpen(false);
   }} />;
   return <div ref={setContainer} className="im-shell" data-mode={props.mode} style={{ colorScheme: props.mode }}>
-    <Sidebar.Provider collapsible="none">
+    <ShellContextMenu enabled={props.contextMenuEnabled}><Sidebar.Provider collapsible="none">
       {!mobile && <Sidebar className="im-desktop-navigation">{navigation}</Sidebar>}
       <div className="im-workspace">
         <header className="im-topbar">
@@ -88,6 +90,6 @@ export function Shell(props: Props) {
         </main>
       </div>
       <aside hidden aria-label="Reserved details panel" />
-    </Sidebar.Provider>
+    </Sidebar.Provider></ShellContextMenu>
   </div>;
 }

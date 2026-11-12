@@ -163,3 +163,7 @@ PR #9 merged. Added application/theme menus, responsive modal navigation, page r
 ### 2026-11-12 — Story 00b table fixture
 
 PR #10 merged. Added shared table/search/sort/column controls, cursor navigation, row actions and states, with cancellable debounced loading and stale-response protection. Frontend: 32 unit/component tests, four browser scenarios, TypeScript and 69.1 KiB build gate. Detailed evidence and remaining acceptance are in Story 00. Next: shell context menu and remaining primitives.
+
+2026-11-13: Started shell-owned context-menu prototype after PR #11 merged. See Story 00 evidence; interaction/lifecycle review remains open.
+
+2026-11-13: Finished context-menu focus/lifecycle guards and input parity coverage in PR #12. Validation is batched per cohesive slice; detailed evidence lives in Story 00. Next: remaining shared overlays/states.

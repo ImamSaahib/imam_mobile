@@ -179,3 +179,11 @@ The gallery loader is an in-memory three-record fixture, with cursor-style callb
 Evidence: 32 helper/component tests, four Chromium scenarios, strict TypeScript, production build and 69.1 KiB gzip gate. New tests cover sort cycles, search resetting pagination, last/previous navigation, column reorder/hiding, row actions, loading/error/retry/empty states and out-of-order responses. Browser checks cover mobile horizontal containment and dark-mode table interactions; screenshots inspected. Production bundle unchanged because the gallery is development-only. No backend changes, D1 calls, migrations or manual deploys.
 
 Story 00 stays open: exact measured tokens, all-primitive screenshot baselines and states, shell context-menu parity, remaining primitives and runtime integration are pending. Next cohesive slice: central context-menu service and remaining overlay/state primitives. Recovery: revert the table slice; no database rollback.
+
+### 2026-11-13 — Shell context-menu service
+
+The shell renders one Kumo/Base UI menu from target descriptors. Fixture edit mode gates mouse, ContextMenu/Shift+F10 and touch-hold activation. Touch movement cancels opening; disabled actions cannot run. Normal elements and editable inputs retain native context behavior. Closing restores target focus (or shell focus after removal), removing the target closes the menu, and callbacks re-check the latest descriptor and target connection. Base UI handles viewport collision and menu keyboard navigation.
+
+Validation: 32 unit/component tests, strict TypeScript, build/69.1 KiB gate and seven Chromium scenarios. Context scenarios cover mouse/keyboard activation, Escape/focus restoration, locking, disabled actions, synthetic touch hold/movement cancellation, ordinary/editable targets, bottom-edge collision and target removal. Synthetic touch coverage is not a physical-device validation claim. Existing shell/table browser regressions remain covered.
+
+PR #12 targets development. Story 00 remains open: exact visual calibration, full primitive states/screenshot baselines, remaining overlays and runtime integration. No backend/schema/data changes. Recovery: revert the context-menu slice. Next: remaining shared overlay/state primitives as one cohesive slice.
