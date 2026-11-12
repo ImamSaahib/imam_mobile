@@ -119,3 +119,7 @@ Opus 5.5 for stories 01, 04, 05, 06, 07, 11 and the reviews. Sonnet 5.5 for the 
 | 2026-11-08 | Slice 01a done: Vitest with the Cloudflare plugin, 35 baseline tests, type checking, lockfiles and CI. Story 01 In progress. |
 
 | 2026-11-12 | PR #3 review follow-up: strict TypeScript interaction helpers (D3), 12 frontend tests and 283 backend tests pass locally; JS 69.0 KiB gzip. Worker build logs require Cloudflare sign-in; CI run failed without executed jobs. PRs #3/#4 remain unmerged; Story 00b acceptance remains open. |
+
+### 2026-11-12 — Story 00b component-test baseline
+
+Added Vitest/Testing Library rendered-App regressions to the frontend check command: 12 helper tests + 4 component tests pass, build passes, JS remains 69.0 KiB gzip. PR #5 GitHub checks now pass; Cloudflare Worker build still fails and build-log access returns 403 with Wrangler OAuth. Owner is configuring Workers CI Read. Original visual reference received privately; measurements remain pending. Story 00 remains in progress.

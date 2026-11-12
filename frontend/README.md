@@ -58,3 +58,5 @@ Run `npm run check` for interaction unit tests, Vite build, and a conservative 3
 Finish Story 00b (shell, Kumo wrappers and measured design tokens), then build metadata-driven navigation, lists, forms and configuration. Authentication follows the UI phase.
 
 New platform helpers use TypeScript (D3). `npm test` compiles `src/platform` with strict checking into ignored `.test-build/` and runs the interaction tests against that output. `npm run typecheck` checks without emitting files. Component and browser tests remain pending.
+
+Component tests: `npm run test:components` runs Vitest with Testing Library and jsdom against fixture-only requests. `npm test` runs helper and component suites. Use Node 22.22.2+, 24.15.0+ or 26+ (jsdom requirement). These DOM tests do not replace browser screenshots or responsive/accessibility verification.
