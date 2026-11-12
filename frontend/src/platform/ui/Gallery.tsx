@@ -4,6 +4,7 @@ import '@cloudflare/kumo/styles/standalone';
 import { Button, IconButton } from './Button';
 import { TextInput } from './TextInput';
 import { Shell } from './Shell';
+import { TableFixture } from './TableFixture';
 
 /** Development-only fixture, not a metadata runtime or measured shell. */
 export default function Gallery() {
@@ -17,6 +18,7 @@ export default function Gallery() {
       { id: 'business', label: 'Business', expandable: true, modules: [{ id: 'inventory', label: 'Inventory' }, { id: 'customers', label: 'Customers', badge: 'New' }] },
       { id: 'workspace', label: 'Workspace', modules: [{ id: 'dashboard', label: 'Dashboard' }] },
     ]} primaryAction={<Button variant="primary" onClick={() => setRefreshes(n => n + 1)}>Primary action</Button>}>
+    <TableFixture />
     <p role="status" aria-label="Selected module">Selected module: {selected}</p>
     <Button onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}>Switch theme</Button>
     <section className="im-gallery-controls" aria-label="Buttons">

@@ -6,9 +6,11 @@
 
 ## 0. Current development entry point (2026-11-12)
 
-PR #9 merged into development at 9fc69df3a88db09cf5ac5d69736906be410ebde1 after five remote checks passed. It includes the fixture navigator; PR #8 previously merged the primitives and #4/#6 guidance. The Worker preview failure is resolved. No production changes or manual remote migrations.
+PR #10 merged into development at 97f0486d1961a517cdfb87146776a8bde9e53f46 after all five checks passed. Shell and navigator remain fixture-only at /__ui; legacy screens are unchanged. No production changes or manual remote migrations.
 
-Current feature branch: responsive fixture shell, application/theme menus, modal navigation drawer and Playwright browser coverage. Story 00 remains open: table primitives, context-menu service, complete visual calibration and runtime integration remain. See its latest evidence section for test results. Next: table/search/column controls as one cohesive slice.
+Current table slice adds controlled table/search/sort/column controls, cursor navigation, row actions and loading/error/empty states. Frontend baseline: 32 helper/component tests, four browser scenarios, strict TypeScript and 69.1 KiB gzip build. Canonical evidence is in Story 00.
+
+Next: shell-owned context menu with mouse/keyboard/touch parity and remaining primitive states. Story 00 remains open; exact reference calibration, complete screenshot coverage and runtime integration are pending.
 
 ## 1. What the project is
 
@@ -48,12 +50,12 @@ Use cohesive, reviewable slices that complete a usable behavior, rather than spl
 | Story 04 (data model, properties) | Complete with deferred items (04a to 04f, 2026-11-12). Review in the Story 04 notes |
 | Stories 02, 03, 05–11 | Planned |
 | Worker tests | 283 passing in 18 files (`cd backend && npm run check`) |
-| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; Kumo primitives and navigator merged; responsive fixture shell and browser tests in progress. Exact visual calibration and runtime integration remain pending |
+| Frontend | Builds. Main chunk about 63 KB gzip. Still uses hardcoded navigation and the legacy API. Vitest/Testing Library baseline merged; Kumo primitives and navigator merged; responsive fixture shell merged; table fixture and browser coverage added. Exact visual calibration and runtime integration remain pending |
 | Dev database | Migrations 0001 to 0009 are applied to `imam-mobile-dev-db` (confirmed 2026-11-12). The seed was installed and upgraded to version 2 (release 2, 61 items, confirmed 2026-11-11). The upgrade to version 3 (65 items) is not confirmed yet; the owner was given the preview and upgrade commands. Counters rebuild reported no drift on 2026-11-12 (1 device, 1 customer, 3 ledger entries, 0 sales). Dev holds test data only |
 
 ## 4. Next step
 
-**Immediate priority:** Finish the responsive fixture-shell PR, then implement table/search/column controls together. The preflight build blocker is resolved.
+**Immediate priority:** Complete the table slice PR, then the shell-owned context-menu service and remaining primitive states. The preflight build blocker is resolved.
 
 Story 04 is complete with deferred items (slices 04a to 04f, 2026-11-12). The deferred boxes, their reasons and the stories that close them are in the Story 04 review ([stories/04-data-model-properties.md](platform/stories/04-data-model-properties.md)). The developer migration process is in [MIGRATIONS.md](platform/MIGRATIONS.md).
 

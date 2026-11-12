@@ -159,3 +159,7 @@ PR #8 merged into development with all five checks passing, including #4/#6 docs
 ### 2026-11-12 — Responsive fixture shell and faster delivery workflow
 
 PR #9 merged. Added application/theme menus, responsive modal navigation, page regions and three browser scenarios; 26 existing frontend tests and build/69.1 KiB gate pass. Detailed evidence and open acceptance remain in Story 00. Simplified HANDOFF and recorded cohesive slices, targeted iteration tests and concise linked docs per owner direction. Next: table/search/column controls.
+
+### 2026-11-12 — Story 00b table fixture
+
+PR #10 merged. Added shared table/search/sort/column controls, cursor navigation, row actions and states, with cancellable debounced loading and stale-response protection. Frontend: 32 unit/component tests, four browser scenarios, TypeScript and 69.1 KiB build gate. Detailed evidence and remaining acceptance are in Story 00. Next: shell context menu and remaining primitives.
