@@ -1,0 +1,32 @@
+import { test, expect } from '@playwright/test';
+test('context menu mouse and keyboard', async ({ page }) => {
+ await page.goto('/__ui');
+ await page.getByRole('button', { name: 'Edit fixture' }).click();
+ const target = page.getByLabel('Configurable table');
+ await target.click({ button: 'right' });
+ await expect(page.getByRole('menuitem', { name: 'Inspect table' })).toBeVisible();
+ await expect(page.getByRole('menuitem', { name: 'Remove table' })).toBeDisabled();
+ await page.getByRole('menuitem', { name: 'Inspect table' }).click();
+ await expect(page.getByLabel('Context action')).toHaveText('Table inspected');
+ await target.focus(); await page.keyboard.press('Shift+F10');
+ await expect(page.getByRole('menuitem', { name: 'Inspect table' })).toBeVisible();
+ await page.keyboard.press('Escape');
+ await expect(page.getByRole('menu')).toHaveCount(0);
+ await page.getByRole('button', { name: 'Lock fixture' }).click();
+ await target.click({ button: 'right' });
+ await expect(page.getByRole('menu')).toHaveCount(0);
+});
+test('context menu touch hold and movement cancellation', async ({ page }) => {
+ await page.goto('/__ui');
+ await page.getByRole('button', { name: 'Edit fixture' }).click();
+ const target = page.getByLabel('Configurable table');
+ await target.dispatchEvent('touchstart', { touches: [{ identifier: 1, clientX: 100, clientY: 300 }] });
+ await expect(page.getByRole('menuitem', { name: 'Inspect table' })).toBeVisible();
+ await target.dispatchEvent('touchend', { touches: [] });
+ await page.keyboard.press('Escape');
+ await target.dispatchEvent('touchstart', { touches: [{ identifier: 1, clientX: 100, clientY: 300 }] });
+ await target.dispatchEvent('touchmove', { touches: [{ identifier: 1, clientX: 150, clientY: 300 }] });
+ await page.waitForTimeout(600);
+ await expect(page.getByRole('menu')).toHaveCount(0);
+ await target.dispatchEvent('touchend', { touches: [] });
+});

@@ -10,7 +10,7 @@ PR #10 merged into development at 97f0486d1961a517cdfb87146776a8bde9e53f46 after
 
 Current table slice adds controlled table/search/sort/column controls, cursor navigation, row actions and loading/error/empty states. Frontend baseline: 32 helper/component tests, four browser scenarios, strict TypeScript and 69.1 KiB gzip build. Canonical evidence is in Story 00.
 
-Next: shell-owned context menu with mouse/keyboard/touch parity and remaining primitive states. Story 00 remains open; exact reference calibration, complete screenshot coverage and runtime integration are pending.
+Current branch feature/story-00b-context-menu contains a context-menu prototype. Before merge, finish event delegation/lifecycle/focus review and touch validation; see the latest Story 00 evidence. Next: remaining primitive states. Story 00 remains open; exact reference calibration, complete screenshot coverage and runtime integration are pending.
 
 ## 1. What the project is
 
