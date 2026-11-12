@@ -3,14 +3,21 @@ import { ArrowClockwiseIcon } from '@phosphor-icons/react';
 import '@cloudflare/kumo/styles/standalone';
 import { Button, IconButton } from './Button';
 import { TextInput } from './TextInput';
+import { NavigatorPreview } from './Navigator';
 
 /** Development-only fixture, not a metadata runtime or measured shell. */
 export default function Gallery() {
+  const [selected, setSelected] = useState('inventory');
   const [mode, setMode] = useState<'light' | 'dark'>('light');
   const [query, setQuery] = useState('');
   const [refreshes, setRefreshes] = useState(0);
   return <main data-mode={mode} style={{ colorScheme: mode }}>
     <h1>Shared component gallery</h1>
+    <NavigatorPreview applicationName="Imam Mobile" selectedId={selected} onSelect={setSelected} groups={[
+      { id: 'business', label: 'Business', expandable: true, modules: [{ id: 'inventory', label: 'Inventory' }, { id: 'customers', label: 'Customers', badge: 'New' }] },
+      { id: 'workspace', label: 'Workspace', modules: [{ id: 'dashboard', label: 'Dashboard' }] },
+    ]} />
+    <p role="status" aria-label="Selected module">Selected module: {selected}</p>
     <Button onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}>Switch theme</Button>
     <section aria-label="Buttons">
       <Button variant="primary" onClick={() => setRefreshes(n => n + 1)}>Primary action</Button>
