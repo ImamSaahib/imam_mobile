@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (slice 00a: evaluation done; tokens and shell remaining)  
+**Status:** In progress (slice 00a: evaluation done; 00b preflight under review; tokens and shell remaining)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -107,3 +107,35 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 - **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. Measuring colors, row heights, sidebar width and spacing needs the image again. Until then the token file is not written, so no values are guessed. Needed by slice 00b.
 - Frontend test tooling (Vitest with Testing Library) for component and screenshot tests, shared with Story 01.
 - Slice 00b: shell, remaining primitives, our context-menu service, gallery and screenshot tests.
+
+### Slice 00b-preflight — interaction tests and CI (2026-11-12)
+
+**Built:** Reusable keyboard shortcuts, context-menu positioning and long-press input helpers; working ⌘K/Ctrl+K focus on existing search; 12 dependency-free Node tests; and CI test/build/300 KiB gzip JS gate. Updated outdated frontend README. No backend, D1 or production changes. Resource cost: zero D1 reads/writes.
+
+**Verification:** `cd frontend && npm run check` (run by Development CI). This is a prerequisite, not completed Story 00b. Full Kumo wrappers, visual tokens and shell, central context menu, gallery, Vitest/Testing Library, screenshot and browser request tests remain pending. The screenshot is not in GitHub, so exact visual values were not guessed.
+
+### Preflight review follow-up (2026-11-12)
+
+PR #3 remains unmerged. Its GitHub Actions run 43098394510 is completed/failure, while both jobs report queued with no runner or steps; the downloaded log archive is empty. Both Pages previews succeeded. The development Worker build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c failed, but its error is not included in GitHub checks; Cloudflare dashboard access currently requires sign-in. No deployment configuration fix is justified without that log. PR #4 was reviewed: its distinction between unmerged work and the development baseline is accurate; its historical CI observations remain applicable. Neither PR is cleared for merge by this review.
+
+D3 correction: new UI interaction helpers now use TypeScript with strict compilation before the existing Node tests; Vite consumes the same source. Legacy screens are not converted in this slice. Validation on Node 26: frontend 12/12 tests, production build, total JavaScript 69.0 KiB gzip; backend type check and 283/283 tests in 18 files. CI uses Node 22 and must still pass independently. No browser regression, screenshot or first-load request-count claim is made. Context-menu helpers remain unconnected to a shared shell, and the shortcut currently focuses legacy record search, not the future navigator filter. All remaining Story 00 acceptance boxes stay open.
+
+No migrations or backend changes; this slice adds zero D1 reads/writes. Recovery: revert the TypeScript conversion and tooling commit. Next: obtain the Worker log and build settings, resolve the CI scheduling failure, then add frontend component tests and Kumo wrappers; exact tokens still require the private reference screenshot.
+
+### Slice 00b component-test baseline — 2026-11-12
+
+Adopted Vitest 4.1.12, Testing Library React 16.3.3/user-event 14.6.10 and jsdom 31.0.0 for rendered component regressions (D10). The existing Node helper tests remain. npm run check now executes both suites before the production build and size gate. Tests render the actual legacy App with only in-memory fixtures, reject unexpected requests, and cover Ctrl+K/Command+K focus, inventory navigation/filtering and listener cleanup. No deployed API or business data is used. Dependencies are development-only; production assets are unchanged.
+
+Validation: 12 helper tests and 4 rendered tests passed; production build and 69.0 KiB total gzip JS gate passed on Node 26. jsdom requires Node 22.22.2+, 24.15.0+ or 26+; CI selects current Node 22. CI verification for this slice remains pending. Backend code and schema are unchanged; previous backend validation remains 283 passing tests. No migration, D1 reads/writes or manual deployment. Recovery: revert this test-only slice.
+
+Deployment investigation: PR #5 GitHub frontend-build and worker-checks passed on commit 753a449; both Pages previews passed. Worker build still failed. Wrangler deployment-history reads succeed, but the documented Cloudflare Builds detail/log API returns HTTP 403/code 12004 with Wrangler OAuth. Owner is arranging Workers CI Read access. No build cause is asserted and PR #3 remains unmerged. The original visual reference was received privately; the screenshot blocker is resolved, measurements remain pending (direction recorded in PR #6).
+
+Acceptance: Story 00 remains in progress. These component tests do not verify screenshot appearance, responsive layout, all legacy workflows or mouse/keyboard/touch context-menu parity. Next bounded slice: shared Kumo wrappers and their interaction tests, followed by measured shell regions; complete deployment diagnostics when access is ready.
+
+### Worker preview build fix — 2026-11-12
+
+Confirmed from Cloudflare build 37f3fc81-bedb-429a-b90e-50a0f4f59e6c: dependency installation succeeded, then npx wrangler preview failed because wrangler.toml lacked previews vars and a D1 binding. Build-log access is now working through a private API credential; no credential is stored in Git.
+
+Added explicit preview development vars and the existing test-only imam-mobile-dev-db binding. Previews share development data; they are isolated from production, not from each other. No new database, remote migration or manual deploy. Schema-changing branches require a separate migration plan. A Wrangler-parsed configuration guard runs in backend check and GitHub CI and pins the approved dev target. Cloudflare’s normal PR build must verify deployment before merge. See https://developers.cloudflare.com/workers/previews/resources/#d1-migrations.
+
+Story 00 acceptance remains open. Recovery is a normal revert of the preview configuration; no database rollback is needed for this configuration-only change.

@@ -87,3 +87,7 @@ The reference application's seed lives under `applications/imam-mobile/seed/`. U
 - What are the real counts of customers and sales? Devices grow by about 10 a day. (D16)
 - Are custom roles needed, or are Admin, Manager and User enough for the first release? (D18)
 - Does Story 11's password hashing fit the free plan's CPU limit? This is answered by the spike at the start of Story 11. (D18)
+
+### D10 frontend tooling resolution — 2026-11-12 (in review)
+
+Story 00b adopts Vitest with Testing Library and jsdom for rendered component regression tests. Existing Node input-helper tests remain. Browser/screenshot tooling is still pending. The first four component tests exercise the existing App with fixture-only network responses; adoption does not complete Story 00 acceptance criteria.
