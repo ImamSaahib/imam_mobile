@@ -75,5 +75,4 @@ validation; it does not make the unfinished page bodies production-ready.
 
 Run `npm run test:built-preview` after the preview build. It serves `dist` locally,
 intercepts bootstrap with test metadata, and verifies direct routes and the ten-request
-first-load budget. CI checks both the normal build and this preview mode. Cloudflare
-build settings have not been changed; enabling this on hosted Dev is a separate step.
+first-load budget. CI checks both the normal build and this preview mode. The imam-mobile-dev Pages project builds the development branch with this command and an explicit Dev API URL (configured 2026-11-14). The main-backed project remains unchanged.
