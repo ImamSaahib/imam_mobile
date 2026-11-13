@@ -1,6 +1,6 @@
 # Development handoff
 
-Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) and the active story. This is a current-state summary, not a second requirements document.
+Updated: 2026-11-14. Read this first, then [agent workflow](AGENT-WORKFLOW.md) and the active story. This is a current-state summary, not a second requirements document.
 
 ## Current state
 
@@ -9,11 +9,11 @@ Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 - Story 01: backend slices 01a–01d implemented. Published-metadata shell integration, final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
 - Story 02: published-navigation projection, stable-ID route resolver and validated cancellable bootstrap loader implemented and tested; local DEV-only published shell integration is available at /__platform; focus revalidation, governor UI and deployed activation remain open.
 - Story 04: implemented with explicitly deferred criteria; consult its review before dependent work. Other stories are planned in TIMELINE order.
-- Last feature validation: frontend 12 helper and 29 component tests (41 total) and 16 Chromium scenarios, TypeScript/build and 69.2 KiB gzip gate; backend baseline 283 tests (not rerun on 2026-11-13). These are recorded results, not a guarantee about future commits.
+- Last feature validation: frontend 12 helper and 29 component tests (41 total) and 17 Chromium scenarios, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests (not rerun on 2026-11-14). These are recorded results, not a guarantee about future commits.
 
 ## Next cohesive slice
 
-Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (pagination sizing, icon sizes, per-primitive state coverage, dark-theme review, RTL render check), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
+Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (pagination sizing, icon sizes, per-primitive state coverage, dark-theme review; RTL testing is out of scope), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
 
 ## Open dependencies and observations
 

@@ -61,3 +61,8 @@
 .im-quick-search > svg { position: absolute; inset-inline-start: calc(var(--spacing) * 3); pointer-events: none; color: var(--im-muted); }
 .im-shell .im-quick-search input { padding-inline-start: calc(var(--spacing) * 9); padding-inline-end: calc(var(--spacing) * 13); }
 .im-quick-search small { position: absolute; inset-inline-end: calc(var(--spacing) * 3); pointer-events: none; color: var(--im-muted); white-space: nowrap; }
+
+/* Touch targets need both dimensions, including square icon-only controls. */
+@media (pointer: coarse), (max-width: 767px) {
+  .im-shell button { min-inline-size: var(--im-touch-target); min-block-size: var(--im-touch-target); }
+}

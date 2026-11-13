@@ -186,3 +186,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Local published-shell integration preview added with stable routes/history and safe bootstrap retry; two browser scenarios pass. Deployed runtime remains legacy.
 
 2026-11-13: Measured the reference (2x screenshot) and recorded light-theme design tokens in tokens.css; shell, navigator, search and table now follow them; 41 frontend tests and 16 Chromium scenarios pass. Story 00 acceptance and runtime integration remain open.
+
+2026-11-14: Reviewed external token/header refinements; hardened mobile icon target dimensions. 41 tests and 17 browser scenarios pass.
