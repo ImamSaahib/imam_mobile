@@ -31,7 +31,7 @@ Keep story status, acceptance evidence, this timeline and HANDOFF synchronized w
 |---|---|---|---|---|---|
 | 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: seven browser scenarios; reference received; calibration and runtime integration pending |
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
-| 02 | Application navigator | P0 | 00, 01 | Planned | |
+| 02 | Application navigator | P0 | 00, 01 | In progress (route-model preparation) | Stable-ID resolver and published-menu projection; runtime integration pending |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
 | 04 | Data model, properties and schema compatibility | P0 | 01 | Complete with deferred items (04a to 04f done 2026-11-12) | Slice plan 04a to 04f in Story 04 notes. 04a: type registry, property routes, seed v2. 04b: schema inspection, adoption, drift check. 04c: schema change service, `add_property` in guided_live mode. 04d: add and drop index, hide property, convert presentation, `migration_controlled` mode. 04e: `updated_at` indexes, counters, version bumps on every legacy write (2026-11-12) |
 | 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | Planned | |
@@ -178,3 +178,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Refined quick-search composition and table density against the reference; 33 tests and four affected browser scenarios pass. Exact calibration remains open.
 
 2026-11-13: Shared icon-button tooltip and light/dark primitive accessibility checks added; Story 00 acceptance and published-metadata integration remain open.
+
+2026-11-13: Story 02 route-model preparation passes four new regressions; no runtime switch. Story 00 acceptance remains open.

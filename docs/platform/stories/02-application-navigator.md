@@ -1,6 +1,6 @@
 # Story 02 — Application Navigator and Navigation Security
 
-**Status:** Planned (waiting on dependencies)  
+**Status:** In progress (route-model preparation; runtime integration awaits Story 00 acceptance)
 **Priority:** P0 · **Depends on:** Stories 00 and 01  
 **Goal:** Render application navigation from metadata and ensure every navigation target is permission-checked by the backend.
 
@@ -52,3 +52,7 @@ Navigator ordering; route stability; role visibility; direct URL authorization; 
 ## Out of scope
 
 Freeform navigation designer, arbitrary route handlers and cross-client navigation.
+
+### 2026-11-13 — Published navigation projection and stable routes
+
+Added a frontend projection matching the published bootstrap menu/page contract. Preserves published order, group/section presentation and badges; disabled modules and empty menus are omitted. Explicit `/app/:applicationId/module/:moduleId` routes use opaque IDs, independent of labels/slugs. Unknown/malformed routes return not-found; disabled modules or missing pages return unavailable. No runtime entry-point switch or network calls yet. Validation: TypeScript, 37 helper/component tests including four routing regressions, production build and unchanged 69.1 KiB gate. No backend/schema/D1 impact. Recovery: revert this preparatory slice. Next: validated bootstrap loading and shell routing with legacy access preserved; Story 00 visual acceptance remains open.

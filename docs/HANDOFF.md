@@ -7,6 +7,7 @@ Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 - Work directly on development (Decision C10). Only development and main remain; completed feature work, including PR #12, is consolidated. Main is unchanged and requires explicit production approval.
 - Story 00: Kumo/Phosphor foundation, responsive shell/navigation, table controls/states and central context menu are implemented in the development-only /__ui gallery. Production screens still use the legacy runtime.
 - Story 01: backend slices 01a–01d implemented. Published-metadata shell integration, final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
+- Story 02: published-navigation projection and stable-ID route resolver implemented and tested; bootstrap loading and runtime integration remain open.
 - Story 04: implemented with explicitly deferred criteria; consult its review before dependent work. Other stories are planned in TIMELINE order.
 - Last feature validation: frontend 33 unit/component tests and 12 Chromium scenarios, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests. These are recorded results, not a guarantee about future commits.
 
