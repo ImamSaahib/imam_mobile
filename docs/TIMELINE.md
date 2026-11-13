@@ -182,3 +182,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Story 02 route-model preparation passes four new regressions; no runtime switch. Story 00 acceptance remains open.
 
 2026-11-13: Validated cancellable bootstrap loading added with retry and stale-response protection; 41 tests pass. Runtime integration remains next.
+
+2026-11-13: Local published-shell integration preview added with stable routes/history and safe bootstrap retry; two browser scenarios pass. Deployed runtime remains legacy.
