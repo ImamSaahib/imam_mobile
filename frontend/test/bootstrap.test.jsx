@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { parseNavigation, useBootstrap, loadBootstrap } from '../src/platform/navigation/bootstrap';
+import { parseNavigation, useBootstrap, loadBootstrap, BootstrapLimitError } from '../src/platform/navigation/bootstrap';
 const fixture = () => ({ platform: { configSchemaVersion: 1 }, application: { id: 'app', key: 'shop', name: 'Shop' }, shell: {
   menus: [{ id: 'menu', label: 'Work', display: 'group', modules: [{ id: 'module', label: 'Records', slug: 'records', badge: null, pageId: 'page', enabled: true }] }],
   pages: [{ id: 'page', title: 'Records', description: null }],
@@ -70,5 +70,36 @@ it('keeps the last snapshot readable when return-to-tab revalidation fails', asy
     expect(load).toHaveBeenCalledTimes(2);
     expect(result.current.status).toBe('ready');
     expect(result.current.snapshot.application.name).toBe('Shop');
+  } finally { unmount(); spy.mockRestore(); }
+});
+it('maps daily-limit failures without exposing the server error', async () => {
+  const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ code: 'DAILY_LIMIT_REACHED', error: 'private detail', resetAt: '2026-11-15T00:00:00Z' }), { status: 503 }));
+  try {
+    const { result, unmount } = renderHook(() => useBootstrap('/api/bootstrap'));
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.resources).toEqual({ state: 'limit', resetAt: '2026-11-15T00:00:00Z' });
+    expect(result.current.message).not.toContain('private');
+    unmount();
+  } finally { fetchMock.mockRestore(); }
+});
+
+it('retains navigation on a limit response and resumes revalidation after reset', async () => {
+  let visibility = 'visible';
+  const spy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility);
+  const load = vi.fn().mockResolvedValueOnce(fixture()).mockRejectedValueOnce(new BootstrapLimitError('2000-01-01T00:00:00Z')).mockResolvedValue(fixture());
+  const { result, unmount } = renderHook(() => useBootstrap('/api/bootstrap', 0, load));
+  const cycle = async () => {
+    await act(async () => { visibility = 'hidden'; document.dispatchEvent(new Event('visibilitychange')); });
+    await act(async () => { visibility = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
+  };
+  try {
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    await cycle();
+    expect(result.current.status).toBe('ready');
+    expect(result.current.snapshot.resources.state).toBe('limit');
+    expect(result.current.snapshot.application.name).toBe('Shop');
+    await cycle();
+    expect(load).toHaveBeenCalledTimes(3);
+    expect(result.current.snapshot.resources).toBeUndefined();
   } finally { unmount(); spy.mockRestore(); }
 });

@@ -190,3 +190,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-14: Reviewed external token/header refinements; hardened mobile icon target dimensions. 41 tests and 17 browser scenarios pass.
 
 2026-11-14: Published shell preview gains bootstrap governor notices and visibility revalidation with conserve-state suppression; runtime browser checks pass.
+
+2026-11-14: Daily-limit HTTP failures now show safe reset/retry states and preserve loaded navigation during revalidation; recovery tests pass.

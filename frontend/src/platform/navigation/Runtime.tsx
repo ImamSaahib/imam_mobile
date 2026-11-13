@@ -44,6 +44,7 @@ export default function NavigationRuntime({ bootstrapUrl }: { bootstrapUrl: stri
   if (state.status === 'ready') return <PublishedShell snapshot={state.snapshot} />;
   return <main className="im-shell im-page" data-mode="light">
     <h1>Application</h1>
+    {state.status === 'error' && <ResourceBanner resources={state.resources} />}
     <ResourceState state={state.status === 'loading' ? 'loading' : 'error'} message={state.status === 'loading' ? 'Loading application…' : state.message} onRetry={() => setRevision(value => value + 1)} />
     <a href="/">Open existing application</a>
   </main>;

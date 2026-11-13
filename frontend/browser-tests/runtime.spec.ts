@@ -37,3 +37,13 @@ test('essential resource state displays a notice without hiding navigation', asy
   await page.getByRole('button', { name: 'People New' }).click();
   await expect(page.getByRole('heading', { name: 'Published people' })).toBeVisible();
 });
+test('daily-limit failure shows reset time and explicit retry recovers', async ({ page }) => {
+  let limited = true;
+  await page.route('**/api/bootstrap', route => limited ? route.fulfill({ status: 503, json: { code: 'DAILY_LIMIT_REACHED', error: 'private database detail', resetAt: '2026-11-15T00:00:00Z' } }) : route.fulfill({ json: snapshot }));
+  await page.goto('/__platform');
+  await expect(page.getByRole('status')).toContainText('15 Nov 2026, 00:00 UTC');
+  await expect(page.getByText('private database detail')).toHaveCount(0);
+  limited = false;
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByRole('heading', { name: 'Published stock' })).toBeVisible();
+});

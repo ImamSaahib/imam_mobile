@@ -33,12 +33,22 @@ export function parseNavigation(value: unknown): PublishedNavigation {
 }
 
 export type BootstrapState = { status: 'loading' } | { status: 'ready'; snapshot: PublishedNavigation } |
-  { status: 'error'; message: string };
+  { status: 'error'; message: string; resources?: PublishedNavigation['resources'] };
+export class BootstrapLimitError extends Error {
+  constructor(public resetAt?: string) { super('The daily usage limit has been reached.'); }
+}
 export type BootstrapLoader = (url: string, signal: AbortSignal) => Promise<PublishedNavigation>;
 export const loadBootstrap: BootstrapLoader = async (url, signal) => {
   // Let the HTTP cache revalidate using the server ETag; no persistent application cache.
   const response = await fetch(url, { signal, cache: 'no-cache', credentials: 'same-origin' });
-  if (!response.ok) throw new Error('Bootstrap unavailable');
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
+    if (response.status === 503 && object(body) && body.code === 'DAILY_LIMIT_REACHED') {
+      const resetAt = typeof body.resetAt === 'string' && Number.isFinite(Date.parse(body.resetAt)) ? body.resetAt : undefined;
+      throw new BootstrapLimitError(resetAt);
+    }
+    throw new Error('Bootstrap unavailable');
+  }
   return parseNavigation(await response.json());
 };
 
@@ -58,7 +68,15 @@ export function useBootstrap(url: string, revision = 0, load: BootstrapLoader = 
           snapshot = next;
           setResult({ url, revision, load, state: { status: 'ready', snapshot: next } });
         }
-      } catch {
+      } catch (error) {
+        if (current && error instanceof BootstrapLimitError) {
+          const resources = { state: 'limit' as const, resetAt: error.resetAt };
+          if (snapshot) {
+            snapshot = { ...snapshot, resources };
+            setResult({ url, revision, load, state: { status: 'ready', snapshot } });
+          } else setResult({ url, revision, load, state: { status: 'error', message: 'The application cannot load until usage is available again.', resources } });
+          return;
+        }
         if (current && !snapshot) setResult({ url, revision, load, state: { status: 'error', message: 'Could not load the application. Please try again.' } });
       } finally { pending = false; }
     };
@@ -67,7 +85,7 @@ export function useBootstrap(url: string, revision = 0, load: BootstrapLoader = 
       if (document.visibilityState === 'hidden') { hidden = true; return; }
       if (!hidden) return;
       hidden = false;
-      if (!snapshot || !snapshot.resources || snapshot.resources.state === 'normal') void request();
+      if (!snapshot || !snapshot.resources || snapshot.resources.state === 'normal' || (snapshot.resources.state === 'limit' && snapshot.resources.resetAt && Date.parse(snapshot.resources.resetAt) <= Date.now())) void request();
     };
     void request();
     document.addEventListener('visibilitychange', visibility);
