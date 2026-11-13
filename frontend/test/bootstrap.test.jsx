@@ -43,3 +43,32 @@ it('revalidates HTTP cache and rejects failed responses before parsing', async (
     await expect(loadBootstrap('/api/bootstrap', signal)).rejects.toThrow('Bootstrap unavailable');
   } finally { fetchMock.mockRestore(); }
 });
+it('revalidates only after a hidden-to-visible transition and suppresses reads in conserve state', async () => {
+  let visibility = 'visible';
+  const spy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility);
+  const initial = fixture(), conserving = fixture(); conserving.resources = { state: 'conserve' };
+  const load = vi.fn().mockResolvedValueOnce(initial).mockResolvedValue(conserving);
+  const { result, unmount } = renderHook(() => useBootstrap('/api/bootstrap', 0, load));
+  const change = async value => { visibility = value; await act(async () => document.dispatchEvent(new Event('visibilitychange'))); };
+  try {
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    await change('visible'); expect(load).toHaveBeenCalledTimes(1);
+    await change('hidden'); await change('visible'); expect(load).toHaveBeenCalledTimes(2);
+    await change('hidden'); await change('visible'); expect(load).toHaveBeenCalledTimes(2);
+    unmount(); await change('hidden'); await change('visible'); expect(load).toHaveBeenCalledTimes(2);
+  } finally { unmount(); spy.mockRestore(); }
+});
+it('keeps the last snapshot readable when return-to-tab revalidation fails', async () => {
+  let visibility = 'visible';
+  const spy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility);
+  const load = vi.fn().mockResolvedValueOnce(fixture()).mockRejectedValue(new Error('offline'));
+  const { result, unmount } = renderHook(() => useBootstrap('/api/bootstrap', 0, load));
+  try {
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    await act(async () => { visibility = 'hidden'; document.dispatchEvent(new Event('visibilitychange')); });
+    await act(async () => { visibility = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe('ready');
+    expect(result.current.snapshot.application.name).toBe('Shop');
+  } finally { unmount(); spy.mockRestore(); }
+});

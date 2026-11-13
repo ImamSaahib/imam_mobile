@@ -66,3 +66,4 @@
 @media (pointer: coarse), (max-width: 767px) {
   .im-shell button { min-inline-size: var(--im-touch-target); min-block-size: var(--im-touch-target); }
 }
+.im-resource-banner { padding: var(--im-gap); margin-block-end: var(--im-gap); border: 1px solid var(--im-border); border-radius: var(--im-radius-control); background: var(--im-surface); color: var(--im-text); }

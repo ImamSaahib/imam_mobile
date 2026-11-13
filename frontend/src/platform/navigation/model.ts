@@ -1,5 +1,6 @@
 /** Published bootstrap projection. IDs are identity; labels and slugs are presentation. */
 export type PublishedNavigation = {
+  resources?: { state: 'normal' | 'conserve' | 'essential' | 'limit'; resetAt?: string };
   application: { id: string; key: string; name: string };
   shell: {
     menus: { id: string; label: string; display: 'group' | 'section'; modules: {

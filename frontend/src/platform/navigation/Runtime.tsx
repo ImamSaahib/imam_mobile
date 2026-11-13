@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '@cloudflare/kumo/styles/standalone';
 import { Shell } from '../ui/Shell';
+import { ResourceBanner } from '../ui/ResourceBanner';
 import { ResourceState } from '../ui/ResourceState';
 import { useBootstrap } from './bootstrap';
 import { modulePath, navigationGroups, resolveModule, type PublishedNavigation } from './model';
@@ -29,6 +30,7 @@ function PublishedShell({ snapshot }: { snapshot: PublishedNavigation }) {
     onSelect={id => { const next = modulePath(snapshot.application.id, id); if (next !== path) window.history.pushState(null, '', next); setPath(next); }}
     title={title} description={route.status === 'ready' ? route.page.description ?? undefined : undefined}
     mode={mode} onModeChange={setMode} releaseLabel="Published navigation preview">
+    <ResourceBanner resources={snapshot.resources} />
     {route.status === 'ready' ? <p>Page content is being migrated. Use the existing application for business workflows.</p>
       : <ResourceState state="empty" message={route.status === 'unavailable' ? 'This page is currently unavailable.' : 'Choose an available page from the navigation.'} />}
     <a href="/">Open existing application</a>

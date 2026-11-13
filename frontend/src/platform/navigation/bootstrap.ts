@@ -11,6 +11,10 @@ export function parseNavigation(value: unknown): PublishedNavigation {
   if (!object(value) || !object(value.platform) || value.platform.configSchemaVersion !== 1 ||
       !object(value.application) || !text(value.application.id) || !text(value.application.key) || !text(value.application.name) ||
       !object(value.shell) || !Array.isArray(value.shell.menus) || !Array.isArray(value.shell.pages)) throw new Error('Invalid bootstrap');
+  if (value.resources !== undefined) {
+    if (!object(value.resources) || !['normal', 'conserve', 'essential', 'limit'].includes(String(value.resources.state)) ||
+        (value.resources.resetAt !== undefined && (typeof value.resources.resetAt !== 'string' || !Number.isFinite(Date.parse(value.resources.resetAt))))) throw new Error('Invalid resources');
+  }
   const menus = value.shell.menus;
   const pages = value.shell.pages;
   for (const menu of menus) {
@@ -38,18 +42,36 @@ export const loadBootstrap: BootstrapLoader = async (url, signal) => {
   return parseNavigation(await response.json());
 };
 
-/** Explicit load/retry only. Endpoint changes and unmount cancel pending work. */
+/** Revalidate once on return to the tab; conserve states suppress automatic reads. */
 export function useBootstrap(url: string, revision = 0, load: BootstrapLoader = loadBootstrap): BootstrapState {
   const [result, setResult] = useState<{ url: string; revision: number; load: BootstrapLoader; state: BootstrapState }>();
   useEffect(() => {
     const controller = new AbortController();
-    let current = true;
-    load(url, controller.signal).then(snapshot => {
-      if (current) setResult({ url, revision, load, state: { status: 'ready', snapshot } });
-    }).catch(() => {
-      if (current) setResult({ url, revision, load, state: { status: 'error', message: 'Could not load the application. Please try again.' } });
-    });
-    return () => { current = false; controller.abort(); };
+    let current = true, pending = false;
+    let snapshot: PublishedNavigation | undefined;
+    const request = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const next = await load(url, controller.signal);
+        if (current) {
+          snapshot = next;
+          setResult({ url, revision, load, state: { status: 'ready', snapshot: next } });
+        }
+      } catch {
+        if (current && !snapshot) setResult({ url, revision, load, state: { status: 'error', message: 'Could not load the application. Please try again.' } });
+      } finally { pending = false; }
+    };
+    let hidden = document.visibilityState === 'hidden';
+    const visibility = () => {
+      if (document.visibilityState === 'hidden') { hidden = true; return; }
+      if (!hidden) return;
+      hidden = false;
+      if (!snapshot || !snapshot.resources || snapshot.resources.state === 'normal') void request();
+    };
+    void request();
+    document.addEventListener('visibilitychange', visibility);
+    return () => { current = false; controller.abort(); document.removeEventListener('visibilitychange', visibility); };
   }, [url, revision, load]);
   return result?.url === url && result.revision === revision && result.load === load ? result.state : { status: 'loading' };
 }

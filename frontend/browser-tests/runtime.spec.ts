@@ -30,3 +30,10 @@ test('bootstrap failure is safe and retry loads the shell', async ({ page }) => 
   await page.getByRole('button', { name: 'Retry' }).click();
   await expect(page.getByRole('heading', { name: 'Published stock' })).toBeVisible();
 });
+test('essential resource state displays a notice without hiding navigation', async ({ page }) => {
+  await page.route('**/api/bootstrap', route => route.fulfill({ json: { ...snapshot, resources: { state: 'essential' } } }));
+  await page.goto('/__platform');
+  await expect(page.getByRole('status')).toHaveText('Some information may be a few minutes old. Essential actions remain available.');
+  await page.getByRole('button', { name: 'People New' }).click();
+  await expect(page.getByRole('heading', { name: 'Published people' })).toBeVisible();
+});
