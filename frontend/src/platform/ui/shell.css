@@ -1,27 +1,27 @@
-/* Semantic aliases and Kumo spacing defaults, not measured reference values. */
+/* Tokens live in tokens.css (measured from the reference). */
 .im-shell {
-  --im-background: var(--color-kumo-base);
-  --im-surface: var(--color-kumo-base);
-  --im-border: var(--color-kumo-line);
-  --im-text: var(--text-color-kumo-default);
-  --im-muted: var(--text-color-kumo-subtle);
-  --im-navigator-width: 256px; /* Kumo Sidebar defaultWidth, not screenshot-derived. */
   --im-gap: calc(var(--spacing) * 4);
   min-block-size: 100dvh;
   color: var(--im-text);
   background: var(--im-background);
   font-family: var(--font-sans);
+  font-size: var(--im-text-body);
 }
+/* Kumo's provider sets these on its own wrapper, so override them there. */
+.im-shell [data-sidebar-wrapper] { --sidebar-bg: var(--im-background); --sidebar-active-bg: var(--im-selected); }
 .im-workspace { flex: 1; min-inline-size: 0; }
-.im-topbar { display: flex; align-items: center; gap: var(--im-gap); padding: var(--im-gap); border-block-end: 1px solid var(--im-border); }
+.im-topbar { display: flex; align-items: center; gap: var(--im-gap); box-sizing: border-box; block-size: var(--im-topbar-height); padding-block: 2px; padding-inline: var(--im-gap); background: var(--im-background); border-block-end: 1px solid var(--im-border); }
 .im-topbar-spacer { flex: 1; }
-.im-page { padding: calc(var(--im-gap) * 2); }
+.im-page { padding: var(--im-page-padding); }
 .im-page-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--im-gap); margin-block-end: calc(var(--im-gap) * 2); }
-.im-page-header h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-semibold); }
+.im-page-header h1 { font-size: var(--im-text-title); font-weight: var(--font-weight-semibold); }
+.im-page-header > button { block-size: var(--im-control-height); min-block-size: var(--im-touch-target); border-radius: var(--im-radius-button); }
 .im-page-header p { color: var(--im-muted); margin-block-start: var(--spacing); }
 .im-app-switcher { inline-size: 100%; justify-content: space-between; }
 .im-shell nav { min-block-size: 0; overflow-y: auto; }
-.im-shell nav [data-navigation-item], .im-shell nav input, .im-topbar button, .im-app-switcher, .im-drawer-close { min-block-size: 44px; }
+.im-shell nav [data-navigation-item] { block-size: max(var(--im-nav-item-height), var(--im-touch-target)); }
+.im-shell nav input { block-size: max(var(--im-quick-search-height), var(--im-touch-target)); border-radius: var(--im-radius-control); }
+.im-topbar button, .im-app-switcher, .im-drawer-close { min-block-size: var(--im-touch-target); }
 .im-shell nav ul[aria-label] { padding-inline-start: var(--im-gap); }
 .im-navigation-drawer { position: fixed; inset-block: 0; inset-inline-start: 0; inset-inline-end: auto; margin: 0; transform: none; translate: none; inline-size: min(100%, var(--im-navigator-width)); max-block-size: 100dvh; border-radius: 0; overflow-y: auto; }
 .im-drawer-close { margin: var(--im-gap); }
@@ -39,7 +39,7 @@
 
 .im-context-positioner { z-index: 100; }
 .im-context-menu { min-inline-size: 12rem; padding: var(--spacing); background: var(--im-surface); color: var(--im-text); border: 1px solid var(--im-border); border-radius: var(--radius-lg); max-block-size: var(--available-height); overflow-y: auto; }
-.im-context-action { padding: calc(var(--spacing) * 3); min-block-size: 44px; cursor: pointer; }
+.im-context-action { padding: calc(var(--spacing) * 3); min-block-size: max(32px, var(--im-touch-target)); cursor: pointer; }
 .im-context-action[data-highlighted] { background: var(--color-kumo-tint); outline: 2px solid var(--color-kumo-focus); }
 .im-context-action[data-disabled] { color: var(--im-muted); cursor: default; }
 
@@ -48,7 +48,7 @@
 
 .im-side-panel { position: fixed; inset-block: 0; inset-inline-end: 0; inset-inline-start: auto; margin: 0; transform: none; translate: none; inline-size: min(100%, 28rem); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh; border-radius: 0; overflow-y: auto; padding: var(--im-gap); }
 .im-side-panel > * + * { margin-block-start: var(--im-gap); }
-.im-side-panel button { min-block-size: 44px; }
+.im-side-panel button { min-block-size: var(--im-touch-target); }
 
 .im-resource-state { padding-block: var(--im-gap); color: var(--im-muted); }
 .im-resource-state button { margin-block-start: var(--spacing); }

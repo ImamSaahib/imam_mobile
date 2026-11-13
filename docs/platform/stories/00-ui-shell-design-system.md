@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (00b fixture shell, navigation, table and context menu implemented; toast, side panel and shared resource states implemented; calibration and runtime integration open)
+**Status:** In progress (00b fixture shell, navigation, table and context menu implemented; toast, side panel and shared resource states implemented; measured tokens recorded and applied to shell, navigator and table; primitive-state acceptance, dark-theme calibration and runtime integration open)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -106,7 +106,7 @@ The current application is about 78 kB gzip in total (JS 62.8, Admin Studio chun
 5. Re-check the budget when the shell is built (slice 00b) and again at the Story 07 phase review.
 
 **Open**
-- **Design tokens (scope item 1) are not measured yet.** The reference screenshot is not stored in the repository because it shows account details. The original image was received privately on 2026-11-12. Measure colors, row heights, sidebar width and spacing in slice 00b, accounting for screenshot scale; the token file is still pending.
+- **Design tokens (scope item 1): measured 2026-11-13, see the entry below.** Originally not measured: The reference screenshot is not stored in the repository because it shows account details. The original image was received privately on 2026-11-12. Measure colors, row heights, sidebar width and spacing in slice 00b, accounting for screenshot scale; the token file is still pending.
 - Frontend test tooling (Vitest with Testing Library) for component and screenshot tests, shared with Story 01.
 - Slice 00b: shell, remaining primitives, our context-menu service, gallery and screenshot tests.
 
@@ -217,3 +217,24 @@ Moved the navigator search icon and keyboard hint into the search field. Reduced
 ### 2026-11-13 — Icon tooltip and primitive accessibility evidence
 
 Shared IconButton now supplies a Kumo tooltip from its required accessible label, with a themed portal. Added light/dark reduced-motion browser scenarios for visible tooltip, disabled controls, side-panel focus cycling/restoration and resource error semantics, plus primitive/panel screenshot captures. TypeScript, 33 tests, build/69.1 KiB gate passed; 12 existing browser scenarios passed and both new scenarios passed after correcting the test to inspect Kumo’s visible popup rather than assuming a separate tooltip role. Screenshots are evidence, not approved baselines. No backend/schema/D1 impact. Recovery: revert this slice.
+
+### 2026-11-13 — Measured design tokens (light theme)
+
+Measured the private reference (3566x1632 px at 2x scale, so a 1783x816 CSS px viewport; 1 CSS px borders measure 2 device px; error about 1 CSS px) by scanning pixel boundaries and glyph heights, then rendered the gallery at the same viewport and compared with the same scans. The screenshot is not committed. Tokens are in `frontend/src/platform/ui/tokens.css`, each with its source value; shell, navigator, page header, search field and table styles consume them.
+
+| Token | Measured | Before (Kumo default) |
+|---|---|---|
+| Navigator width | 251 px (250 + border) | 260 px |
+| Top bar height | 49 px | 77 px |
+| Page padding | 32 px | 32 px (kept) |
+| Search field / primary button height | 38 px | 44 px |
+| Table header and body row | 44 px | 52 px |
+| Toolbar container | 8 px wider than the table per side, 26 px above the table | 16 px gap, not wider |
+| Radii | table and field 8, toolbar 12, button 6, quick search 8 (measured 7, 11, 6, 7) | 12 |
+| Title | 20 px, cap height 14.5 px (equal to the reference) | 24 px |
+| Light colors | background #fbfbfb, surface #ffffff, border #e3e3e3, field border #d6d6d6, selected item #f3f3f3, text #171717, muted #737373, placeholder #a1a1a1 | Kumo values |
+| Primary button | #277aff fill, #045ede border; Kumo's default already matches, no override | same |
+
+Changes: search is now one bordered field with the leading icon and the refresh button inside it (as in the reference), inside the wider toolbar container. The top bar, rows, controls and navigator width use the tokens. Touch-first contexts (`pointer: coarse` or narrow screens) keep 44 px targets through `--im-touch-target`, so fine pointers use the reference sizes (UI-REFERENCE section 5 is preserved). Dark theme has no reference, so dark values stay on Kumo semantics and are validated visually only. Font family cannot be measured from pixels and stays on Kumo's. Kumo sets the sidebar width on its own wrapper, so the token is passed through the provider `style`.
+
+Validation: TypeScript, 12 helper and 29 component tests, build and 69.2 KiB gzip gate pass; all 16 Chromium scenarios pass; desktop light and dark and a 390 px touch render were inspected, and measured sizes confirmed (rows 44 px, search 38 px, navigator items 34 px on desktop; search 44 px and rows 45 px on touch). Remaining differences: item pitch and icon sizes in the navigator, the application switcher and quick-search proportions (the reference has the switcher in the top bar, ours in the sidebar), pagination button dimensions, exact font metrics and the unmeasured dark theme. Screenshots are evidence, not approved baselines. No backend, schema or D1 impact. Recovery: revert this styling commit.

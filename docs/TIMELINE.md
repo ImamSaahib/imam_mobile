@@ -29,7 +29,7 @@ Keep story status, acceptance evidence, this timeline and HANDOFF synchronized w
 
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: seven browser scenarios; reference received; calibration and runtime integration pending |
+| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: 16 browser scenarios; light-theme tokens measured and applied (2026-11-13); acceptance gaps and runtime integration pending |
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
 | 02 | Application navigator | P0 | 00, 01 | In progress (route-model preparation) | Stable-ID resolver and published-menu projection; runtime integration pending |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | Planned | |
@@ -101,7 +101,7 @@ The policy layer denies every route except health unless `AUTH_MODE=dev-open` an
 | Rough customer and sales counts (for the reference dataset) | Step 6 |
 | Whether Admin, Manager and User are enough as roles | Step 15 |
 | Password hashing spike result | Step 15 |
-| Measure tokens from the original reference received 2026-11-12 | Step 4 (00b) |
+| ~~Measure tokens from the original reference received 2026-11-12~~ done 2026-11-13 (light theme) | Step 4 (00b) |
 
 ## Change log
 
@@ -184,3 +184,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Validated cancellable bootstrap loading added with retry and stale-response protection; 41 tests pass. Runtime integration remains next.
 
 2026-11-13: Local published-shell integration preview added with stable routes/history and safe bootstrap retry; two browser scenarios pass. Deployed runtime remains legacy.
+
+2026-11-13: Measured the reference (2x screenshot) and recorded light-theme design tokens in tokens.css; shell, navigator, search and table now follow them; 41 frontend tests and 16 Chromium scenarios pass. Story 00 acceptance and runtime integration remain open.

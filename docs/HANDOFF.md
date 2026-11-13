@@ -5,19 +5,19 @@ Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 ## Current state
 
 - Work directly on development (Decision C10). Only development and main remain; completed feature work, including PR #12, is consolidated. Main is unchanged and requires explicit production approval.
-- Story 00: Kumo/Phosphor foundation, responsive shell/navigation, table controls/states and central context menu are implemented in the development-only /__ui gallery. Production screens still use the legacy runtime.
+- Story 00: Kumo/Phosphor foundation, responsive shell/navigation, table controls/states, central context menu, dialog, side panel, toasts and shared states are implemented in the development-only /__ui gallery, styled with design tokens measured from the reference (tokens.css). Production screens still use the legacy runtime.
 - Story 01: backend slices 01a–01d implemented. Published-metadata shell integration, final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
 - Story 02: published-navigation projection, stable-ID route resolver and validated cancellable bootstrap loader implemented and tested; local DEV-only published shell integration is available at /__platform; focus revalidation, governor UI and deployed activation remain open.
 - Story 04: implemented with explicitly deferred criteria; consult its review before dependent work. Other stories are planned in TIMELINE order.
-- Last feature validation: frontend 33 unit/component tests and 12 Chromium scenarios, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests. These are recorded results, not a guarantee about future commits.
+- Last feature validation: frontend 12 helper and 29 component tests (41 total) and 16 Chromium scenarios, TypeScript/build and 69.2 KiB gzip gate; backend baseline 283 tests (not rerun on 2026-11-13). These are recorded results, not a guarantee about future commits.
 
 ## Next cohesive slice
 
-Confirmation dialog, modal side panel and toast notifications are implemented in the gallery. Shared loading/empty/no-results/error states now serve the table and gallery. Next finish visual calibration and acceptance evidence before runtime integration with Story 02. Do not reopen the resolved Worker-preview investigation or recreate branches.
+Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (navigator item pitch and application-switcher placement, pagination sizing, per-primitive state coverage, dark-theme review, no hard-coded left/right positioning check), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
 
 ## Open dependencies and observations
 
-- Original Cloudflare reference received privately; keep account details out of Git. Exact scale/token calibration remains open. Kumo defaults are provisional.
+- Original Cloudflare reference received privately; keep account details out of Git. Light-theme tokens are measured; dark theme has no reference and uses Kumo semantics.
 - Dev D1 migrations 0001–0009 were confirmed on 2026-11-12. Seed v2 was confirmed; seed v3 upgrade confirmation remains open. Recheck only when relevant; never infer current remote state from these dated observations.
 - Dev Worker: https://imam-mobile-api-dev.imamsaahib.workers.dev; dev D1: imam-mobile-dev-db. Verify environment bindings/configuration before remote reads; do not infer production targets from a Pages project name.
 - Role choices and password-hashing spike belong to Story 11. Reference-dataset assumptions remain in Contracts §9.

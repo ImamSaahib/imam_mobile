@@ -33,11 +33,11 @@ export function DataTable<T>(props: Props<T>) {
   }
   return <div ref={setContainer} className="im-data-table">
     <TooltipProvider>
-      <div className="im-table-toolbar">
+      <div className="im-table-toolbar"><div className="im-search-field">
         <MagnifyingGlassIcon aria-hidden />
         <TextInput aria-label={`Search ${props.label}`} placeholder={`Search ${props.label.toLowerCase()}`} value={props.search} onChange={event => props.onSearch(event.target.value)} />
         <Tooltip content="Refresh records" container={container} render={<Button aria-label="Refresh records" disabled={busy} onClick={props.onRefresh} />}><ArrowClockwiseIcon aria-hidden /></Tooltip>
-      </div>
+      </div></div>
       <div className="im-table-scroll" role="region" aria-label={`${props.label} table`} tabIndex={0}>
         <Table aria-label={props.label} aria-busy={busy}>
           <Table.Header><Table.Row>

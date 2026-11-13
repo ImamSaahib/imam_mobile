@@ -11,6 +11,8 @@ The owner supplied the original Cloudflare D1 dashboard screenshot in chat ("Scr
 
 Prioritize the application navigator: top application switcher, quick search, grouped/expandable navigation, indented children and selected-item state. Reproduce the visual language of the page heading, primary button, bordered search with refresh, rounded table, sortable headings, column settings, row actions, summary and pagination. Exclude the right usage/changelog section; the main content uses the available width. Filters must fit this visual language and the view contracts, although their open states are not visible in this reference. Measure tokens during Story 00b; image pixels alone do not establish CSS pixels or browser scale. Dark theme and unseen interaction states require Kumo semantic tokens and explicit validation.
 
+**Measured tokens (2026-11-13):** the light-theme values were measured and are recorded in `frontend/src/platform/ui/tokens.css`; the table and method are in [Story 00](stories/00-ui-shell-design-system.md). Section 8 below remains the list of token categories.
+
 ## 1. Rules of use
 
 - Reproduce the layout, proportions, spacing, component structure and interaction behavior of the reference.

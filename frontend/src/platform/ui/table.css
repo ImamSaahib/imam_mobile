@@ -1,10 +1,15 @@
 .im-data-table { min-inline-size: 0; }
-.im-table-toolbar { display: flex; align-items: center; gap: var(--im-gap); border: 1px solid var(--im-border); border-radius: var(--radius-lg); padding: calc(var(--spacing) * 2); margin-block-end: calc(var(--im-gap) * 2); }
-.im-table-toolbar input { flex: 1; min-inline-size: 0; inline-size: 100%; }
-.im-table-toolbar > svg { flex-shrink: 0; }
-.im-table-scroll { max-inline-size: 100%; overflow-x: auto; border: 1px solid var(--im-border); border-radius: var(--radius-lg); }
+.im-table-toolbar { margin-inline: calc(var(--im-toolbar-bleed) * -1); padding: var(--im-toolbar-padding); margin-block-end: var(--im-toolbar-gap); border: 1px solid var(--im-border); border-radius: var(--im-radius-container); background: var(--im-background); }
+.im-search-field { display: flex; align-items: center; box-sizing: border-box; block-size: max(var(--im-control-height), var(--im-touch-target)); border: 1px solid var(--im-field-border); border-radius: var(--im-radius-control); background: var(--im-surface); }
+.im-search-field:focus-within { outline: 2px solid var(--color-kumo-focus); outline-offset: 2px; }
+.im-search-field > svg { flex-shrink: 0; margin-inline: calc(var(--spacing) * 3) calc(var(--spacing) * 2); color: var(--im-muted); }
+.im-search-field input { flex: 1; min-inline-size: 0; block-size: 100%; border: 0; box-shadow: none; outline: none; background: transparent; padding-inline: 0; color: var(--im-text); }
+.im-search-field input::placeholder { color: var(--im-placeholder); }
+.im-search-field > button { flex-shrink: 0; block-size: 100%; aspect-ratio: 1; border: 0; border-inline-start: 1px solid var(--im-border); border-radius: 0; background: transparent; }
+.im-table-scroll { max-inline-size: 100%; overflow-x: auto; border: 1px solid var(--im-border); border-radius: var(--im-radius-control); background: var(--im-surface); }
 .im-table-scroll table { inline-size: 100%; white-space: nowrap; }
-.im-data-table button { min-block-size: 44px; }
+.im-data-table button { min-block-size: var(--im-touch-target); }
+.im-table-footer button { block-size: max(var(--im-pagination-height), var(--im-touch-target)); }
 .im-table-footer, .im-table-footer nav { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--spacing) * 2); }
 .im-table-footer { justify-content: space-between; margin-block: var(--im-gap); color: var(--im-muted); }
 .im-column-settings { padding: var(--im-gap); max-inline-size: calc(100vw - var(--im-gap)); }
@@ -15,7 +20,8 @@
 .im-record-identifier { font-family: var(--font-mono); display: block; max-inline-size: 18ch; overflow: hidden; text-overflow: ellipsis; }
 .im-data-table :focus-visible { outline: 2px solid var(--color-kumo-focus); outline-offset: 2px; }
 
-/* Keep the 44px controls while removing duplicated vertical cell padding. */
-.im-data-table .im-table-scroll table :is(th, td) { padding-block: var(--spacing); }
+/* Header and body rows are 44px including the separator (measured). Touch input keeps 44px targets. */
+.im-data-table .im-table-scroll table :is(th, td) { box-sizing: border-box; block-size: max(var(--im-row-height), var(--im-touch-target)); padding-block: 0; }
+.im-data-table .im-table-scroll thead { background: var(--im-background); }
 .im-data-table .im-table-scroll tbody tr { background: var(--im-surface); }
 .im-data-table .im-table-scroll tbody tr + tr td { border-block-start: 1px solid var(--im-border); }

@@ -6,6 +6,7 @@ import { CaretDownIcon, ListIcon, UserCircleIcon } from '@phosphor-icons/react';
 import { Navigator, type NavigationGroup } from './Navigator';
 import { Button } from './Button';
 import { quickSearchKey } from '../ui-interactions';
+import './tokens.css';
 import './shell.css';
 import { ShellContextMenu } from './ContextMenu';
 
@@ -61,7 +62,7 @@ export function Shell(props: Props) {
     props.onSelect(id); setDrawerOpen(false);
   }} />;
   return <div ref={setContainer} className="im-shell" data-mode={props.mode} style={{ colorScheme: props.mode }}>
-    <ShellContextMenu enabled={props.contextMenuEnabled}><Sidebar.Provider collapsible="none">
+    <ShellContextMenu enabled={props.contextMenuEnabled}><Sidebar.Provider collapsible="none" style={{ '--sidebar-width': 'var(--im-navigator-width)' } as React.CSSProperties}>
       {!mobile && <Sidebar className="im-desktop-navigation">{navigation}</Sidebar>}
       <div className="im-workspace">
         <header className="im-topbar">

@@ -1,0 +1,50 @@
+/*
+ * Design tokens measured from the private Cloudflare D1 reference (UI-REFERENCE, Story 00).
+ * Method: the reference is a 3566x1632 px screenshot taken at 2x device scale (1 CSS px borders
+ * measure 2 device px), i.e. a 1783x816 CSS px viewport. Values below are device px / 2.
+ * Measurement error is about +/-1 CSS px. Only the light theme exists in the reference; dark values
+ * fall back to Kumo semantic tokens. Font family is not measurable from pixels and stays on Kumo's.
+ */
+.im-shell {
+  /* Layout regions */
+  --im-navigator-width: 251px;      /* 250 + 1 border */
+  --im-topbar-height: 49px;         /* 48 + 1 border */
+  --im-page-padding: 32px;          /* measured 31 */
+  --im-toolbar-padding: 7px;       /* plus 1px border = 8px to the field */
+  --im-toolbar-bleed: 8px;          /* toolbar container is 8px wider than the table on each side */
+  --im-toolbar-gap: 26px;           /* toolbar container to table */
+
+  /* Control and row sizes */
+  --im-control-height: 38px;        /* search field and primary button */
+  --im-nav-item-height: 34px;       /* item pitch 35 */
+  --im-quick-search-height: 34px;
+  --im-row-height: 44px;            /* table header row and body rows, border included */
+  --im-pagination-height: 36px;
+  --im-touch-target: 0px;           /* raised to 44px for touch input below (UI-REFERENCE section 5) */
+
+  /* Radii (measured 7, 7, 11, 6; rounded to the nearest common value) */
+  --im-radius-control: 8px;         /* table, search field, quick search */
+  --im-radius-container: 12px;      /* toolbar container */
+  --im-radius-button: 6px;
+
+  /* Typography (cap height / 0.727 for the reference sans face; calibrated against our render) */
+  --im-text-title: 20px;
+  --im-text-body: 13px;
+
+  /* Colors. Light values are measured; dark values use Kumo semantics. */
+  --im-background: light-dark(#fbfbfb, var(--color-kumo-base));
+  --im-surface: light-dark(#ffffff, var(--color-kumo-base));
+  --im-border: light-dark(#e3e3e3, var(--color-kumo-line));
+  --im-field-border: light-dark(#d6d6d6, var(--color-kumo-line));
+  --im-selected: light-dark(#f3f3f3, var(--color-kumo-tint));
+  --im-text: light-dark(#171717, var(--text-color-kumo-default));
+  --im-muted: light-dark(#737373, var(--text-color-kumo-subtle));
+  --im-placeholder: light-dark(#a1a1a1, var(--text-color-kumo-subtle));
+  /* Primary button in the reference: fill #277aff, 1px border #045ede. Kumo's default primary
+     already renders the same values, so no override is applied. */
+}
+
+/* Touch-first contexts keep 44px targets; fine pointers use the reference sizes. */
+@media (pointer: coarse), (max-width: 767px) {
+  .im-shell { --im-touch-target: 44px; }
+}
