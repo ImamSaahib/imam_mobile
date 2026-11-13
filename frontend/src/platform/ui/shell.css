@@ -52,3 +52,9 @@
 
 .im-resource-state { padding-block: var(--im-gap); color: var(--im-muted); }
 .im-resource-state button { margin-block-start: var(--spacing); }
+
+/* Reference structure; sizes use existing spacing and accessible control tokens. */
+.im-quick-search { position: relative; display: flex; align-items: center; min-inline-size: 0; }
+.im-quick-search > svg { position: absolute; inset-inline-start: calc(var(--spacing) * 3); pointer-events: none; color: var(--im-muted); }
+.im-shell .im-quick-search input { padding-inline-start: calc(var(--spacing) * 9); padding-inline-end: calc(var(--spacing) * 13); }
+.im-quick-search small { position: absolute; inset-inline-end: calc(var(--spacing) * 3); pointer-events: none; color: var(--im-muted); white-space: nowrap; }

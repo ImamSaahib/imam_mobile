@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef, useState, type ComponentType, type KeyboardEvent, type ReactNode } from 'react';
 import { Sidebar } from '@cloudflare/kumo/components/sidebar';
-import { CaretDownIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { CaretDownIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { TextInput } from './TextInput';
 import { focusQuickSearch } from '../ui-interactions';
 
@@ -36,10 +36,10 @@ export function Navigator({ applicationName, applicationSwitcher, groups, select
   return <nav className="im-navigator group/sidebar" data-state="expanded" aria-label={`${applicationName} navigation`} onKeyDown={moveFocus}>
     <Sidebar.Header>
       {applicationSwitcher ?? <strong>{applicationName}</strong>}
-      <div ref={search}><TextInput aria-label="Quick search" placeholder="Search menus and modules" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => {
+      <div ref={search} className="im-quick-search"><MagnifyingGlassIcon aria-hidden /><TextInput aria-label="Quick search" placeholder="Quick search…" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => {
         if (event.key === 'Escape') { if (query) { event.preventDefault(); event.stopPropagation(); setQuery(''); } }
-      }} /></div>
-      <small>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K'}</small>
+      }} />
+      <small aria-hidden="true">{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K'}</small></div>
     </Sidebar.Header>
     <Sidebar.Content>
       {visible.map(group => {

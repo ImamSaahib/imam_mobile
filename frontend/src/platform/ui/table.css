@@ -14,3 +14,8 @@
 .im-record-link { text-decoration: underline; text-underline-offset: var(--spacing); cursor: pointer; }
 .im-record-identifier { font-family: var(--font-mono); display: block; max-inline-size: 18ch; overflow: hidden; text-overflow: ellipsis; }
 .im-data-table :focus-visible { outline: 2px solid var(--color-kumo-focus); outline-offset: 2px; }
+
+/* Keep the 44px controls while removing duplicated vertical cell padding. */
+.im-data-table .im-table-scroll table :is(th, td) { padding-block: var(--spacing); }
+.im-data-table .im-table-scroll tbody tr { background: var(--im-surface); }
+.im-data-table .im-table-scroll tbody tr + tr td { border-block-start: 1px solid var(--im-border); }

@@ -209,3 +209,7 @@ Added a typed notification provider/hook around Kumo, with portals inside the th
 ### 2026-11-13 — Shared resource states and overlay batch validation
 
 Extracted loading, empty, no-results and error/retry presentation into ResourceState and reused it in DataTable and the gallery. Existing component tests verify state transitions, stale-row removal and retry callbacks. Final batch validation: TypeScript, 33 helper/component tests, all 12 Chromium scenarios, production build and 69.1 KiB gzip gate passed. Includes the side-panel and notification changes above. No backend/schema/D1 impact. Recovery: revert the shared overlay/state batch. Exact visual calibration, approved screenshot baselines, complete primitive-state acceptance and runtime integration remain open.
+
+### 2026-11-13 — Reference structure refinement
+
+Moved the navigator search icon and keyboard hint into the search field. Reduced table cell vertical padding while preserving 44px controls, and replaced alternating row fills with surface backgrounds and row separators to follow the original reference structure. Uses existing semantic/spacing tokens; no exact screenshot-to-CSS scale claim. Validation: TypeScript, 33 tests, build/69.1 KiB gate and four affected Chromium scenarios passed; light/dark screenshots inspected. Prior overlay/state commit 5f278d0 passed Development CI run 43389402873. No backend/schema/D1 impact. Recovery: revert this styling slice. Full measured-token and primitive-state acceptance remains open.
