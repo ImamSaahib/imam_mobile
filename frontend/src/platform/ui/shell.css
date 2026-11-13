@@ -20,8 +20,8 @@
 .im-app-switcher { inline-size: 100%; justify-content: space-between; }
 .im-shell nav { min-block-size: 0; overflow-y: auto; }
 .im-shell nav [data-navigation-item] { block-size: max(var(--im-nav-item-height), var(--im-touch-target)); }
-.im-shell nav input { block-size: max(var(--im-quick-search-height), var(--im-touch-target)); border-radius: var(--im-radius-control); }
-.im-topbar button, .im-app-switcher, .im-drawer-close { min-block-size: var(--im-touch-target); }
+.im-shell nav input { box-sizing: border-box; block-size: max(var(--im-quick-search-height), var(--im-touch-target)); border-radius: var(--im-radius-control); }
+.im-topbar button, .im-drawer-close { min-block-size: var(--im-touch-target); }
 .im-shell nav ul[aria-label] { padding-inline-start: var(--im-gap); }
 .im-navigation-drawer { position: fixed; inset-block: 0; inset-inline-start: 0; inset-inline-end: auto; margin: 0; transform: none; translate: none; inline-size: min(100%, var(--im-navigator-width)); max-block-size: 100dvh; border-radius: 0; overflow-y: auto; }
 .im-drawer-close { margin: var(--im-gap); }
@@ -33,7 +33,10 @@
 
 .im-shell .im-desktop-navigation { block-size: 100dvh; position: sticky; inset-block-start: 0; }
 .im-shell .im-navigator { display: flex; flex-direction: column; block-size: 100%; }
-.im-shell .im-navigator [data-sidebar="header"] { flex-direction: column; align-items: stretch; block-size: auto; padding-block: var(--im-gap); gap: calc(var(--spacing) * 2); }
+.im-shell .im-navigator [data-sidebar="header"] { flex-direction: column; align-items: stretch; block-size: auto; padding: 0; gap: 0; border-block-end: 0; }
+/* Reference: a borderless switcher row as tall as the top bar, then the quick search 12px below it. */
+.im-shell .im-app-switcher { box-sizing: border-box; block-size: var(--im-topbar-height); border: 0; border-block-end: 1px solid var(--im-border); border-radius: 0; background: transparent; box-shadow: none; padding-inline: calc(var(--spacing) * 3); font-weight: var(--font-weight-medium); }
+.im-shell .im-quick-search { margin: 12px calc(var(--spacing) * 2); }
 .im-shell .im-navigator [data-sidebar="header"] input { inline-size: 100%; }
 .im-shell .im-navigation-drawer .im-navigator { block-size: auto; }
 

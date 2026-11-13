@@ -17,7 +17,7 @@
   /* Control and row sizes */
   --im-control-height: 38px;        /* search field and primary button */
   --im-nav-item-height: 34px;       /* item pitch 35 */
-  --im-quick-search-height: 34px;
+  --im-quick-search-height: 32px;   /* visible height is 34: Kumo's input draws a 1px ring on each side */
   --im-row-height: 44px;            /* table header row and body rows, border included */
   --im-pagination-height: 36px;
   --im-touch-target: 0px;           /* raised to 44px for touch input below (UI-REFERENCE section 5) */

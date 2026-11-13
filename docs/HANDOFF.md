@@ -13,7 +13,7 @@ Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 
 ## Next cohesive slice
 
-Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (navigator item pitch and application-switcher placement, pagination sizing, per-primitive state coverage, dark-theme review, no hard-coded left/right positioning check), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
+Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (pagination sizing, icon sizes, per-primitive state coverage, dark-theme review, RTL render check), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
 
 ## Open dependencies and observations
 
