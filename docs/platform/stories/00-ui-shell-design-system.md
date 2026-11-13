@@ -213,3 +213,7 @@ Extracted loading, empty, no-results and error/retry presentation into ResourceS
 ### 2026-11-13 — Reference structure refinement
 
 Moved the navigator search icon and keyboard hint into the search field. Reduced table cell vertical padding while preserving 44px controls, and replaced alternating row fills with surface backgrounds and row separators to follow the original reference structure. Uses existing semantic/spacing tokens; no exact screenshot-to-CSS scale claim. Validation: TypeScript, 33 tests, build/69.1 KiB gate and four affected Chromium scenarios passed; light/dark screenshots inspected. Prior overlay/state commit 5f278d0 passed Development CI run 43389402873. No backend/schema/D1 impact. Recovery: revert this styling slice. Full measured-token and primitive-state acceptance remains open.
+
+### 2026-11-13 — Icon tooltip and primitive accessibility evidence
+
+Shared IconButton now supplies a Kumo tooltip from its required accessible label, with a themed portal. Added light/dark reduced-motion browser scenarios for visible tooltip, disabled controls, side-panel focus cycling/restoration and resource error semantics, plus primitive/panel screenshot captures. TypeScript, 33 tests, build/69.1 KiB gate passed; 12 existing browser scenarios passed and both new scenarios passed after correcting the test to inspect Kumo’s visible popup rather than assuming a separate tooltip role. Screenshots are evidence, not approved baselines. No backend/schema/D1 impact. Recovery: revert this slice.

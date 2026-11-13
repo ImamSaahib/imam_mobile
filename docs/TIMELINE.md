@@ -176,3 +176,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Shared resource states now used by tables and gallery; overlay/state batch passes 33 tests and all 12 browser scenarios. Next: visual calibration and acceptance before runtime integration.
 
 2026-11-13: Refined quick-search composition and table density against the reference; 33 tests and four affected browser scenarios pass. Exact calibration remains open.
+
+2026-11-13: Shared icon-button tooltip and light/dark primitive accessibility checks added; Story 00 acceptance and published-metadata integration remain open.
