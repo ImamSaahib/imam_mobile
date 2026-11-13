@@ -192,3 +192,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-14: Published shell preview gains bootstrap governor notices and visibility revalidation with conserve-state suppression; runtime browser checks pass.
 
 2026-11-14: Daily-limit HTTP failures now show safe reset/retry states and preserve loaded navigation during revalidation; recovery tests pass.
+
+2026-11-14: Explicit built shell preview passes 173.1 KiB bundle and ten-request gates with fixture bootstrap; CI now validates both build modes. Hosted activation pending.

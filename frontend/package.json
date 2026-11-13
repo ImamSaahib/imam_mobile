@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "tsc && node --test test/*.test.mjs",
     "test:components": "vitest run",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "build:platform-preview": "vite build --mode development-preview && npm run check:bundle",
+    "test:built-preview": "playwright test --config playwright.preview.config.ts"
   },
   "dependencies": {
     "@cloudflare/kumo": "2.17.0",

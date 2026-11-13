@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
-const isPlatform = import.meta.env.DEV && (window.location.pathname === "/__platform" || window.location.pathname.startsWith("/app/"));
+const isPlatform = (import.meta.env.DEV || import.meta.env.MODE === "development-preview") && (window.location.pathname === "/__platform" || window.location.pathname.startsWith("/app/"));
 const isGallery = import.meta.env.DEV && window.location.pathname === "/__ui";
 
 // Register the PWA service worker on secure origins (HTTPS / localhost).

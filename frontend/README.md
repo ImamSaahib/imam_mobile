@@ -64,3 +64,16 @@ Component tests: `npm run test:components` runs Vitest with Testing Library and 
 Shared UI wrappers live in `src/platform/ui`; screens must use wrappers rather than importing Kumo. During `npm run dev`, open `/__ui` for the functional primitive gallery and theme switch. It is removed from production builds. The gallery is not yet a measured visual reference or complete component catalog.
 
 Browser tests use only the `/__ui` fixture, block API calls and service workers, and save screenshots/traces under ignored `test-results/`. To use an installed browser locally, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable; CI uses pinned Playwright Chromium. Screenshots are review artifacts, not approved pixel baselines.
+
+### Built published-navigation preview
+
+`npm run build:platform-preview` explicitly includes the published shell at
+`/__platform` and `/app/:applicationId/module/:moduleId`. `/` remains the existing
+application. Set `VITE_API_BASE` to the verified development Worker before building.
+The normal `npm run build` excludes this preview. This mode is for development
+validation; it does not make the unfinished page bodies production-ready.
+
+Run `npm run test:built-preview` after the preview build. It serves `dist` locally,
+intercepts bootstrap with test metadata, and verifies direct routes and the ten-request
+first-load budget. CI checks both the normal build and this preview mode. Cloudflare
+build settings have not been changed; enabling this on hosted Dev is a separate step.
