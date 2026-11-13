@@ -170,3 +170,7 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-13: Documentation navigation consolidated; stale PR/screenshot/tooling guidance corrected. Architecture/contracts and historical acceptance evidence preserved.
 
 2026-11-13: Added reusable confirmation dialog with asynchronous action/error handling; 33 component/unit tests and targeted browser validation pass. Story 00 evidence records scope and limitations.
+
+2026-11-13: Shared side panel and toast gallery fixtures validated with four targeted browser scenarios; Story 00 state coverage, calibration and runtime integration remain open.
+
+2026-11-13: Shared resource states now used by tables and gallery; overlay/state batch passes 33 tests and all 12 browser scenarios. Next: visual calibration and acceptance before runtime integration.

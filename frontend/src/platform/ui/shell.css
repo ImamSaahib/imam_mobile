@@ -45,3 +45,10 @@
 
 .im-confirmation-dialog { padding: var(--im-gap); }
 .im-confirmation-dialog p { margin-block: var(--im-gap); }
+
+.im-side-panel { position: fixed; inset-block: 0; inset-inline-end: 0; inset-inline-start: auto; margin: 0; transform: none; translate: none; inline-size: min(100%, 28rem); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh; border-radius: 0; overflow-y: auto; padding: var(--im-gap); }
+.im-side-panel > * + * { margin-block-start: var(--im-gap); }
+.im-side-panel button { min-block-size: 44px; }
+
+.im-resource-state { padding-block: var(--im-gap); color: var(--im-muted); }
+.im-resource-state button { margin-block-start: var(--spacing); }

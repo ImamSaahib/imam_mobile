@@ -6,7 +6,15 @@ import { TextInput } from './TextInput';
 import { ContextTarget } from './ContextMenu';
 import { Shell } from './Shell';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { SidePanel } from './SidePanel';
+import { Notifications, useNotifications } from './Notifications';
+import { ResourceState } from './ResourceState';
 import { TableFixture } from './TableFixture';
+
+function NotificationFixture() {
+  const { notify } = useNotifications();
+  return <Button onClick={() => notify('Fixture saved', 'Your example changes were saved.')}>Show notification</Button>;
+}
 
 /** Development-only fixture, not a metadata runtime or measured shell. */
 export default function Gallery() {
@@ -28,11 +36,19 @@ export default function Gallery() {
     <p role="status" aria-label="Selected module">Selected module: {selected}</p>
     <Button onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}>Switch theme</Button>
     <section className="im-gallery-controls" aria-label="Buttons">
+      <SidePanel trigger="Open side panel" title="Fixture details" description="Shared panel example."><TextInput aria-label="Panel note" placeholder="Add a note" /></SidePanel>
+      <Notifications><NotificationFixture /></Notifications>
       <Button disabled>Disabled action</Button>
       <Button loading>Loading action</Button>
       <ConfirmationDialog trigger="Destructive action" title="Reset fixture?" description="This clears the fixture action count only." confirmLabel="Reset fixture" onConfirm={() => setRefreshes(0)} />
       <IconButton aria-label="Refresh" icon={ArrowClockwiseIcon} onClick={() => setRefreshes(n => n + 1)} />
       <p role="status" aria-label="Action count">Actions: {refreshes}</p>
+    </section>
+    <section aria-label="Resource states">
+      <ResourceState state="loading" />
+      <ResourceState state="empty" />
+      <ResourceState state="no-results" />
+      <ResourceState state="error" onRetry={() => setRefreshes(n => n + 1)} />
     </section>
     <section className="im-gallery-controls" aria-label="Inputs">
       <TextInput aria-label="Search fixture" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search fixture" />

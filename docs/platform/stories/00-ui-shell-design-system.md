@@ -1,6 +1,6 @@
 # Story 00 — UI Shell and Design System
 
-**Status:** In progress (00b fixture shell, navigation, table and context menu implemented; remaining primitives, calibration and runtime integration open)
+**Status:** In progress (00b fixture shell, navigation, table and context menu implemented; toast, side panel and shared resource states implemented; calibration and runtime integration open)
 **Priority:** P0 · **Depends on:** none (can run alongside Story 01) · **Unlocks:** Stories 02, 03, 05, 06, 07  
 **Goal:** Build the reference interface shell and the shared UI primitives so that every later story reuses one design system.
 
@@ -197,3 +197,15 @@ All completed slices through context-menu lifecycle handling are merged into dev
 ### 2026-11-13 — Shared confirmation dialog
 
 Added a typed Kumo confirmation dialog with caller-supplied action, pending-state duplicate/dismissal prevention, plain failure feedback and retry. Gallery reset action exercises it without business writes. Validation: 33 unit/component tests, TypeScript, build and unchanged 69.1 KiB budget pass; targeted Chromium scenario verifies cancel/focus restoration and confirmation in dark mode. Existing unrelated browser cases are left to the final CI gate rather than rerun locally. No backend/schema changes. Recovery: revert this slice. Story 00 remains open; next shared pieces are toast/side-panel/state coverage, followed by visual calibration and runtime integration.
+
+### 2026-11-13 — Shared side panel
+
+Verified Development CI run 43305943027 succeeded for 8639b3a. Added a typed Kumo modal side panel with caller-owned content, theme inheritance, logical positioning and narrow-screen containment; the gallery exercises an editable field. Validation: TypeScript, 33 helper/component tests, build and 69.1 KiB gzip gate passed; two Chromium scenarios passed for light/dark mobile containment, Escape and close-button focus restoration. No backend, schema or D1 impact. Recovery: revert this slice. Toast/shared state coverage, visual calibration and runtime integration remain open.
+
+### 2026-11-13 — Toast notifications
+
+Added a typed notification provider/hook around Kumo, with portals inside the themed boundary and a gallery example. Frontend check passed: TypeScript, 33 helper/component tests, build and unchanged 69.1 KiB gzip gate. Four targeted Chromium scenarios passed for toast appearance/focus preservation/expiry and side-panel dismissal/containment in both themes. No backend, migration or D1 impact. Recovery: revert this overlay slice. Shared state coverage, screenshot acceptance and calibration remain open; these components are not yet integrated into the deployed runtime.
+
+### 2026-11-13 — Shared resource states and overlay batch validation
+
+Extracted loading, empty, no-results and error/retry presentation into ResourceState and reused it in DataTable and the gallery. Existing component tests verify state transitions, stale-row removal and retry callbacks. Final batch validation: TypeScript, 33 helper/component tests, all 12 Chromium scenarios, production build and 69.1 KiB gzip gate passed. Includes the side-panel and notification changes above. No backend/schema/D1 impact. Recovery: revert the shared overlay/state batch. Exact visual calibration, approved screenshot baselines, complete primitive-state acceptance and runtime integration remain open.

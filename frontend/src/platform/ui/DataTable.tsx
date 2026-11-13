@@ -7,6 +7,7 @@ import { ArrowClockwiseIcon, ArrowUpIcon, ArrowDownIcon, ArrowsDownUpIcon, Magni
 import { Button } from './Button';
 import { TextInput } from './TextInput';
 import './table.css';
+import { ResourceState } from './ResourceState';
 
 export type Sort = { key: string; direction: 'asc' | 'desc' } | null;
 export type Column<T> = { key: string; label: string; sortable?: boolean; render: (row: T) => ReactNode };
@@ -60,9 +61,9 @@ export function DataTable<T>(props: Props<T>) {
             </Table.Head>
           </Table.Row></Table.Header>
           <Table.Body>
-            {busy ? <Table.Row><Table.Cell colSpan={shown.length + 1}><p role="status">Loading records…</p></Table.Cell></Table.Row>
-              : state.status === 'error' ? <Table.Row><Table.Cell colSpan={shown.length + 1}><p role="alert">Could not load records.</p><Button onClick={props.onRefresh}>Retry</Button></Table.Cell></Table.Row>
-              : !page?.rows.length ? <Table.Row><Table.Cell colSpan={shown.length + 1}><p role="status">{props.search.trim() ? 'No records match your search.' : 'No records yet.'}</p></Table.Cell></Table.Row>
+            {busy ? <Table.Row><Table.Cell colSpan={shown.length + 1}><ResourceState state="loading" /></Table.Cell></Table.Row>
+              : state.status === 'error' ? <Table.Row><Table.Cell colSpan={shown.length + 1}><ResourceState state="error" onRetry={props.onRefresh} /></Table.Cell></Table.Row>
+              : !page?.rows.length ? <Table.Row><Table.Cell colSpan={shown.length + 1}><ResourceState state={props.search.trim() ? "no-results" : "empty"} /></Table.Cell></Table.Row>
               : page.rows.map(row => <Table.Row key={props.rowKey(row)}>
                 {shown.map(column => <Table.Cell key={column.key}>{column.render(row)}</Table.Cell>)}
                 <Table.Cell><DropdownMenu>

@@ -8,11 +8,11 @@ Updated: 2026-11-13. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 - Story 00: Kumo/Phosphor foundation, responsive shell/navigation, table controls/states and central context menu are implemented in the development-only /__ui gallery. Production screens still use the legacy runtime.
 - Story 01: backend slices 01a–01d implemented. Published-metadata shell integration, final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
 - Story 04: implemented with explicitly deferred criteria; consult its review before dependent work. Other stories are planned in TIMELINE order.
-- Last feature validation: frontend 33 unit/component tests; seven prior Chromium scenarios plus a targeted confirmation-dialog scenario, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests. These are recorded results, not a guarantee about future commits.
+- Last feature validation: frontend 33 unit/component tests and 12 Chromium scenarios, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests. These are recorded results, not a guarantee about future commits.
 
 ## Next cohesive slice
 
-Confirmation dialog is implemented in the gallery. Complete remaining toast/side-panel/state coverage in Story 00. Then finish visual calibration and acceptance evidence before runtime integration with Story 02. Do not reopen the resolved Worker-preview investigation or recreate branches.
+Confirmation dialog, modal side panel and toast notifications are implemented in the gallery. Shared loading/empty/no-results/error states now serve the table and gallery. Next finish visual calibration and acceptance evidence before runtime integration with Story 02. Do not reopen the resolved Worker-preview investigation or recreate branches.
 
 ## Open dependencies and observations
 
