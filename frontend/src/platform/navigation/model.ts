@@ -6,7 +6,7 @@ export type PublishedNavigation = {
     menus: { id: string; label: string; display: 'group' | 'section'; modules: {
       id: string; label: string; slug: string; badge: string | null; pageId: string; enabled: boolean;
     }[] }[];
-    pages: { id: string; title: string; description: string | null }[];
+    pages: { id: string; title: string; description: string | null; components?: unknown }[];
   };
 };
 

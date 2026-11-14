@@ -1,6 +1,6 @@
 # Story 03 — Page Builder and Component Registry
 
-**Status:** Planned (waiting on dependencies)  
+**Status:** In progress (published heading and text rendering)
 **Priority:** P0 · **Depends on:** Stories 00–02  
 **Goal:** Render pages from metadata using a fixed, versioned component registry and stable data-binding contracts.
 
@@ -58,3 +58,5 @@ Component registry validation; unknown component version; invalid config; missin
 ## Out of scope
 
 Full draft versioning/publish lifecycle (Story 07); freeform canvas, arbitrary React injection, third-party marketplace and unreviewed runtime plug-ins.
+
+2026-11-14 — The preview renders published heading and text components with version 1 and a plain text setting. Empty pages and unsupported or malformed blocks have explicit messages. Seeded list and summary components, publish validation and configuration editing remain open. The renderer uses the existing bootstrap response and adds no data requests.
