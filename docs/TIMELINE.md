@@ -34,7 +34,7 @@ Keep story status, acceptance evidence, this timeline and HANDOFF synchronized w
 | 02 | Application navigator | P0 | 00, 01 | In progress | Hosted Dev navigation and stable-route reload verified. Dashboard summary passed CI at `4ba2e4a`; hosted dashboard check pending |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | In progress | Published heading and text renderer |
 | 04 | Data model, properties and schema compatibility | P0 | 01 | Complete with deferred items (04a to 04f done 2026-11-12) | Slice plan 04a to 04f in Story 04 notes. 04a: type registry, property routes, seed v2. 04b: schema inspection, adoption, drift check. 04c: schema change service, `add_property` in guided_live mode. 04d: add and drop index, hide property, convert presentation, `migration_controlled` mode. 04e: `updated_at` indexes, counters, version bumps on every legacy write (2026-11-12) |
-| 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | In progress | Devices page read and published Inventory list (first page, paging) |
+| 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | In progress | Devices page read, published Inventory list (paging, record side panel) |
 | 06 | Forms, records and domain service extensions | P0 | 00, 02, 04 | Planned | |
 | 07 | Edit mode, configuration drafts and publishing | P0 | 00–06 | Planned | |
 | 08 | Reports, metrics and registered actions | P2 | 04–06 | Planned | |
@@ -202,3 +202,5 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 2026-11-14: Added the permission-checked keyset page read `GET /api/devices/page` (at most 50 rows, counter totals); 289 backend tests pass. Published Inventory list UI is next.
 
 2026-11-15: Published Inventory list renders from the keyset page read with Next and Previous, counter totals and safe states; DataTable gains optional search-disabled and row-open props; 12 helper, 40 component, 19 main and 3 built-preview scenarios pass; preview bundle 193.5 KiB gzip.
+
+2026-11-15: Published Inventory list opens a record in a read-only side panel (no extra read, focus restored); SidePanel can be controlled; 42 component and 4 built-preview scenarios pass. Search deferred to an FTS5 plan after a budget analysis.
