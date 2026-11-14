@@ -1,6 +1,6 @@
 # Story 05 — Lists, Views and Safe Query Engine
 
-**Status:** In progress (backend page read for devices; no published list UI yet)  
+**Status:** In progress (devices page read and a first published Inventory list; search, sorting, filters and views not started)  
 **Priority:** P0 · **Depends on:** Stories 00, 02 and 04  
 **Goal:** Provide reusable, bounded table views over approved relational data sources, with Notion-style table capabilities in the Cloudflare-style layout of [UI Reference](../UI-REFERENCE.md).
 
@@ -96,3 +96,15 @@ Decisions and limits of this slice:
 - The page reads exactly `limit` rows. `nextCursor` is set when a full page came back, so a last page that is exactly full yields one more request that returns an empty page; the client compares its position with the exact `total` and does not offer Next at the end.
 - Not done yet: previous and last (reversed query), search, sorting and filters beyond `status`, `ETag` and `If-None-Match`, cache serving in Essential and Limit states, the `1,000+` filtered-total cap, and the published list UI. Acceptance boxes stay unticked until the full behavior exists.
 - Customers, customer entries and sales have no page read yet.
+
+### 2026-11-15 — Published Inventory list, first page and Next/Previous (frontend)
+
+A published `list` component (type version 1, `config` exactly `{ dataSourceId }`) now renders when its data source resolves, through the bootstrap's `shell.dataSources`, to the registered key `devices`. Any other key, a missing source or extra settings show a plain "unavailable" or "invalid settings" message, so unregistered sources never fall back to another table. The list uses the shared `DataTable` and `useTableResource` and reads `GET /api/devices/page` with `limit=25` (`frontend/src/platform/pages/InventoryList.tsx`).
+
+Behavior: first page, Next and Previous (the component remembers, per cursor, the previous cursor and row offset because the server only knows "after this id"), "Showing x–y of z" from the exact counter total, loading, empty and generic error states with Retry, a page label, and stale responses ignored by the hook. Next is offered only when the server returned a cursor and the position is below the total, which removes the extra empty page noted on 2026-11-14. Malformed responses become the generic error. Columns: model, company, IMEI, condition, purchase price, status (purchase price is shown while access is still the development placeholder; revisit in Story 11).
+
+`DataTable` gained two optional props: `searchDisabled` (the field stays in the layout but is inert, placeholder "Search is not available yet") and optional `onOpen` (without it the row action menu is omitted, since opening a record is not implemented for published lists). The gallery behavior is unchanged.
+
+Evidence: 6 component tests (paging forward and back with request parameters, a full last page, empty state with inert search, safe error and retry, malformed page, unsupported or invalid list settings), a built-preview scenario with two mocked pages, 12 helper and 40 component tests, 19 main and 3 built-preview Chromium scenarios, all passing. Main bundle 69.2 KiB gzip; preview bundle 193.5 KiB (was 173.9, because the table now loads with the runtime), limit 300. The preview Playwright config now honors `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` like the main config. Not verified: the hosted Dev preview, and the Dev Worker must include `/api/devices/page` before the list can load there. No schema change. Recovery: revert the commit.
+
+Still open for Story 05: search, sorting, filters, views, Last, calculations, row opening, `ETag`, governor cache behavior and the daily-limit message inside the list (the page-level banner already appears), and the same read for customers, entries and sales. Acceptance boxes stay unticked.

@@ -38,3 +38,32 @@ test('published inventory summary can retry a failed read', async ({ page }) => 
   await page.getByRole('button', { name: 'Retry' }).click();
   await expect(page.getByRole('region', { name: 'Inventory summary' }).locator('dd')).toHaveText(['7', '5', '2']);
 });
+
+test('published inventory list pages through the keyset read', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.route('**/api/bootstrap', route => route.fulfill({ json: {
+    platform: { configSchemaVersion: 1 }, application: { id: 'app', key: 'shop', name: 'Shop' },
+    shell: { menus: [{ id: 'menu', label: 'Work', display: 'section', modules: [{ id: 'stock', label: 'Inventory', slug: 'inventory', badge: null, pageId: 'inventory', enabled: true }] }],
+      pages: [{ id: 'inventory', title: 'Inventory', description: null, components: [{ id: 'list', type: 'list', typeVersion: 1, config: { dataSourceId: 'ds-devices' } }] }],
+      dataSources: [{ id: 'ds-devices', key: 'devices', label: 'Devices', tableName: 'mobile_devices', primaryKey: 'id' }] },
+  } }));
+  const row = (id: number, model: string) => ({ id, model, company: 'Samsung', imei: `3500000000${id}`, condition: 'Pack', status: 'Available', purchasePrice: 40000 });
+  const afters: (string | null)[] = [];
+  await page.route('**/api/devices/page**', route => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    afters.push(after);
+    return route.fulfill({ json: after === '8' ? { items: [row(7, 'Galaxy A05')], nextCursor: null, total: 3 }
+      : { items: [row(9, 'Galaxy A15'), row(8, 'Redmi 13C')], nextCursor: '8', total: 3 } });
+  });
+  await page.goto('/__platform');
+  await expect(page.getByRole('status', { name: 'Result summary' })).toHaveText('Showing 1–2 of 3');
+  await expect(page.getByRole('cell', { name: 'Galaxy A15' })).toBeVisible();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Result summary' })).toHaveText('Showing 3–3 of 3');
+  await expect(page.getByRole('cell', { name: 'Galaxy A05' })).toBeVisible();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Result summary' })).toHaveText('Showing 1–2 of 3');
+  expect(afters).toEqual([null, '8', null]);
+  expect(errors).toEqual([]);
+});

@@ -17,7 +17,11 @@ type Props<T> = {
   label: string; columns: Column<T>[]; hidden: string[]; onHiddenChange: (keys: string[]) => void;
   onColumnsChange: (columns: Column<T>[]) => void; rowKey: (row: T) => string; rowLabel: (row: T) => string;
   state: TableState<T>; search: string; onSearch: (value: string) => void; sort: Sort; onSort: (value: Sort) => void;
-  onRefresh: () => void; onPage: (cursor: string | null) => void; onOpen: (row: T) => void;
+  onRefresh: () => void; onPage: (cursor: string | null) => void;
+  /** Omit until the record can actually be opened; the row action menu is then left empty. */
+  onOpen?: (row: T) => void;
+  /** Keeps the search field in the layout but inert while search is not implemented for the data source. */
+  searchDisabled?: boolean;
 };
 /** Controlled presentation. Permissions, data loading and action registration belong to callers. */
 export function DataTable<T>(props: Props<T>) {
@@ -35,7 +39,7 @@ export function DataTable<T>(props: Props<T>) {
     <TooltipProvider>
       <div className="im-table-toolbar"><div className="im-search-field">
         <MagnifyingGlassIcon aria-hidden />
-        <TextInput aria-label={`Search ${props.label}`} placeholder={`Search ${props.label.toLowerCase()}`} value={props.search} onChange={event => props.onSearch(event.target.value)} />
+        <TextInput aria-label={`Search ${props.label}`} placeholder={props.searchDisabled ? 'Search is not available yet' : `Search ${props.label.toLowerCase()}`} disabled={props.searchDisabled} value={props.search} onChange={event => props.onSearch(event.target.value)} />
         <Tooltip content="Refresh records" container={container} render={<Button aria-label="Refresh records" disabled={busy} onClick={props.onRefresh} />}><ArrowClockwiseIcon aria-hidden /></Tooltip>
       </div></div>
       <div className="im-table-scroll" role="region" aria-label={`${props.label} table`} tabIndex={0}>
@@ -66,10 +70,10 @@ export function DataTable<T>(props: Props<T>) {
               : !page?.rows.length ? <Table.Row><Table.Cell colSpan={shown.length + 1}><ResourceState state={props.search.trim() ? "no-results" : "empty"} /></Table.Cell></Table.Row>
               : page.rows.map(row => <Table.Row key={props.rowKey(row)}>
                 {shown.map(column => <Table.Cell key={column.key}>{column.render(row)}</Table.Cell>)}
-                <Table.Cell><DropdownMenu>
+                <Table.Cell>{props.onOpen && <DropdownMenu>
                   <DropdownMenu.Trigger render={<Button aria-label={`Actions for ${props.rowLabel(row)}`} title={`Actions for ${props.rowLabel(row)}`} />}><DotsThreeIcon aria-hidden /></DropdownMenu.Trigger>
-                  <DropdownMenu.Content container={container}><DropdownMenu.Item onClick={() => props.onOpen(row)}>Open record</DropdownMenu.Item></DropdownMenu.Content>
-                </DropdownMenu></Table.Cell>
+                  <DropdownMenu.Content container={container}><DropdownMenu.Item onClick={() => props.onOpen!(row)}>Open record</DropdownMenu.Item></DropdownMenu.Content>
+                </DropdownMenu>}</Table.Cell>
               </Table.Row>)}
           </Table.Body>
         </Table>

@@ -7,6 +7,8 @@ export type PublishedNavigation = {
       id: string; label: string; slug: string; badge: string | null; pageId: string; enabled: boolean;
     }[] }[];
     pages: { id: string; title: string; description: string | null; components?: unknown }[];
+    /** Opaque IDs map to registered keys; a list renders only for a key the runtime knows. */
+    dataSources?: { id: string; key: string }[];
   };
 };
 

@@ -32,7 +32,7 @@ function PublishedShell({ snapshot, bootstrapUrl }: { snapshot: PublishedNavigat
     title={title} description={route.status === 'ready' ? route.page.description ?? undefined : undefined}
     mode={mode} onModeChange={setMode} releaseLabel="Published navigation preview">
     <ResourceBanner resources={snapshot.resources} />
-    {route.status === 'ready' ? <PageContent bootstrapUrl={bootstrapUrl} components={route.page.components} />
+    {route.status === 'ready' ? <PageContent bootstrapUrl={bootstrapUrl} components={route.page.components} dataSources={snapshot.shell.dataSources} />
       : <ResourceState state="empty" message={route.status === 'unavailable' ? 'This page is currently unavailable.' : 'Choose an available page from the navigation.'} />}
     <a href="/">Open existing application</a>
   </Shell>;
