@@ -82,6 +82,7 @@ export const ROUTE_POLICY: RoutePolicy[] = [
   { method: "POST", pattern: "/api/custom-field-values", permission: P.customFieldsWrite },
 
   { method: "GET", pattern: "/api/devices/summary", permission: P.devicesRead },
+  { method: "GET", pattern: "/api/devices/page", permission: P.devicesRead },
   { method: "GET", pattern: "/api/devices", permission: P.devicesRead },
   { method: "POST", pattern: "/api/devices", permission: P.devicesCreate },
   { method: "PATCH", pattern: "/api/devices/:id", permission: P.devicesUpdate },

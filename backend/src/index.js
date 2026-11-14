@@ -285,6 +285,27 @@ async function handleRequest(request, env) {
         const counts = new Map(rows.results.map(row => [row.counter_key, row.value]));
         return json({ total: counts.get("total") ?? 0, available: counts.get("status=Available") ?? 0, sold: counts.get("status=Sold Out") ?? 0 },200,origin);
       }
+      if (path === "/api/devices/page" && request.method === "GET") {
+        // Keyset page of devices, newest first (Contracts 10.3). The cursor is the id of the last row of the previous
+        // page; no OFFSET. At most `limit` rows are read, and the total comes from a maintained counter (one row, 10.4).
+        const limitParam = url.searchParams.get("limit");
+        const limit = limitParam === null ? 25 : Number(limitParam);
+        const after = url.searchParams.get("after");
+        const status = url.searchParams.get("status");
+        if (!Number.isInteger(limit) || limit < 1 || limit > 50) return error("limit must be a whole number from 1 to 50.",400,origin);
+        if (after !== null && !validId(after)) return error("after must be the cursor returned with the previous page.",400,origin);
+        if (status !== null && (status === "" || status.length > 40)) return error("status is invalid.",400,origin);
+        const where = [], binds = [];
+        if (status !== null) { where.push("status=?"); binds.push(status); }
+        if (after !== null) { where.push("id<?"); binds.push(Number(after)); }
+        const [page, counter] = await env.DB.batch([
+          env.DB.prepare(`SELECT * FROM mobile_devices${where.length ? " WHERE " + where.join(" AND ") : ""} ORDER BY id DESC LIMIT ?`).bind(...binds, limit),
+          env.DB.prepare("SELECT value FROM data_source_counters WHERE data_source_key='devices' AND counter_key=?").bind(status === null ? "total" : `status=${status}`)
+        ]);
+        const rows = page.results;
+        // A full page may be the last one; the client compares its position with `total` before offering Next.
+        return json({ items: rows.map(deviceRow), nextCursor: rows.length === limit ? String(rows[rows.length - 1].id) : null, total: counter.results[0]?.value ?? 0 },200,origin);
+      }
       if (path === "/api/devices" && request.method === "GET") {
         const status=url.searchParams.get("status");
         const result=status

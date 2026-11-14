@@ -1,6 +1,6 @@
 # Story 05 — Lists, Views and Safe Query Engine
 
-**Status:** Planned (waiting on dependencies)  
+**Status:** In progress (backend page read for devices; no published list UI yet)  
 **Priority:** P0 · **Depends on:** Stories 00, 02 and 04  
 **Goal:** Provide reusable, bounded table views over approved relational data sources, with Notion-style table capabilities in the Cloudflare-style layout of [UI Reference](../UI-REFERENCE.md).
 
@@ -83,3 +83,16 @@ Query compiler unit tests; injection cases; type/operator matrix; nested filter 
 ## Out of scope
 
 Board, timeline, calendar, gallery and chart views; sub-groups; sub-items; templates; formula/rollup; collaborative views; arbitrary query builder.
+
+## Progress
+
+### 2026-11-14 — Keyset page read for devices (backend only)
+
+Added `GET /api/devices/page` (permission `devices.read`, declared in `ROUTE_POLICY`). Parameters: `limit` (1 to 50, default 25), `after` (cursor: the id of the last row of the previous page; positive integer), `status` (optional exact match, at most 40 characters). Order is `id DESC`, the same newest-first order as the legacy list; there is no `OFFSET`. Response: `{ items, nextCursor, total }`. `total` is read from the maintained counter (`total` or `status=<value>`, one row), so it is exact and cheap. Invalid `limit`, `after` or `status` return 400. The legacy `GET /api/devices` is unchanged and the legacy workflows at `/` still use it.
+
+Evidence: 5 new backend tests (each row exactly once across pages, empty table, status filter with counter total, invalid parameters, rows-read bound); a probe on a 12-row table measured 4 rows read for a 3-row page against 12 for the legacy list. Backend check passes (289 tests, 18 files). Frontend untouched. No schema or migration change, so nothing to recover.
+
+Decisions and limits of this slice:
+- The page reads exactly `limit` rows. `nextCursor` is set when a full page came back, so a last page that is exactly full yields one more request that returns an empty page; the client compares its position with the exact `total` and does not offer Next at the end.
+- Not done yet: previous and last (reversed query), search, sorting and filters beyond `status`, `ETag` and `If-None-Match`, cache serving in Essential and Limit states, the `1,000+` filtered-total cap, and the published list UI. Acceptance boxes stay unticked until the full behavior exists.
+- Customers, customer entries and sales have no page read yet.

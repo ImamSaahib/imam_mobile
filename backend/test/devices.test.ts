@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { call, deviceBody, createDevice } from "./helpers";
+import { call, callWithEnv, deviceBody, createDevice } from "./helpers";
 
 describe("devices", () => {
   it("creates and lists a device with camelCase fields, newest first", async () => {
@@ -15,6 +15,51 @@ describe("devices", () => {
     await createDevice();
     await createDevice({ status: "Sold Out" });
     expect((await call("GET", "/api/devices/summary")).json).toEqual({ total: 2, available: 1, sold: 1 });
+  });
+  it("pages devices with a keyset cursor, returning each row once, newest first", async () => {
+    const created: number[] = [];
+    for (let i = 0; i < 7; i++) created.push(await createDevice({ model: `Phone ${i}` }));
+    const seen: number[] = [];
+    let cursor: string | null = null;
+    let pages = 0;
+    do {
+      const r: any = await call("GET", `/api/devices/page?limit=3${cursor ? `&after=${cursor}` : ""}`);
+      expect(r.status).toBe(200);
+      expect(r.json.total).toBe(7);
+      seen.push(...r.json.items.map((d: any) => d.id));
+      cursor = r.json.nextCursor;
+      pages++;
+    } while (cursor && pages < 10);
+    expect(pages).toBe(3);
+    expect(seen).toEqual([...created].reverse());
+  });
+  it("returns an empty first page with a zero total", async () => {
+    expect((await call("GET", "/api/devices/page")).json).toEqual({ items: [], nextCursor: null, total: 0 });
+  });
+  it("pages within a status filter and takes the total from its counter", async () => {
+    await createDevice({ status: "Available" });
+    const sold1 = await createDevice({ status: "Sold Out" });
+    const sold2 = await createDevice({ status: "Sold Out" });
+    await createDevice({ status: "Available" });
+    const first: any = await call("GET", "/api/devices/page?status=Sold%20Out&limit=1");
+    expect(first.json.total).toBe(2);
+    expect(first.json.items.map((d: any) => d.id)).toEqual([sold2]);
+    const second: any = await call("GET", `/api/devices/page?status=Sold%20Out&limit=1&after=${first.json.nextCursor}`);
+    expect(second.json.items.map((d: any) => d.id)).toEqual([sold1]);
+    expect((await call("GET", "/api/devices/page?status=Reserved")).json).toEqual({ items: [], nextCursor: null, total: 0 });
+  });
+  it("rejects an invalid limit, cursor or status", async () => {
+    for (const query of ["limit=0", "limit=51", "limit=abc", "limit=1.5", "limit=", "after=0", "after=abc", "after=-1", "status=", `status=${"x".repeat(41)}`]) {
+      const r = await call("GET", `/api/devices/page?${query}`);
+      expect(r.status, query).toBe(400);
+    }
+  });
+  it("reads only the requested page, not the table", async () => {
+    for (let i = 0; i < 12; i++) await createDevice();
+    const r = await callWithEnv({ ENVIRONMENT: "development" }, "GET", "/api/devices/page?limit=3");
+    expect(r.json.items).toHaveLength(3);
+    // 3 device rows plus the counter row; the 12-row table is never scanned.
+    expect(Number(r.headers.get("X-Rows-Read"))).toBeLessThanOrEqual(5);
   });
   it("filters by status", async () => {
     await createDevice({ status: "Available" });
