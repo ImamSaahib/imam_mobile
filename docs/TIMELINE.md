@@ -195,4 +195,4 @@ PR #10 merged. Added shared table/search/sort/column controls, cursor navigation
 
 2026-11-14: Explicit built shell preview passes 173.1 KiB bundle and ten-request gates with fixture bootstrap; CI now validates both build modes. Hosted activation pending.
 
-2026-11-14: Verified imam-mobile-dev Pages uses development/frontend; configured explicit Dev API and preview build command. Next automatic Git build activates /__platform; hosted verification pending.
+2026-11-14: Verified imam-mobile-dev Pages uses development/frontend; configured explicit Dev API and preview build command. Automatic build of 2c0a5db activated /__platform; live bootstrap and stable route reload verified.
