@@ -6,18 +6,21 @@ Updated: 2026-11-14. Read this first, then [agent workflow](AGENT-WORKFLOW.md) a
 
 - Work directly on development (Decision C10). Only development and main remain; completed feature work, including PR #12, is consolidated. Main is unchanged and requires explicit production approval.
 - Story 00: Kumo/Phosphor foundation, responsive shell/navigation, table controls/states, central context menu, dialog, side panel, toasts and shared states are implemented in the development-only /__ui gallery, styled with design tokens measured from the reference (tokens.css). Production screens still use the legacy runtime.
-- Story 01: backend slices 01a–01d implemented. Published-metadata shell integration, final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
+- Story 01: backend slices 01a–01d implemented. The Dev preview consumes published bootstrap metadata. Final workflow/deployment acceptance and interrupted-operation recovery evidence remain open.
 - Story 02: [Hosted Dev navigation preview](https://imam-mobile-dev.pages.dev/__platform) verified against live bootstrap. Stable module links survive reload. Pages support published heading and text blocks. The seeded dashboard summary reads maintained device counters. Seeded lists await renderers; `/` serves existing workflows. Focus revalidation and governor notices are implemented.
 - Story 04: implemented with explicitly deferred criteria; consult its review before dependent work. Other stories are planned in TIMELINE order.
-- Last feature validation: frontend 12 helper and 29 component tests (41 total) and 17 Chromium scenarios, TypeScript/build and 69.1 KiB gzip gate; backend baseline 283 tests (not rerun on 2026-11-14). These are recorded results, not a guarantee about future commits.
+- Feature baseline `4ba2e4a` on development passed [GitHub CI](https://github.com/ImamSaahib/imam_mobile/actions/runs/43615557279), 284 backend tests and both built-preview Chromium scenarios. Preview JS measured 173.9 KiB gzip. The last hosted smoke check covered navigation. The dashboard and its Worker endpoint still need a hosted Dev check.
 
-## Next cohesive slice
+## Next agent — Inventory list
 
-Light-theme tokens are measured and applied (see Story 00, 2026-11-13). Next: close the remaining Story 00 acceptance gaps (pagination sizing, icon sizes, per-primitive state coverage, dark-theme review; RTL testing is out of scope), then integrate the shell with Story 02's published navigation at runtime. Do not reopen the resolved Worker-preview investigation or recreate branches.
+1. Check the current development tip and working tree for intervening work. On the [Dev preview](https://imam-mobile-dev.pages.dev/__platform), open Dashboard and check whether the summary renders and the Dev Worker returns a successful `GET /api/devices/summary`. Record deployment or runtime failures separately from CI.
+2. Start with the published Inventory list. Read [Story 05](platform/stories/05-list-view-engine.md), [UI reference](platform/UI-REFERENCE.md) and Contracts §§1, 3, 9–10. Trace the seeded list’s `config.dataSourceId` from [seed configuration](../applications/imam-mobile/seed/package.ts) into [PageContent](../frontend/src/platform/pages/PageContent.tsx). The ID is opaque.
+3. Reuse the [shared table](../frontend/src/platform/ui/DataTable.tsx). The legacy device collection returns all matching records. Implement a permission-checked, server-paginated read before connecting the published list. Verify page bounds, empty results and read failures, then exercise Inventory through the built preview. Customers, customer entries and sales are subsequent consumers.
+4. Story 00 still needs pagination and icon sizing, per-primitive state coverage and dark-theme review. See the [Story 00 acceptance criteria](platform/stories/00-ui-shell-design-system.md). Preserve the existing workflows at `/` during migration.
 
 ## Open dependencies and observations
 
-- Original Cloudflare reference received privately; keep account details out of Git. Light-theme tokens are measured; dark theme has no reference and uses Kumo semantics.
+- Original Cloudflare reference received privately; keep account details out of Git. Light-theme tokens are measured; use the supplied dark Kumo demo for comparison. The original D1 screenshot is light-theme only.
 - Dev D1 migrations 0001–0009 were confirmed on 2026-11-12. Seed v2 was confirmed; seed v3 upgrade confirmation remains open. Recheck only when relevant; never infer current remote state from these dated observations.
 - Dev Worker: https://imam-mobile-api-dev.imamsaahib.workers.dev; dev D1: imam-mobile-dev-db. Verify environment bindings/configuration before remote reads; do not infer production targets from a Pages project name.
 - Role choices and password-hashing spike belong to Story 11. Reference-dataset assumptions remain in Contracts §9.

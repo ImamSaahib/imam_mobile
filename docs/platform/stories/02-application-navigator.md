@@ -1,6 +1,6 @@
 # Story 02 — Application Navigator and Navigation Security
 
-**Status:** In progress (route-model preparation; runtime integration awaits Story 00 acceptance)
+**Status:** In progress. Published navigation is integrated in the hosted Dev preview. Full story acceptance remains open.
 **Priority:** P0 · **Depends on:** Stories 00 and 01  
 **Goal:** Render application navigation from metadata and ensure every navigation target is permission-checked by the backend.
 
@@ -79,4 +79,4 @@ Added development-preview Vite mode and build/test scripts, leaving the normal b
 
 Hosted Dev acceptance (2026-11-14): Chromium loaded `/__platform` on imam-mobile-dev.pages.dev without interception. The Dev Worker returned HTTP 200 for bootstrap; navigation rendered on a stable module URL, reloading preserved that URL, and the existing-app link pointed to `/`. No page errors observed. This verifies navigation only; page bodies remain placeholders.
 
-2026-11-14 — The seeded dashboard summary shows total, available and sold devices using one permission-checked read of three maintained counters. The built preview covers failed reads and manual retry. Backend passed 284 tests. Dev preview JS weighed 173.9 KiB gzip. Seeded lists remain pending. Recovery requires only a code revert.
+2026-11-14 — The seeded dashboard summary shows total, available and sold devices using one permission-checked read of three maintained counters. The built preview covers failed reads and manual retry. Backend passed 284 tests. Dev preview JS weighed 173.9 KiB gzip. Commit `4ba2e4a` passed [development CI](https://github.com/ImamSaahib/imam_mobile/actions/runs/43615557279). Hosted dashboard verification and seeded list rendering remain pending. Recovery requires only a code revert.

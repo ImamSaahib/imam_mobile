@@ -1,6 +1,6 @@
 # Development Timeline
 
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 **Branch rule:** work directly on development (C10); main changes require explicit owner approval. Do not assume branch protection is enabled.
 **Continuing the work:** start with [HANDOFF.md](HANDOFF.md).  
 **Source of truth:** the story files in [`platform/stories/`](platform/stories/). This file summarizes them. Update it in the same commit that changes a story's status.
@@ -29,9 +29,9 @@ Keep story status, acceptance evidence, this timeline and HANDOFF synchronized w
 
 | Story | Title | Priority | Depends on | Status | Evidence |
 |---|---|---|---|---|---|
-| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: 16 browser scenarios; light-theme tokens measured and applied (2026-11-13); acceptance gaps and runtime integration pending |
+| 00 | UI shell and design system | P0 | none | In progress (00a done; 00b fixture shell/table/context menu implemented) | See Story 00: 16 browser scenarios; light-theme tokens measured and applied (2026-11-13); visual acceptance gaps remain; hosted shell integration is recorded under Story 02 |
 | 01 | Platform foundation and application identity | P0 | none | In progress (01a–01d done) | 01a: baseline tests, type check, CI. 01b: policy layer, actors, audit shape, legacy inventory. 01c-1: catalog, seed, release, bootstrap, compatibility. 01c-2: seed upgrade preview, conflicts, reset (117 tests). 01d: row metering, governor, daily-limit mapping, rate limit, bootstrap cache, version counters (139 tests). See Story 01 notes |
-| 02 | Application navigator | P0 | 00, 01 | In progress (route-model preparation) | Stable-ID resolver and published-menu projection; runtime integration pending |
+| 02 | Application navigator | P0 | 00, 01 | In progress | Hosted Dev navigation and stable-route reload verified. Dashboard summary passed CI at `4ba2e4a`; hosted dashboard check pending |
 | 03 | Page builder and component registry | P0 | 00, 01, 02 | In progress | Published heading and text renderer |
 | 04 | Data model, properties and schema compatibility | P0 | 01 | Complete with deferred items (04a to 04f done 2026-11-12) | Slice plan 04a to 04f in Story 04 notes. 04a: type registry, property routes, seed v2. 04b: schema inspection, adoption, drift check. 04c: schema change service, `add_property` in guided_live mode. 04d: add and drop index, hide property, convert presentation, `migration_controlled` mode. 04e: `updated_at` indexes, counters, version bumps on every legacy write (2026-11-12) |
 | 05 | Lists, views and safe query engine | P0 | 00, 02, 04 | Planned | |
