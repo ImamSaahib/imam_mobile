@@ -280,6 +280,11 @@ async function handleRequest(request, env) {
         return json({ ok:true, service:"imam-mobile-api", database:"connected", auth:policy.mode, resources:governor.snapshot() },200,origin);
       }
 
+      if (path === "/api/devices/summary" && request.method === "GET") {
+        const rows = await env.DB.prepare("SELECT counter_key,value FROM data_source_counters WHERE data_source_key='devices' AND counter_key IN ('total','status=Available','status=Sold Out')").all();
+        const counts = new Map(rows.results.map(row => [row.counter_key, row.value]));
+        return json({ total: counts.get("total") ?? 0, available: counts.get("status=Available") ?? 0, sold: counts.get("status=Sold Out") ?? 0 },200,origin);
+      }
       if (path === "/api/devices" && request.method === "GET") {
         const status=url.searchParams.get("status");
         const result=status

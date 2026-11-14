@@ -24,3 +24,17 @@ test('built platform preview loads within request budget and supports direct rou
   await expect(page.getByRole('heading', { name: 'Published records' })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('published inventory summary can retry a failed read', async ({ page }) => {
+  await page.route('**/api/bootstrap', route => route.fulfill({ json: {
+    platform: { configSchemaVersion: 1 }, application: { id: 'app', key: 'shop', name: 'Shop' },
+    shell: { menus: [{ id: 'menu', label: 'Work', display: 'section', modules: [{ id: 'home', label: 'Home', slug: 'home', badge: null, pageId: 'dashboard', enabled: true }] }],
+      pages: [{ id: 'dashboard', title: 'Dashboard', description: null, components: [{ type: 'summary', typeVersion: 1, config: {} }] }] },
+  } }));
+  let attempts = 0;
+  await page.route('**/api/devices/summary', route => ++attempts === 1
+    ? route.fulfill({ status: 503 }) : route.fulfill({ json: { total: 7, available: 5, sold: 2 } }));
+  await page.goto('/__platform');
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByRole('region', { name: 'Inventory summary' }).locator('dd')).toHaveText(['7', '5', '2']);
+});

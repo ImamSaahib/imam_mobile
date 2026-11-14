@@ -10,6 +10,12 @@ describe("devices", () => {
     expect(r.json.map((d: any) => d.id)).toEqual([second, first]);
     expect(r.json[0]).toMatchObject({ model: "Second", company: "Samsung", status: "Available", purchasePrice: 40000, purchaseDate: "2026-11-01" });
   });
+  it("summarizes inventory from maintained counters", async () => {
+    expect((await call("GET", "/api/devices/summary")).json).toEqual({ total: 0, available: 0, sold: 0 });
+    await createDevice();
+    await createDevice({ status: "Sold Out" });
+    expect((await call("GET", "/api/devices/summary")).json).toEqual({ total: 2, available: 1, sold: 1 });
+  });
   it("filters by status", async () => {
     await createDevice({ status: "Available" });
     await createDevice({ status: "Sold Out" });

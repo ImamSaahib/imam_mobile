@@ -7,7 +7,7 @@ import { ResourceState } from '../ui/ResourceState';
 import { useBootstrap } from './bootstrap';
 import { modulePath, navigationGroups, resolveModule, type PublishedNavigation } from './model';
 
-function PublishedShell({ snapshot }: { snapshot: PublishedNavigation }) {
+function PublishedShell({ snapshot, bootstrapUrl }: { snapshot: PublishedNavigation; bootstrapUrl: string }) {
   const [path, setPath] = useState(window.location.pathname);
   const [mode, setMode] = useState<'light' | 'dark'>('light');
   const groups = navigationGroups(snapshot);
@@ -32,7 +32,7 @@ function PublishedShell({ snapshot }: { snapshot: PublishedNavigation }) {
     title={title} description={route.status === 'ready' ? route.page.description ?? undefined : undefined}
     mode={mode} onModeChange={setMode} releaseLabel="Published navigation preview">
     <ResourceBanner resources={snapshot.resources} />
-    {route.status === 'ready' ? <PageContent components={route.page.components} />
+    {route.status === 'ready' ? <PageContent bootstrapUrl={bootstrapUrl} components={route.page.components} />
       : <ResourceState state="empty" message={route.status === 'unavailable' ? 'This page is currently unavailable.' : 'Choose an available page from the navigation.'} />}
     <a href="/">Open existing application</a>
   </Shell>;
@@ -42,7 +42,7 @@ function PublishedShell({ snapshot }: { snapshot: PublishedNavigation }) {
 export default function NavigationRuntime({ bootstrapUrl }: { bootstrapUrl: string }) {
   const [revision, setRevision] = useState(0);
   const state = useBootstrap(bootstrapUrl, revision);
-  if (state.status === 'ready') return <PublishedShell snapshot={state.snapshot} />;
+  if (state.status === 'ready') return <PublishedShell bootstrapUrl={bootstrapUrl} snapshot={state.snapshot} />;
   return <main className="im-shell im-page" data-mode="light">
     <h1>Application</h1>
     {state.status === 'error' && <ResourceBanner resources={state.resources} />}
